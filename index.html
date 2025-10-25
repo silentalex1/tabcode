@@ -5,14 +5,17 @@
     <title>TabCode</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.min.js"></script>
 </head>
 <body>
     <div id="main-container">
         <aside id="sidebar">
-            <div class="sidebar-header">Files</div>
+            <div class="sidebar-header">FILES</div>
             <ul class="file-explorer" id="fileExplorer"></ul>
-            <button id="add-file-btn" class="sidebar-action">+ Add files</button>
+            <div class="sidebar-footer">
+                <button id="add-file-btn" class="sidebar-action">+ Add File</button>
+                <button id="ai-settings-btn" class="sidebar-action settings-icon" title="AI Key Settings">⚙</button>
+            </div>
         </aside>
         <section id="content-container">
             <div id="editor-wrapper">
@@ -20,18 +23,18 @@
             </div>
             <div id="console-wrapper">
                 <div class="console-header">
-                    <div id="lang-detector">LANGUAGE: </div>
+                    <div id="lang-detector">LANGUAGE: TEXT</div>
                     <div class="button-bar">
-                        <button id="improve-code">Improve</button>
-                        <select id="obfuscate-language" class="dropdown-clean">
+                        <button id="improve-code" title="Use AI to improve code quality">Improve</button>
+                        <select id="obfuscate-language" class="dropdown-clean" title="Select language for obfuscation">
                             <option value="auto">Auto</option>
                             <option value="javascript">JavaScript</option>
                             <option value="lua">Lua</option>
                             <option value="cpp">C++</option>
                             <option value="html">HTML</option>
                         </select>
-                        <button id="obfuscate">Obfuscate</button>
-                        <button id="deobfuscate">Deobfuscate</button>
+                        <button id="obfuscate" title="Obfuscate the current file's content">Obfuscate</button>
+                        <button id="deobfuscate" title="Attempt to deobfuscate the current file's content">Deobfuscate</button>
                     </div>
                 </div>
                 <div id="terminal"></div>
@@ -39,36 +42,41 @@
         </section>
     </div>
     <div id="modal-backdrop"></div>
-    <div id="modal-addfile">
+    <div id="modal-addfile" class="modal">
         <div class="modal-content">
             <div class="modal-title">Add a new file</div>
-            <input type="text" id="file-language" placeholder="What will you code this in?">
-            <input type="text" id="file-name" placeholder="Name the file here.">
+            <input type="text" id="file-name" placeholder="Name the file (e.g., script.js)">
+            <input type="text" id="file-language" placeholder="Language (e.g., javascript, lua)">
             <div class="modal-actions">
                 <button id="create-file">Create</button>
-                <button id="close-modal">Cancel</button>
+                <button id="close-addfile">Cancel</button>
             </div>
         </div>
     </div>
-    <div id="modal-aiagent">
+    <div id="modal-aiagent" class="modal">
         <div class="modal-content">
-            <div class="modal-title">TabCode AI Agent Setup</div>
-            <input type="text" id="gemini-key" placeholder="Enter your gemini api key:">
+            <div class="modal-title">AI Agent Key Setup</div>
+            <input type="password" id="gemini-key" placeholder="Enter your gemini api key:">
             <div class="modal-link">
-                If you want to save your coding projects please create account <a id="register-link" href="/registeraccount" target="_blank" class="highlight-link">here</a>.
+                <p>For persistent projects, <a id="register-link" href="/registeraccount" target="_blank" class="highlight-link">create an account</a>.</p>
             </div>
             <div class="modal-actions">
-                <button id="save-gemini">Save</button>
+                <button id="save-gemini">Save Key</button>
             </div>
         </div>
     </div>
-    <div id="aiagent-box">
+    <div id="aiagent-box" role="dialog" aria-labelledby="aiagent-header">
         <div id="aiagent-header">
             <span>What do you need help with coding?</span>
-            <button id="aiagent-close">✕</button>
+            <button id="aiagent-close" aria-label="Close AI Agent">✕</button>
         </div>
-        <textarea id="aiagent-input" placeholder="Type your question..."></textarea>
-        <button id="aiagent-send">Send</button>
+        <div id="aiagent-chat-window">
+            <div class="chat-message system-message">AI: I can help you with coding questions and suggestions for the current file.</div>
+        </div>
+        <div id="aiagent-input-container">
+            <textarea id="aiagent-input" placeholder="Type your question..."></textarea>
+            <button id="aiagent-send" aria-label="Send Message">Send</button>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
