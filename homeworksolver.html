@@ -1,1 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TabCode - Homework Helper</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="helper.css">
+</head>
+<body>
+    <div id="registration-modal">
+        <div id="reg-content">
+            <h1>Welcome to the registar account page.</h1>
+            <input type="text" id="reg-username" placeholder="Enter your username." required>
+            <input type="password" id="reg-password" placeholder="Enter your password." required>
+            <input type="password" id="reg-invite" placeholder="Enter the invite code." required>
+            <button id="register-btn">Create Account</button>
+            <p id="reg-error" class="error-message"></p>
+        </div>
+    </div>
 
+    <div id="chat-interface" class="hidden">
+        <div id="chat-window">
+            <div id="chat-messages">
+                <div class="ai-message">
+                    <span>Prysmis AI:</span> Hello <span id="chat-username">User</span>, please click the <span id="settings-placeholder" class="settings-icon-placeholder">⚙</span> button and enter your Gemini API key to get this ai to work.
+                </div>
+            </div>
+            <div id="chat-input-container">
+                <input type="text" id="chat-input" placeholder="Ask prysmis ai anything.. Or use '/' commands.">
+                <button id="send-btn">Send</button>
+            </div>
+        </div>
+
+        <button id="settings-btn" class="custom-svg-button" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C11.85 2 11.75 2.1 11.75 2.25V4.38C9.69 4.67 7.78 5.76 6.3 7.24L4.85 5.8C4.75 5.7 4.55 5.7 4.45 5.8L3.05 7.2C2.95 7.3 2.95 7.5 3.05 7.6L4.5 9.05C4.38 9.35 4.28 9.68 4.2 10.03L2.25 9.85C2.1 9.85 2 9.95 2 10.1V11.95C2 12.1 2.1 12.2 2.25 12.2L4.2 12.03C4.28 12.38 4.38 12.7 4.5 13L3.05 14.45C2.95 14.55 2.95 14.75 3.05 14.85L4.45 16.25C4.55 16.35 4.75 16.35 4.85 16.25L6.3 14.8C7.78 16.27 9.69 17.36 11.75 17.65V19.75C11.75 19.9 11.85 20 12 20H13.85C14 20 14.1 19.9 14.1 19.75V17.65C16.16 17.36 18.07 16.27 19.55 14.8L21 16.25C21.1 16.35 21.3 16.35 21.4 16.25L22.8 14.85C22.9 14.75 22.9 14.55 22.8 14.45L21.35 13C21.47 12.7 21.57 12.38 21.65 12.03L23.6 12.2C23.75 12.2 23.85 12.1 23.85 11.95V10.1C23.85 9.95 23.75 9.85 23.6 9.85L21.65 10.03C21.57 9.68 21.47 9.35 21.35 9.05L22.8 7.6C22.9 7.5 22.9 7.3 22.8 7.2L21.4 5.8C21.3 5.7 21.1 5.7 21 5.8L19.55 7.24C18.07 5.76 16.16 4.67 14.1 4.38V2.25C14.1 2.1 14 2 13.85 2H12ZM12.95 13.9C10.7 13.9 8.85 12.05 8.85 9.8C8.85 7.55 10.7 5.7 12.95 5.7C15.2 5.7 17.05 7.55 17.05 9.8C17.05 12.05 15.2 13.9 12.95 13.9Z" fill="currentColor"/>
+            </svg>
+        </button>
+    </div>
+
+    <div id="settings-modal" class="hidden">
+        <div id="settings-panel">
+            <div id="settings-sidebar">
+                <button id="tab-ai" class="settings-tab active">AI Settings</button>
+                <button id="tab-user" class="settings-tab">User Settings</button>
+            </div>
+            <div id="settings-content">
+                <div id="ai-settings-tab" class="settings-tab-content active">
+                    <div class="setting-group">
+                        <label for="gemini-api-key">Enter your Gemini API Key here.</label>
+                        <input type="password" id="gemini-api-key" placeholder="••••••••••••••••••••••••••••••••" required>
+                        <a id="generate-key-link" href="https://aistudio.google.com/app/apikey" target="_blank">Click here to generate your gemini api key.</a>
+                    </div>
+                    <div class="setting-group">
+                        <label for="keybind-input">Enter a keybind to switch to ai mode from calculator: a+i</label>
+                        <input type="text" id="keybind-input" value="a+i">
+                    </div>
+                    <div class="setting-group-switch">
+                        <span class="switch-label">Fast AI response speed.</span>
+                        <label class="switch">
+                            <input type="checkbox" id="fast-ai-switch">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+                <div id="user-settings-tab" class="settings-tab-content">
+                    <div class="setting-group">
+                        <label for="new-username">Username</label>
+                        <input type="text" id="new-username" disabled>
+                    </div>
+                    <div class="setting-group">
+                        <label for="new-password">Change Password</label>
+                        <input type="password" id="new-password" placeholder="Enter new password">
+                    </div>
+                </div>
+                <button id="save-settings-btn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-backdrop" class="hidden"></div>
+
+    <script src="backend.js"></script>
+</body>
+</html>
