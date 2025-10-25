@@ -11,10 +11,10 @@
     <div id="main-container">
         <aside id="sidebar">
             <div class="sidebar-header">FILES</div>
+            <button id="add-file-btn" class="sidebar-action">+ Add File</button>
             <ul class="file-explorer" id="fileExplorer"></ul>
-            <div class="sidebar-footer">
-                <button id="add-file-btn" class="sidebar-action">+ Add File</button>
-                <button id="ai-settings-btn" class="sidebar-action settings-icon" title="AI Key Settings">⚙</button>
+            <div class="sidebar-bottom-controls">
+                <button id="ai-settings-btn" class="sidebar-action settings-icon" title="User Settings">⚙ Settings</button>
             </div>
         </aside>
         <section id="content-container">
@@ -53,25 +53,26 @@
             </div>
         </div>
     </div>
-    <div id="modal-aiagent" class="modal">
+    <div id="modal-settings" class="modal">
         <div class="modal-content">
-            <div class="modal-title">AI Agent Key Setup</div>
-            <input type="password" id="gemini-key" placeholder="Enter your gemini api key:">
+            <div class="modal-title">User Settings</div>
+            <input type="password" id="gemini-key" placeholder="Enter your API key:">
             <div class="modal-link">
                 <p>For persistent projects, <a id="register-link" href="/registeraccount" target="_blank" class="highlight-link">create an account</a>.</p>
             </div>
             <div class="modal-actions">
                 <button id="save-gemini">Save Key</button>
+                <button id="close-settings">Close</button>
             </div>
         </div>
     </div>
     <div id="aiagent-box" role="dialog" aria-labelledby="aiagent-header">
         <div id="aiagent-header">
             <span>What do you need help with coding?</span>
-            <button id="aiagent-close" aria-label="Close AI Agent">✕</button>
+            <button id="aiagent-close" aria-label="Close Agent">✕</button>
         </div>
         <div id="aiagent-chat-window">
-            <div class="chat-message system-message">AI: I can help you with coding questions and suggestions for the current file.</div>
+            <div class="chat-message system-message">Agent: I can help you with coding questions and suggestions for the current file.</div>
         </div>
         <div id="aiagent-input-container">
             <textarea id="aiagent-input" placeholder="Type your question..."></textarea>
