@@ -1,297 +1,479 @@
-let files=[],activeFile=null,geminiKey=null;
-document.addEventListener("DOMContentLoaded",()=>{
-    const editor=ace.edit("editor");
-    editor.setTheme("ace/theme/tomorrow_night_eighties");
-    editor.session.setMode("ace/mode/text");
-    editor.setShowPrintMargin(false);
+:root {
+    --color-bg: #181820;
+    --color-bg-editor: #1c1c25; 
+    --color-bg-light: #23232d;
+    --color-bg-lighter: #353545;
+    --color-border: #29292f;
+    --color-text: #e0e0e6;
+    --color-text-dark: #9898ad;
+    --color-accent: #1a99e0;
+    --color-accent-hover: #23b0ff;
+    --font-main: 'Segoe UI', 'Roboto', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', Courier, monospace;
+    --modal-bg: rgba(26, 26, 32, 0.9);
+    --modal-shadow: 0 8px 30px 0 rgba(34, 34, 44, 0.6);
+}
 
-    const fileExplorer=document.getElementById("fileExplorer");
-    const terminal=document.getElementById("terminal");
-    const langDetector=document.getElementById("lang-detector");
-    const improveCodeBtn=document.getElementById("improve-code");
-    const deobfuscateBtn=document.getElementById("deobfuscate");
-    const obfuscateBtn=document.getElementById("obfuscate");
-    const obfuscateLang=document.getElementById("obfuscate-language");
-    const addFileBtn=document.getElementById("add-file-btn");
-    const modalBackdrop=document.getElementById("modal-backdrop");
-    const modalAddFile=document.getElementById("modal-addfile");
-    const modalAiAgent=document.getElementById("modal-aiagent");
-    const createFileBtn=document.getElementById("create-file");
-    const closeModalBtn=document.getElementById("close-modal");
-    const fileLangInput=document.getElementById("file-language");
-    const fileNameInput=document.getElementById("file-name");
-    const geminiKeyInput=document.getElementById("gemini-key");
-    const saveGeminiBtn=document.getElementById("save-gemini");
-    const registerLink=document.getElementById("register-link");
-    const aiagentBox=document.getElementById("aiagent-box");
-    const aiagentHeader=document.getElementById("aiagent-header");
-    const aiagentClose=document.getElementById("aiagent-close");
-    const aiagentInput=document.getElementById("aiagent-input");
-    const aiagentSend=document.getElementById("aiagent-send");
+* {
+    box-sizing: border-box;
+}
 
-    function logToTerminal(message,type='info'){
-        const entry=document.createElement("div");
-        entry.innerHTML=`[<span style="color:${type==='error'?'#f44336':'#888'}">${new Date().toLocaleTimeString()}</span>] ${message}`;
-        terminal.appendChild(entry);
-        terminal.scrollTop=terminal.scrollHeight;
-    }
+html, body {
+    height: 100%;
+}
 
-    function detectLanguage(code){
-        if(/\b(function|const|let|var|class|import|export)\b/.test(code)&&/console\.log/.test(code))return'javascript';
-        if(/\b(local\s+function|function\s+\w+\s*\(|end\b)/.test(code)&&(code.includes('print')||code.includes('require')))return'lua';
-        if(/#include\s*<[a-zA-Z_]+>/.test(code)&&/\b(int\s+main|std::cout|printf)\b/.test(code))return'cpp';
-        if(/<!DOCTYPE\s+html>/i.test(code)&&/<\s*head\s*>/.test(code)&&/<\s*body\s*>/.test(code))return'html';
-        return'text';
-    }
+body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-main);
+    margin: 0;
+    overflow: hidden;
+}
 
-    function updateSidebar(){
-        fileExplorer.innerHTML='';
-        files.forEach((file,i)=>{
-            const li=document.createElement("li");
-            li.className="file-item"+(file===activeFile?' active':'');
-            li.dataset.index=i;
-            li.innerHTML=`<i>${getIcon(file.lang)}</i>${file.name||"Untitled"}<div class="file-controls"><button class="move-up" title="Move Up">▲</button><button class="move-down" title="Move Down">▼</button></div>`;
-            li.onclick=()=>{
-                activeFile=file;
-                editor.setValue(file.content,-1);
-                editor.session.setMode("ace/mode/"+(file.lang||"text"));
-                updateSidebar();
-                langDetector.textContent="LANGUAGE: "+(file.lang?file.lang.toUpperCase():"TEXT");
-            };
-            li.querySelector('.move-up').onclick=(e)=>{
-                e.stopPropagation();
-                if(i>0){[files[i-1],files[i]]=[files[i],files[i-1]];updateSidebar();}
-            };
-            li.querySelector('.move-down').onclick=(e)=>{
-                e.stopPropagation();
-                if(i<files.length-1){[files[i+1],files[i]]=[files[i],files[i+1]];updateSidebar();}
-            };
-            fileExplorer.appendChild(li);
-        });
-    }
+#main-container {
+    display: flex;
+    height: 100vh;
+}
 
-    function getIcon(lang){
-        if(lang==="javascript")return"🟨";
-        if(lang==="lua")return"🟦";
-        if(lang==="cpp")return"🟩";
-        if(lang==="html")return"⬜";
-        return"📄";
-    }
+#sidebar {
+    width: 250px;
+    background: var(--color-bg-light);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
+    padding-bottom: 0;
+}
 
-    addFileBtn.onclick=()=>{
-        modalBackdrop.style.display="block";
-        modalAddFile.style.display="block";
-        fileLangInput.value="";
-        fileNameInput.value="";
-        fileLangInput.focus();
-    };
-    closeModalBtn.onclick=()=>{modalBackdrop.style.display="none";modalAddFile.style.display="none";};
-    modalBackdrop.onclick=()=>{modalBackdrop.style.display="none";modalAddFile.style.display="none";modalAiAgent.style.display="none";};
+.sidebar-header {
+    padding: 14px 20px 10px 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-dark);
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid var(--color-border);
+}
 
-    createFileBtn.onclick=()=>{
-        let lang=fileLangInput.value.trim().toLowerCase();
-        let name=fileNameInput.value.trim();
-        if(!lang)lang="text";
-        files.push({name,lang,content:""});
-        activeFile=files[files.length-1];
-        editor.session.setMode("ace/mode/"+lang);
-        editor.setValue("",-1);
-        updateSidebar();
-        modalBackdrop.style.display="none";
-        modalAddFile.style.display="none";
-        langDetector.textContent="LANGUAGE: "+(lang?lang.toUpperCase():"TEXT");
-    };
+.sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    gap: 8px;
+}
 
-    function obfuscateJS(code){
-        let obfuscated=code.replace(/(["'`])(?:(?=(\\?))\2.)*?\1/g,m=>btoa(m));
-        obfuscated=obfuscated.replace(/([A-Za-z_]\w*)/g,(m)=>m.split('').reverse().join(''));
-        return obfuscated;
-    }
-    function obfuscateLua(code){
-        let obfuscated=code.replace(/print\(([^)]+)\)/g,(m,inside)=>`print(string.reverse(tostring(${inside})))`);
-        obfuscated=obfuscated.replace(/local\s+(\w+)/g,(m,v)=>`local ${v.split('').reverse().join('')}`);
-        return obfuscated;
-    }
-    function obfuscateCpp(code){
-        let obfuscated=code.replace(/std::cout\s*<<\s*([^\n;]+);/g,(m,inside)=>`std::cout << std::string(${inside}).c_str();`);
-        obfuscated=obfuscated.replace(/int\s+main\(\)/g,"int main_obf()");
-        obfuscated=obfuscated.replace(/#include\s*<([a-zA-Z_]+)>/g,(m,h)=>`#include <${h.split('').reverse().join('')}>`);
-        return obfuscated;
-    }
-    function obfuscateHTML(code){
-        let obfuscated=code.replace(/<h1([^>]*)>([\s\S]*?)<\/h1>/i,(m,attr,text)=>`<h1${attr}>${btoa(text.trim())}</h1>`);
-        obfuscated=obfuscated.replace(/<p([^>]*)>([\s\S]*?)<\/p>/i,(m,attr,text)=>`<p${attr}>${btoa(text)}</p>`);
-        return obfuscated;
-    }
-    function obfuscateCode(code,lang){
-        if(lang==="auto")lang=detectLanguage(code);
-        let obfuscated="";
-        if(lang==="javascript")obfuscated=obfuscateJS(code);
-        else if(lang==="lua")obfuscated=obfuscateLua(code);
-        else if(lang==="cpp")obfuscated=obfuscateCpp(code);
-        else if(lang==="html")obfuscated=obfuscateHTML(code);
-        else{logToTerminal("No obfuscator for detected language.","error");return;}
-        editor.setValue(obfuscated,-1);
-        if(activeFile)activeFile.content=obfuscated;
-        logToTerminal("Code obfuscated ("+lang+").");
-    }
+#add-file-btn {
+    flex-grow: 1;
+}
 
-    function deobfuscateJS(code){
-        let deobfuscated=code.replace(/([A-Za-z_]\w*)/g,(m)=>m.split('').reverse().join(''));
-        deobfuscated=deobfuscated.replace(/([A-Za-z0-9+\/=]+){1,}/g,(m)=>{try{return atob(m);}catch{return m;}});
-        return deobfuscated;
-    }
-    function deobfuscateLua(code){
-        let deobfuscated=code.replace(/print\(string\.reverse\(tostring\(([^)]+)\)\)\)/g,(m,inside)=>`print(${inside})`);
-        deobfuscated=deobfuscated.replace(/local\s+(\w+)/g,(m,v)=>`local ${v.split('').reverse().join('')}`);
-        return deobfuscated;
-    }
-    function deobfuscateCpp(code){
-        let deobfuscated=code.replace(/std::cout\s*<<\s*std::string\(([^)]+)\)\.c_str\(\);/g,(m,inside)=>`std::cout << ${inside};`);
-        deobfuscated=deobfuscated.replace(/int\s+main_obf\(\)/g,"int main()");
-        deobfuscated=deobfuscated.replace(/#include\s*<([a-zA-Z_]+)>/g,(m,h)=>`#include <${h.split('').reverse().join('')}>`);
-        return deobfuscated;
-    }
-    function deobfuscateHTML(code){
-        let deobfuscated=code.replace(/<h1([^>]*)>([A-Za-z0-9+\/=]+)<\/h1>/i,(m,attr,text)=>`<h1${attr}>${atob(text)}</h1>`);
-        deobfuscated=deobfuscated.replace(/<p([^>]*)>([A-Za-z0-9+\/=]+)<\/p>/i,(m,attr,text)=>`<p${attr}>${atob(text)}</p>`);
-        return deobfuscated;
-    }
-    function deobfuscateCode(code){
-        let lang=detectLanguage(code);
-        let deobfuscated="";
-        if(lang==="javascript")deobfuscated=deobfuscateJS(code);
-        else if(lang==="lua")deobfuscated=deobfuscateLua(code);
-        else if(lang==="cpp")deobfuscated=deobfuscateCpp(code);
-        else if(lang==="html")deobfuscated=deobfuscateHTML(code);
-        else{logToTerminal("No deobfuscator for detected language.","error");return;}
-        editor.setValue(deobfuscated,-1);
-        if(activeFile)activeFile.content=deobfuscated;
-        logToTerminal("Code deobfuscated ("+lang+").");
-    }
+.sidebar-action {
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+}
 
-    function improveJS(code){
-        let imp=["Improved variable scoping.","Standardized equality checks.","Beautified console output."];
-        let newCode=code.replace(/var\s/g,"let ");
-        newCode=newCode.replace(/\s==\s(?!=)/g," === ");
-        newCode=newCode.replace(/console\.log\(([^)]+)\);/g,"console.log(String($1).trim());");
-        return {code:newCode,imp};
-    }
-    function improveLua(code){
-        let imp=["Improved print formatting.","Trimmed whitespace before 'end'.","Standardized table initialization."];
-        let newCode=code.replace(/print\(([^)]+)\)/g,"print(tostring($1):gsub('^%s*(.-)%s*$', '%1'))");
-        newCode=newCode.replace(/\s+end/g," end");
-        return{code:newCode,imp};
-    }
-    function improveCpp(code){
-        let imp=["Improved std::cout formatting.","Added explicit return type for main.","Avoided 'using namespace std'."];
-        let newCode=code.replace(/using\s+namespace\s+std;/g,"");
-        newCode=newCode.replace(/std::cout\s*<<\s*([^\n;]+);/g,"std::cout << $1.c_str();");
-        newCode=newCode.replace(/int\s+main\(\)/g,"int main()");
-        return{code:newCode,imp};
-    }
-    function improveHTML(code){
-        let imp=["Enforced single title tag.","Improved h1 tag formatting."];
-        let newCode=code.replace(/<title>([\s\S]*?)<\/title>/i,"<title>TabCode</title>");
-        newCode=newCode.replace(/<h1([^>]*)>([\s\S]*?)<\/h1>/i,(m,attr,text)=>`<h1${attr}>${text.trim()}</h1>`);
-        return{code:newCode,imp};
-    }
-    function improveCode(code){
-        let lang=detectLanguage(code);
-        let result={code:code,imp:[]};
-        if(lang==="javascript")result=improveJS(code);
-        else if(lang==="lua")result=improveLua(code);
-        else if(lang==="cpp")result=improveCpp(code);
-        else if(lang==="html")result=improveHTML(code);
-        if(geminiKey){
-            // Gemini AI integration would go here (call Gemini API with code and key)
-            logToTerminal("AI improvement applied with Gemini API key.");
-        }
-        if(result.imp.length>0){
-            logToTerminal("<strong>Code Improvement Suggestions:</strong>");
-            result.imp.forEach(imp=>logToTerminal(`- ${imp}`));
-            editor.setValue(result.code,-1);
-            if(activeFile)activeFile.content=result.code;
-        }else{
-            logToTerminal("No improvements found.");
-        }
-    }
+.sidebar-action:hover {
+    background: var(--color-accent-hover);
+    transform: translateY(-1px);
+}
 
-    improveCodeBtn.onclick=()=>improveCode(editor.getValue());
-    obfuscateBtn.onclick=()=>obfuscateCode(editor.getValue(),obfuscateLang.value);
-    deobfuscateBtn.onclick=()=>deobfuscateCode(editor.getValue());
-    obfuscateLang.className="dropdown-clean";
+.sidebar-action.settings-icon {
+    width: 40px;
+    font-size: 18px;
+    padding: 9px 0;
+}
 
-    editor.session.on('change',()=>{
-        let code=editor.getValue();
-        if(activeFile)activeFile.content=code;
-        let lang=detectLanguage(code);
-        langDetector.textContent="LANGUAGE: "+(lang?lang.toUpperCase():"TEXT");
-    });
+.file-explorer {
+    list-style: none;
+    flex-grow: 1;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+}
 
-    document.addEventListener("keydown",e=>{
-        if(e.key==="Enter"){
-            let val=editor.getValue();
-            if(val.includes("/aiagent mode")){
-                showAiAgentModal();
-                let newVal=val.replace("/aiagent mode","");
-                setTimeout(()=>editor.setValue(newVal,-1),100);
-            }
-        }
-    });
+.file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 15px;
+    border-left: 3px solid transparent;
+    background: none;
+    transition: background .2s, color .2s, border-color .2s;
+    user-select: none;
+    position: relative;
+}
 
-    function showAiAgentModal(){
-        modalBackdrop.style.display="block";
-        modalAiAgent.style.display="block";
-        geminiKeyInput.value="";
-    }
-    saveGeminiBtn.onclick=()=>{
-        geminiKey=geminiKeyInput.value.trim();
-        modalBackdrop.style.display="none";
-        modalAiAgent.style.display="none";
-        logToTerminal("Gemini API key saved.");
-    };
+.file-item:hover {
+    background: var(--color-bg-lighter);
+}
 
-    registerLink.onclick=()=>{window.open("/registeraccount","_blank");};
+.file-item.active {
+    background: var(--color-accent);
+    color: #fff;
+    border-left-color: var(--color-accent);
+}
 
-    document.addEventListener("contextmenu",function(e){
-        e.preventDefault();
-        showAiAgentBox(e.clientX,e.clientY);
-    });
+.file-item.active:hover {
+    background: var(--color-accent);
+}
 
-    function showAiAgentBox(x,y){
-        aiagentBox.style.display="flex";
-        aiagentBox.style.left=x+"px";
-        aiagentBox.style.top=y+"px";
-    }
-    aiagentClose.onclick=()=>{aiagentBox.style.display="none";};
-    aiagentSend.onclick=()=>aiAgentSend();
-    aiagentInput.onkeydown=e=>{
-        if(e.key==="Enter"){e.preventDefault();aiAgentSend();}
-    };
-    function aiAgentSend(){
-        let q=aiagentInput.value.trim();
-        if(!q)return;
-        // Gemini AI integration would go here (call Gemini API with q and geminiKey)
-        logToTerminal("AI agent answered your question.");
-        aiagentBox.style.display="none";
-        aiagentInput.value="";
-    }
+.file-item i {
+    width: 16px;
+    font-style: normal;
+    text-align: center;
+    font-size: 14px;
+}
 
-    let dragging=false,dragOffset={x:0,y:0};
-    aiagentHeader.onmousedown=function(e){
-        dragging=true;
-        dragOffset.x=e.clientX-aiagentBox.offsetLeft;
-        dragOffset.y=e.clientY-aiagentBox.offsetTop;
-        document.body.style.userSelect="none";
-    };
-    document.onmousemove=function(e){
-        if(dragging){
-            aiagentBox.style.left=(e.clientX-dragOffset.x)+"px";
-            aiagentBox.style.top=(e.clientY-dragOffset.y)+"px";
-        }
-    };
-    document.onmouseup=function(){dragging=false;document.body.style.userSelect="auto";};
+.file-item .file-controls {
+    display: flex;
+    gap: 3px;
+    margin-left: auto;
+    opacity: 0;
+    transition: opacity .2s;
+}
 
-    updateSidebar();
-});
+.file-item:hover .file-controls {
+    opacity: 1;
+}
+
+.file-controls button {
+    background: var(--color-bg-lighter);
+    color: var(--color-text);
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .2s, color .2s;
+}
+
+.file-controls button:hover {
+    background: var(--color-accent);
+    color: #fff;
+}
+
+#content-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+#editor-wrapper {
+    flex: 2 1 60%;
+    min-height: 0;
+    background: var(--color-bg-editor);
+    border-bottom: 1px solid var(--color-border);
+}
+
+#editor {
+    height: 100%;
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 16px;
+}
+
+#console-wrapper {
+    flex: 1 1 40%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.console-header {
+    background: var(--color-bg-light);
+    padding: 8px 15px;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#lang-detector {
+    color: var(--color-text-dark);
+}
+
+.button-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.console-header button,
+.console-header select {
+    border: 0;
+    outline: none;
+    padding: 7px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--color-bg-lighter);
+    color: var(--color-text);
+    transition: background .2s, color .2s;
+    height: 32px;
+    line-height: 1;
+}
+
+.console-header button:hover,
+.console-header select:hover {
+    background: var(--color-bg);
+}
+
+#improve-code {
+    background: var(--color-accent);
+    color: #fff;
+}
+
+#improve-code:hover {
+    background: var(--color-accent-hover);
+}
+
+.dropdown-clean {
+    padding-right: 20px;
+}
+
+#terminal {
+    flex-grow: 1;
+    background: var(--color-bg);
+    padding: 15px 18px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--color-bg-light);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--color-bg-lighter);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #444458;
+}
+
+#modal-backdrop {
+    position: fixed;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: var(--modal-bg);
+    z-index: 100;
+    display: none;
+}
+
+.modal {
+    position: fixed;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--color-bg-lighter);
+    box-shadow: var(--modal-shadow);
+    border-radius: 12px;
+    z-index: 101;
+    min-width: 380px;
+    max-width: 90%;
+    display: none;
+}
+
+.modal-content {
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--color-accent);
+    text-align: center;
+}
+
+.modal-content input[type="text"], 
+.modal-content input[type="password"] {
+    margin: 8px 0;
+    padding: 12px;
+    font-size: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-light);
+    color: var(--color-text);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.modal-content input[type="text"]:focus, 
+.modal-content input[type="password"]:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(26, 153, 224, 0.2);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-actions button {
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.modal-actions #close-addfile {
+    background: var(--color-bg-light);
+    color: var(--color-text);
+}
+
+.modal-actions button:hover {
+    background: var(--color-accent-hover);
+}
+
+.modal-actions #close-addfile:hover {
+    background: var(--color-bg);
+}
+
+.modal-link {
+    margin: 15px 0 0 0;
+    font-size: 14px;
+    color: var(--color-text-dark);
+    text-align: center;
+}
+
+.highlight-link {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.highlight-link:hover {
+    text-decoration: underline;
+}
+
+#aiagent-box {
+    position: fixed;
+    right: 30px;
+    bottom: 30px;
+    width: 350px;
+    max-width: 90%;
+    background: var(--color-bg-lighter);
+    box-shadow: var(--modal-shadow);
+    border-radius: 12px;
+    z-index: 105;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    resize: both;
+    min-width: 280px;
+    min-height: 200px;
+}
+
+#aiagent-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-accent);
+    color: #fff;
+    padding: 10px 15px;
+    font-weight: 600;
+    cursor: grab;
+    user-select: none;
+    font-size: 15px;
+}
+
+#aiagent-header button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+}
+
+#aiagent-chat-window {
+    flex-grow: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background: var(--color-bg);
+    min-height: 100px;
+}
+
+.chat-message {
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.system-message {
+    background: var(--color-bg-light);
+    color: var(--color-text-dark);
+}
+
+#aiagent-input-container {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid var(--color-border);
+}
+
+#aiagent-input {
+    flex-grow: 1;
+    min-height: 40px;
+    max-height: 120px;
+    resize: none;
+    font-size: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 8px;
+    background: var(--color-bg-light);
+    color: var(--color-text);
+    outline: none;
+    margin-right: 10px;
+}
+
+#aiagent-send {
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 0 15px;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+#aiagent-send:hover {
+    background: var(--color-accent-hover);
+}
