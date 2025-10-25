@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     const display = document.getElementById("display");
     const buttons = document.getElementById("buttons");
+    let lastAsteriskTime = 0;
+    const doubleClickTimeThreshold = 300;
 
     function appendToDisplay(value) {
         if (value === '**') {
@@ -47,6 +49,8 @@ document.addEventListener("DOMContentLoaded", () => {
             display.value = '';
         } else if (value === 'del') {
             display.value = display.value.slice(0, -1);
+        } else if (value === '**') {
+            appendToDisplay('°');
         } else {
             appendToDisplay(value);
         }
@@ -70,14 +74,15 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             appendToDisplay('−');
         } else if (key === '*') {
-            if (display.value.slice(-1) === '*') {
-                e.preventDefault();
-                display.value = display.value.slice(0, -1) + '°';
-            } else if (e.shiftKey) {
-                appendToDisplay('*');
+            e.preventDefault();
+            const currentTime = new Date().getTime();
+            if (currentTime - lastAsteriskTime < doubleClickTimeThreshold) {
+                display.value = display.value.slice(0, -1);
+                appendToDisplay('°');
+                lastAsteriskTime = 0;
             } else {
-                e.preventDefault();
                 appendToDisplay('×');
+                lastAsteriskTime = currentTime;
             }
         } else if (key === 'a' || key === 'i') {
         } else {
