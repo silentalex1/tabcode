@@ -2,47 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tabcode</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>TabCode</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.js"></script>
 </head>
 <body>
     <div id="main-container">
-        <div id="sidebar">
-            <div class="sidebar-header">
-                <span>EXPLORER</span>
-            </div>
+        <aside id="sidebar">
+            <div class="sidebar-header">Files</div>
             <ul class="file-explorer">
-                <li class="file-item active" data-lang="javascript" data-file="script.js"><i class="fa-brands fa-js-square"></i><span>script.js</span></li>
-                <li class="file-item" data-lang="lua" data-file="data.lua"><i class="fa-solid fa-file-code"></i><span>data.lua</span></li>
-                <li class="file-item" data-lang="c_cpp" data-file="main.cpp"><i class="fa-solid fa-file-invoice"></i><span>main.cpp</span></li>
-                <li class="file-item" data-lang="html" data-file="index.html"><i class="fa-brands fa-html5"></i><span>index.html</span></li>
+                <li class="file-item active" data-file="script.js" data-lang="javascript"><i>🟨</i>script.js</li>
+                <li class="file-item" data-file="data.lua" data-lang="lua"><i>🟦</i>data.lua</li>
+                <li class="file-item" data-file="main.cpp" data-lang="c_cpp"><i>🟩</i>main.cpp</li>
+                <li class="file-item" data-file="index.html" data-lang="html"><i>⬜</i>index.html</li>
             </ul>
-        </div>
-
-        <div id="content-container">
+        </aside>
+        <section id="content-container">
             <div id="editor-wrapper">
                 <div id="editor"></div>
             </div>
-
             <div id="console-wrapper">
                 <div class="console-header">
+                    <div id="lang-detector">LANGUAGE: JAVASCRIPT</div>
                     <div class="button-bar">
-                        <button id="lang-detector" disabled>LANGUAGE: JAVASCRIPT</button>
-                        <button id="improve-code">Improve your code</button>
-                    </div>
-                    <div class="button-bar">
-                        <button id="deobfuscate">Deobfuscate</button>
+                        <button id="improve-code">Improve</button>
                         <button id="obfuscate">Obfuscate</button>
+                        <button id="deobfuscate">Deobfuscate</button>
                     </div>
                 </div>
                 <div id="terminal"></div>
             </div>
-        </div>
+        </section>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.15.2/ace.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
