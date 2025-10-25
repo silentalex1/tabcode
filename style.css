@@ -8,6 +8,8 @@
     --color-accent: #1a99e0;
     --font-main: 'Segoe UI', 'Roboto', sans-serif;
     --font-mono: 'JetBrains Mono', 'Courier New', Courier, monospace;
+    --modal-bg: rgba(34,34,44,0.95);
+    --modal-radius: 12px;
 }
 
 * {
@@ -49,6 +51,7 @@ body {
     list-style: none;
     flex-grow: 1;
     padding: 0;
+    margin: 0;
 }
 
 .file-item {
@@ -60,9 +63,12 @@ body {
     font-size: 16px;
     border-left: 3px solid transparent;
     transition: background .2s, color .2s, border-color .2s;
+    background: none;
+    color: var(--color-text);
+    user-select: none;
 }
 
-.file-item:hover {
+.file-item:hover, .file-item:focus {
     background: var(--color-bg-lighter);
     color: var(--color-accent);
     border-left: 3px solid var(--color-accent);
@@ -79,6 +85,43 @@ body {
     font-style: normal;
     text-align: center;
 }
+
+.file-move {
+    margin-left: auto;
+    display: flex;
+    gap: 2px;
+}
+
+.move-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-dark);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background .2s;
+}
+.move-btn:hover {
+    background: var(--color-accent);
+    color: #fff;
+}
+
+.add-file-btn {
+    margin: 10px 18px 14px 18px;
+    padding: 10px 0;
+    background: var(--color-accent);
+    color: #fff;
+    border-radius: 5px;
+    border: none;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .2s;
+    width: calc(100% - 36px);
+    box-shadow: 0 1px 3px #2222;
+}
+.add-file-btn:hover { background: #23b0ff; }
 
 #content-container {
     flex: 1;
@@ -135,21 +178,25 @@ body {
     color: var(--color-text);
     transition: background .2s, color .2s;
 }
-
-.console-header button:hover,
-.console-header select:hover {
+.console-header select.clean-dropdown {
+    background: var(--color-bg-light);
+    color: var(--color-text-dark);
+    font-size: 15px;
+    border-radius: 5px;
+    padding-right: 24px;
+    min-width: 130px;
+    font-weight: 500;
+}
+.console-header select.clean-dropdown:focus,
+.console-header select.clean-dropdown:hover {
     background: var(--color-accent);
     color: #fff;
 }
 
-#improve-code {
-    background: var(--color-accent);
-    color: #fff;
-}
+.console-header button:hover { background: var(--color-accent); color: #fff; }
 
-#improve-code:hover {
-    background: #23b0ff;
-}
+#improve-code { background: var(--color-accent); color: #fff; }
+#improve-code:hover { background: #23b0ff; }
 
 #terminal {
     flex-grow: 1;
@@ -162,16 +209,140 @@ body {
     word-break: break-word;
 }
 
-::-webkit-scrollbar {
-    width: 10px;
+/* Modal Styling */
+.modal-bg {
+    display: none;
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: var(--modal-bg);
+    z-index: 50;
+    justify-content: center;
+    align-items: center;
+    transition: opacity .2s;
 }
-::-webkit-scrollbar-track {
-    background: var(--color-bg-light);
+.modal {
+    background: #22222c;
+    border-radius: var(--modal-radius);
+    padding: 32px 32px 22px 32px;
+    min-width: 320px;
+    max-width: 360px;
+    box-shadow: 0 6px 24px #23233d66;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
 }
-::-webkit-scrollbar-thumb {
+.modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-accent);
+    margin-bottom: 8px;
+    text-align: center;
+}
+.modal-input {
+    padding: 12px 14px;
+    border-radius: 7px;
+    border: none;
     background: var(--color-bg-lighter);
-    border-radius: 5px;
+    color: var(--color-text);
+    font-size: 16px;
+    margin-bottom: 2px;
+    outline: none;
+    font-family: var(--font-main);
 }
-::-webkit-scrollbar-thumb:hover {
-    background: #444458;
+.modal-input:focus { background: var(--color-bg-light); }
+.modal-buttons { display: flex; gap: 12px; justify-content: center; }
+.modal-buttons button {
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 10px 24px;
+    cursor: pointer;
+    transition: background .2s;
 }
+.modal-buttons button:hover { background: #23b0ff; }
+.modal-register {
+    text-align: center;
+    font-size: 15px;
+    color: var(--color-text-dark);
+}
+.register-link {
+    color: var(--color-accent);
+    background: none;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+}
+.register-link:hover { color: #23b0ff; }
+
+/* AI Agent Chat */
+.aiagent-chat {
+    display: none;
+    position: fixed;
+    left: 50px;
+    top: 50px;
+    min-width: 300px;
+    max-width: 350px;
+    background: #23233d;
+    border-radius: 10px;
+    box-shadow: 0 3px 24px #23233d55;
+    z-index: 100;
+    flex-direction: column;
+    align-items: stretch;
+    border: 2px solid var(--color-accent);
+}
+.aiagent-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-accent);
+    color: #fff;
+    padding: 10px 16px;
+    font-size: 16px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    cursor: move;
+}
+.aiagent-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.aiagent-input {
+    border: none;
+    min-height: 60px;
+    padding: 12px 14px;
+    font-size: 15px;
+    border-radius: 0 0 10px 10px;
+    background: var(--color-bg-lighter);
+    color: var(--color-text);
+    resize: none;
+    outline: none;
+}
+.aiagent-send {
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: 0 0 10px 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 10px 0;
+    width: 100%;
+    transition: background .2s;
+}
+.aiagent-send:hover { background: #23b0ff; }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--color-bg-light); }
+::-webkit-scrollbar-thumb { background: var(--color-bg-lighter); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #444458; }
