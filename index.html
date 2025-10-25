@@ -4,38 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>tabcode</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="editor-container">
-            <div class="editor-header">
+    <div id="main-container">
+        <div id="sidebar">
+            <div class="sidebar-header">
                 <span>EXPLORER</span>
             </div>
-            <div class="file-explorer">
-                <ul>
-                    <li><img src="https://img.icons8.com/color/16/000000/lua-file.png" alt="lua icon"/> script.lua</li>
-                    <li><img src="https://img.icons8.com/color/16/000000/javascript.png" alt="js icon"/> main.js</li>
-                    <li><img src="https://img.icons8.com/color/16/000000/c-plus-plus-logo.png" alt="cpp icon"/> app.cpp</li>
-                </ul>
-            </div>
-            <div id="editor"></div>
+            <ul class="file-explorer">
+                <li class="file-item active" data-lang="javascript" data-file="script.js"><i class="fa-brands fa-js-square"></i><span>script.js</span></li>
+                <li class="file-item" data-lang="lua" data-file="data.lua"><i class="fa-solid fa-file-code"></i><span>data.lua</span></li>
+                <li class="file-item" data-lang="c_cpp" data-file="main.cpp"><i class="fa-solid fa-file-invoice"></i><span>main.cpp</span></li>
+                <li class="file-item" data-lang="html" data-file="index.html"><i class="fa-brands fa-html5"></i><span>index.html</span></li>
+            </ul>
         </div>
-        <div class="output-container">
-            <div class="output-header">
-                <div class="button-group">
-                    <button id="lang-detector" class="btn-detector" disabled>LANGUAGE: DETECTING...</button>
-                    <button id="improve-code" class="btn-improve">Improve your code</button>
-                </div>
-                <div class="obfuscate-group">
-                    <button id="deobfuscate" class="btn-obfuscate">deobfuscate</button>
-                    <button id="obfuscate" class="btn-obfuscate">Obfuscate</button>
-                </div>
+
+        <div id="content-container">
+            <div id="editor-wrapper">
+                <div id="editor"></div>
             </div>
-            <div id="terminal" class="terminal"></div>
+
+            <div id="console-wrapper">
+                <div class="console-header">
+                    <div class="button-bar">
+                        <button id="lang-detector" disabled>LANGUAGE: JAVASCRIPT</button>
+                        <button id="improve-code">Improve your code</button>
+                    </div>
+                    <div class="button-bar">
+                        <button id="deobfuscate">Deobfuscate</button>
+                        <button id="obfuscate">Obfuscate</button>
+                    </div>
+                </div>
+                <div id="terminal"></div>
+            </div>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.15.2/ace.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
