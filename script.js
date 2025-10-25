@@ -30,9 +30,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const aiSettingsBtn = document.getElementById("ai-settings-btn"); 
     const modalBackdrop = document.getElementById("modal-backdrop");
     const modalAddFile = document.getElementById("modal-addfile");
-    const modalAiAgent = document.getElementById("modal-aiagent");
+    const modalSettings = document.getElementById("modal-settings");
     const createFileBtn = document.getElementById("create-file");
-    const closeModalBtn = document.getElementById("close-addfile"); 
+    const closeModalAddFileBtn = document.getElementById("close-addfile"); 
+    const closeModalSettingsBtn = document.getElementById("close-settings");
     const fileLangInput = document.getElementById("file-language");
     const fileNameInput = document.getElementById("file-name");
     const geminiKeyInput = document.getElementById("gemini-key");
@@ -134,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function hideModals() {
         modalBackdrop.style.display = "none";
         modalAddFile.style.display = "none";
-        modalAiAgent.style.display = "none";
+        modalSettings.style.display = "none";
     }
 
     addFileBtn.onclick = () => {
@@ -144,10 +145,12 @@ document.addEventListener("DOMContentLoaded", () => {
         fileNameInput.focus();
     };
     aiSettingsBtn.onclick = () => {
-        showModal(modalAiAgent);
+        showModal(modalSettings);
         geminiKeyInput.value = geminiKey || "";
+        geminiKeyInput.focus();
     };
-    closeModalBtn.onclick = hideModals; 
+    closeModalAddFileBtn.onclick = hideModals; 
+    closeModalSettingsBtn.onclick = hideModals;
     modalBackdrop.onclick = hideModals;
 
     createFileBtn.onclick = () => {
@@ -201,7 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function isBase64(str) {
-        if (typeof str !== 'string' || str.length === 0) return false;
+        if (typeof str !== 'string' || str.length === 0 || str.length % 4 !== 0 || !/^[A-Za-z0-9+/=]+$/.test(str)) return false;
         try {
             return btoa(atob(str)) === str;
         } catch (e) {
@@ -247,20 +250,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         return deobfuscated;
     }
-    function deobfuscateCode(code) {
-        if (!activeFile) return logToTerminal("No file open to deobfuscate.", "error");
-        let lang = detectLanguage(code);
-        let deobfuscated = code; 
+    function improveCode(code) {
+        if (!activeFile) return logToTerminal("No file open to improve.", "error");
+        const lang = detectLanguage(code);
+        let result = { code: code, imp: [] };
 
-        if (lang === "javascript") deobfuscated = deobfuscateJS(code);
-        else if (lang === "lua") deobfuscated = deobfuscateLua(code);
-        else if (lang === "cpp") deobfuscated = deobfuscateCpp(code);
-        else if (lang === "html") deobfuscated = deobfuscateHTML(code);
-        else { logToTerminal(`No deobfuscator for language **${lang}**.`, "error"); return; }
-        
-        editor.setValue(deobfuscated, -1);
-        activeFile.content = deobfuscated;
-        logToTerminal(`Code deobfuscated (**${lang}**).`, 'success');
+        if (lang === "javascript") result = improveJS(code);
+        else if (lang === "lua") result = improveLua(code);
+        else if (lang === "cpp") result = improveCpp(code);
+        else if (lang === "html") result = improveHTML(code);
+
+        if (geminiKey) {
+            logToTerminal("AI improvement applied with API key. (Functionality placeholder)");
+        }
+
+        if (result.imp.length > 0) {
+            logToTerminal("<strong>Code Improvement Suggestions:</strong>");
+            result.imp.forEach(imp => logToTerminal(`- ${imp}`));
+            editor.setValue(result.code, -1);
+            activeFile.content = result.code;
+            logToTerminal(`Code improved (**${lang}**).`, 'success');
+        } else {
+            logToTerminal("No local improvements found.");
+        }
     }
 
     function improveJS(code) {
@@ -287,30 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         return { code: newCode, imp };
     }
-    function improveCode(code) {
-        if (!activeFile) return logToTerminal("No file open to improve.", "error");
-        const lang = detectLanguage(code);
-        let result = { code: code, imp: [] };
 
-        if (lang === "javascript") result = improveJS(code);
-        else if (lang === "lua") result = improveLua(code);
-        else if (lang === "cpp") result = improveCpp(code);
-        else if (lang === "html") result = improveHTML(code);
-
-        if (geminiKey) {
-            logToTerminal("AI improvement applied with Gemini API key **(Simulated)**.");
-        }
-
-        if (result.imp.length > 0) {
-            logToTerminal("<strong>Code Improvement Suggestions:</strong>");
-            result.imp.forEach(imp => logToTerminal(`- ${imp}`));
-            editor.setValue(result.code, -1);
-            activeFile.content = result.code;
-            logToTerminal(`Code improved (**${lang}**).`, 'success');
-        } else {
-            logToTerminal("No local improvements found.");
-        }
-    }
 
     improveCodeBtn.onclick = () => improveCode(editor.getValue());
     obfuscateBtn.onclick = () => obfuscateCode(editor.getValue(), obfuscateLang.value);
@@ -339,9 +328,9 @@ document.addEventListener("DOMContentLoaded", () => {
         geminiKey = geminiKeyInput.value.trim();
         hideModals();
         if (geminiKey) {
-            logToTerminal("Gemini API key saved.", 'success');
+            logToTerminal("API key saved.", 'success');
         } else {
-            logToTerminal("Gemini API key cleared.", 'info');
+            logToTerminal("API key cleared.", 'info');
         }
     };
 
@@ -358,8 +347,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function showAiAgentBox(x, y) {
         aiagentBox.style.display = "flex";
         aiagentInput.focus();
-        // Since the AI box is fixed bottom-right, we don't need dynamic positioning here, 
-        // but the contextmenu event triggers it. We'll just ensure it's visible.
     }
     
     aiagentClose.onclick = () => { aiagentBox.style.display = "none"; };
@@ -379,15 +366,14 @@ document.addEventListener("DOMContentLoaded", () => {
         aiagentInput.value = "";
         aiAgentChatWindow.scrollTop = aiAgentChatWindow.scrollHeight;
 
-        // Gemini AI integration would go here (call Gemini API with question and geminiKey)
         const aiResponse = document.createElement("div");
         aiResponse.className = "chat-message system-message";
         if (geminiKey) {
-             aiResponse.textContent = `AI: Analyzing code in **${activeFile ? activeFile.name : "Untitled"}**... (Response Simulated)`;
-             logToTerminal("AI agent query sent with saved key.", 'info');
+             aiResponse.textContent = `Agent: Analyzing code in **${activeFile ? activeFile.name : "Untitled"}**... (Response placeholder)`;
+             logToTerminal("Agent query sent with saved key.", 'info');
         } else {
-             aiResponse.textContent = `AI: Please set your Gemini API key in the settings (⚙) to use this feature.`;
-             logToTerminal("AI agent query failed: No API key set.", 'error');
+             aiResponse.textContent = `Agent: Please set your API key in the User Settings (⚙) to use this feature.`;
+             logToTerminal("Agent query failed: No API key set.", 'error');
         }
         aiAgentChatWindow.appendChild(aiResponse);
         aiAgentChatWindow.scrollTop = aiAgentChatWindow.scrollHeight;
@@ -405,11 +391,9 @@ document.addEventListener("DOMContentLoaded", () => {
             let newX = e.clientX - dragOffset.x;
             let newY = e.clientY - dragOffset.y;
             
-            // Constrain movement to viewport
             newX = Math.max(0, Math.min(newX, window.innerWidth - aiagentBox.offsetWidth));
             newY = Math.max(0, Math.min(newY, window.innerHeight - aiagentBox.offsetHeight));
 
-            // Convert position back to right/bottom offsets for 'fixed' element for better drag behavior
             aiagentBox.style.left = newX + "px";
             aiagentBox.style.top = newY + "px";
             aiagentBox.style.right = "unset";
@@ -418,9 +402,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     document.onmouseup = function() { dragging = false; document.body.style.userSelect = "auto"; };
 
-    // Initial file setup
     if (files.length === 0) {
-        files.push({ name: "welcome.js", lang: "javascript", content: "const message = \"Welcome to TabCode!\\n\\nRight-click to open the AI Agent.\\nType /aiagent mode in the editor and press Enter to open the AI Agent.\\nClick '+ Add File' below to get started.\";\\nconsole.log(message);" });
+        files.push({ name: "welcome.js", lang: "javascript", content: "const message = \"Welcome to TabCode!\\n\\nRight-click to open the Agent.\\nType /aiagent mode in the editor and press Enter to open the Agent.\\nClick '+ Add File' to get started.\";\\nconsole.log(message);" });
         activeFile = files[0];
         editor.setValue(activeFile.content, -1);
         editor.session.setMode("ace/mode/javascript");
