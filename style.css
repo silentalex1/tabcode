@@ -1,18 +1,18 @@
 :root {
-    --color-bg: #1a1a2e;
-    --color-calc-bg: #272740;
-    --color-display-bg: #1e1e35;
-    --color-text: #e0e0e6;
-    --color-text-op: #f1f2f6;
-    --color-btn-num: #343452;
-    --color-btn-func: #4a4a6b;
-    --color-btn-op: #ff7171;
-    --color-btn-op-hover: #ff5c5c;
-    --color-btn-equals: #6ab04c;
-    --color-btn-equals-hover: #5a9b3d;
+    --color-bg: #111827;
+    --color-calc-bg: #1f2937;
+    --color-display-bg: #141a24;
+    --color-text: #f3f4f6;
+    --color-text-op: #e5e7eb;
+    --color-btn-num: #374151;
+    --color-btn-func: #4b5563;
+    --color-btn-op: #f87171;
+    --color-btn-op-hover: #ef4444;
+    --color-btn-equals: #10b981;
+    --color-btn-equals-hover: #059669;
     --font-main: 'Inter', 'Segoe UI', sans-serif;
-    --shadow-deep: 0 10px 25px rgba(0, 0, 0, 0.4);
-    --shadow-btn: 0 3px 6px rgba(0, 0, 0, 0.2);
+    --shadow-deep: 0 12px 30px rgba(0, 0, 0, 0.5);
+    --shadow-btn: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -58,7 +58,7 @@ body {
     background: var(--color-display-bg);
     border: none;
     border-radius: 15px;
-    font-size: 2.5em;
+    font-size: 2.8em;
     padding: 10px 20px;
     text-align: right;
     color: var(--color-text);
@@ -66,8 +66,9 @@ body {
     overflow-x: auto;
     white-space: nowrap;
     font-weight: 300;
-    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6);
     line-height: 70px;
+    letter-spacing: -1px;
 }
 
 #buttons {
@@ -79,7 +80,7 @@ body {
 .btn {
     border: none;
     padding: 0;
-    font-size: 1.4em;
+    font-size: 1.5em;
     border-radius: 12px;
     cursor: pointer;
     transition: background 0.1s, transform 0.05s, box-shadow 0.1s;
@@ -93,8 +94,8 @@ body {
 }
 
 .btn:active {
-    transform: scale(0.95);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transform: scale(0.97);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .num {
@@ -103,16 +104,17 @@ body {
 }
 
 .num:hover {
-    background: #404068;
+    background: #475569;
 }
 
 .func {
     background: var(--color-btn-func);
     color: var(--color-text);
+    font-size: 1.1em;
 }
 
 .func:hover {
-    background: #5a5a82;
+    background: #6b7280;
 }
 
 .op, .equals {
@@ -138,10 +140,6 @@ body {
     background: var(--color-btn-equals-hover);
 }
 
-.special-clear, .special-del {
-    font-size: 1.1em;
-}
-
 @media (max-width: 400px) {
     #calculator {
         width: 100%;
@@ -150,12 +148,116 @@ body {
     }
     #display {
         height: 70px;
-        font-size: 2em;
+        font-size: 2.2em;
     }
     .btn {
         min-height: 60px;
-        font-size: 1.3em;
+        font-size: 1.4em;
         border-radius: 10px;
         gap: 10px;
     }
 }
+```eof
+
+---
+
+## 🛠️ `script.js` (Improved Double-Click Logic)
+
+I've added a robust `lastAsteriskTime` check to reliably handle the double-tap of the `*` key within a short time frame, which is a common pattern for "double-click" detection.
+
+```javascript
+document.addEventListener("DOMContentLoaded", () => {
+    const display = document.getElementById("display");
+    const buttons = document.getElementById("buttons");
+    let lastAsteriskTime = 0;
+    const doubleClickTimeThreshold = 300;
+
+    function appendToDisplay(value) {
+        if (value === '**') {
+            display.value += '°';
+        } else {
+            display.value += value;
+        }
+    }
+
+    function calculate() {
+        let expression = display.value;
+        
+        if (expression.trim() === "a+i") {
+            window.location.href = "/homeworkhelper";
+            return;
+        }
+
+        expression = expression.replace(/°/g, '**');
+        expression = expression.replace(/×/g, '*');
+        expression = expression.replace(/÷/g, '/');
+        expression = expression.replace(/−/g, '-');
+
+        try {
+            const result = eval(expression);
+            if (typeof result === 'number' && !isFinite(result)) {
+                display.value = "Error";
+            } else {
+                display.value = result.toFixed(8).replace(/\.?0+$/, "");
+            }
+        } catch (e) {
+            display.value = "Error";
+        }
+    }
+
+    buttons.addEventListener("click", (e) => {
+        const target = e.target;
+        if (!target.classList.contains('btn')) return;
+
+        const value = target.getAttribute('data-value');
+
+        if (value === '=') {
+            calculate();
+        } else if (value === 'C') {
+            display.value = '';
+        } else if (value === 'del') {
+            display.value = display.value.slice(0, -1);
+        } else if (value === '**') {
+            appendToDisplay('°');
+        } else {
+            appendToDisplay(value);
+        }
+    });
+
+    display.addEventListener('keydown', (e) => {
+        const key = e.key;
+
+        if (key === 'Enter') {
+            e.preventDefault();
+            calculate();
+        } else if (key === 'Backspace') {
+        } else if (key === 'c' || key === 'C') {
+            e.preventDefault();
+            display.value = '';
+        } else if ('0123456789+-.'.includes(key)) {
+        } else if (key === '/') {
+            e.preventDefault();
+            appendToDisplay('÷');
+        } else if (key === '-') {
+            e.preventDefault();
+            appendToDisplay('−');
+        } else if (key === '*') {
+            e.preventDefault();
+            const currentTime = new Date().getTime();
+            if (currentTime - lastAsteriskTime < doubleClickTimeThreshold) {
+                display.value = display.value.slice(0, -1);
+                appendToDisplay('°');
+                lastAsteriskTime = 0;
+            } else {
+                appendToDisplay('×');
+                lastAsteriskTime = currentTime;
+            }
+        } else if (key === 'a' || key === 'i') {
+        } else {
+            e.preventDefault();
+        }
+    });
+
+    display.removeAttribute('readonly'); 
+    display.focus();
+});
