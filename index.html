@@ -11,12 +11,8 @@
     <div id="main-container">
         <aside id="sidebar">
             <div class="sidebar-header">Files</div>
-            <ul class="file-explorer">
-                <li class="file-item active" data-file="script.js" data-lang="javascript"><i>🟨</i>script.js</li>
-                <li class="file-item" data-file="data.lua" data-lang="lua"><i>🟦</i>data.lua</li>
-                <li class="file-item" data-file="main.cpp" data-lang="c_cpp"><i>🟩</i>main.cpp</li>
-                <li class="file-item" data-file="index.html" data-lang="html"><i>⬜</i>index.html</li>
-            </ul>
+            <ul class="file-explorer" id="file-explorer"></ul>
+            <button id="add-file-btn" class="add-file-btn">+ Add files</button>
         </aside>
         <section id="content-container">
             <div id="editor-wrapper">
@@ -24,16 +20,10 @@
             </div>
             <div id="console-wrapper">
                 <div class="console-header">
-                    <div id="lang-detector">LANGUAGE: JAVASCRIPT</div>
+                    <div id="lang-detector">LANGUAGE: NONE</div>
                     <div class="button-bar">
                         <button id="improve-code">Improve</button>
-                        <select id="obfuscate-language">
-                            <option value="auto">Auto</option>
-                            <option value="javascript">JavaScript</option>
-                            <option value="lua">Lua</option>
-                            <option value="cpp">C++</option>
-                            <option value="html">HTML</option>
-                        </select>
+                        <select id="obfuscate-language" class="clean-dropdown"></select>
                         <button id="obfuscate">Obfuscate</button>
                         <button id="deobfuscate">Deobfuscate</button>
                     </div>
@@ -41,6 +31,40 @@
                 <div id="terminal"></div>
             </div>
         </section>
+    </div>
+    
+    <div id="add-file-modal" class="modal-bg">
+        <div class="modal">
+            <div class="modal-title">Add a File</div>
+            <input class="modal-input" id="modal-language" placeholder="What will you code this in?" autocomplete="off">
+            <input class="modal-input" id="modal-filename" placeholder="Name the file here." autocomplete="off">
+            <div class="modal-buttons">
+                <button id="modal-create">Create</button>
+                <button id="modal-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiagent-modal" class="modal-bg">
+        <div class="modal">
+            <div class="modal-title">AI Agent Mode</div>
+            <input class="modal-input" id="gemini-key" placeholder="Enter your gemini api key:" autocomplete="off">
+            <div class="modal-register">
+                If you want to save your coding projects please create account <button id="register-link" class="register-link">here</button>.
+            </div>
+            <div class="modal-buttons">
+                <button id="save-gemini-key">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiagent-chat" class="aiagent-chat">
+        <div class="aiagent-header">
+            <span>What do you need help with coding?</span>
+            <button id="aiagent-close" class="aiagent-close">✕</button>
+        </div>
+        <textarea id="aiagent-input" class="aiagent-input" placeholder="Type your question..."></textarea>
+        <button id="aiagent-send" class="aiagent-send">Send</button>
     </div>
     <script src="script.js"></script>
 </body>
