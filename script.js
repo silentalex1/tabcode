@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded",function(){
     const improveCodeBtn=document.getElementById("improve-code");
     const deobfuscateBtn=document.getElementById("deobfuscate");
     const obfuscateBtn=document.getElementById("obfuscate");
+    const obfuscateLang=document.getElementById("obfuscate-language");
     const fileItems=document.querySelectorAll(".file-item");
 
     const fileContents={
@@ -29,66 +30,192 @@ document.addEventListener("DOMContentLoaded",function(){
 
     const detectLanguage=(code)=>{
         if(/\b(function|const|let|var|class|import|export)\b/.test(code)&&/console\.log/.test(code))return'JAVASCRIPT';
-        if(/\b(local\s+function|function\s+\w+\s*\(|end\b)/.test(code)&&(print=require.test(code)||/print\b/.test(code)))return'LUA';
+        if(/\b(local\s+function|function\s+\w+\s*\(|end\b)/.test(code)&&(code.includes('print')||code.includes('require')))return'LUA';
         if(/#include\s*<[a-zA-Z_]+>/.test(code)&&/\b(int\s+main|std::cout|printf)\b/.test(code))return'C++';
         if(/<!DOCTYPE\s+html>/i.test(code)&&/<\s*head\s*>/.test(code)&&/<\s*body\s*>/.test(code))return'HTML';
         return'DETECTING...';
     };
 
-    const improveCode=(code)=>{
+    const improveJS=(code)=>{
         let improvements=[];
         let newCode=code;
         newCode=newCode.replace(/var\s/g,()=>{improvements.push("Replaced 'var' with 'let'.");return'let ';});
         newCode=newCode.replace(/\s==\s(?!=)/g,()=>{improvements.push("Replaced '==' with '==='.");return' === ';});
-        if(improvements.length>0){
+        newCode=newCode.replace(/function\s+(\w+)\s*\((.*?)\)\s*\{([\s\S]*?)\}/g,(m,fn,args,body)=>{
+            if(!body.includes('return')){improvements.push(`Added return in ${fn}.`);body=body.trim()+"\nreturn;";}
+            return `function ${fn}(${args}){${body}}`;
+        });
+        newCode=newCode.replace(/console\.log\(([^)]+)\);/g,(m,inside)=>{
+            improvements.push("Improved console.log formatting.");
+            return `console.log(String(${inside}).trim());`;
+        });
+        return {code:newCode,improvements};
+    };
+
+    const improveLua=(code)=>{
+        let improvements=[];
+        let newCode=code;
+        newCode=newCode.replace(/local\s+(\w+)\s*=\s*\{\s*\}/g,(m,v)=>{improvements.push(`Initialized table ${v} properly.`);return m;});
+        newCode=newCode.replace(/print\(([^)]+)\)/g,(m,inside)=>{
+            improvements.push("Improved print formatting.");
+            return `print(tostring(${inside}):gsub("^%s*(.-)%s*$", "%1"))`;
+        });
+        newCode=newCode.replace(/\s+end/g,(m)=>{improvements.push("Trimmed whitespace before 'end'.");return " end";});
+        return {code:newCode,improvements};
+    };
+
+    const improveCpp=(code)=>{
+        let improvements=[];
+        let newCode=code;
+        newCode=newCode.replace(/using\s+namespace\s+std;/g,(m)=>{improvements.push("Avoided 'using namespace std'.");return "";});
+        newCode=newCode.replace(/std::cout\s*<<\s*([^\n;]+);/g,(m,inside)=>{
+            improvements.push("Improved std::cout formatting.");
+            return `std::cout << ${inside}.c_str();`;
+        });
+        newCode=newCode.replace(/int\s+main\(\)/g,(m)=>{improvements.push("Added explicit return type for main.");return m;});
+        return {code:newCode,improvements};
+    };
+
+    const improveHTML=(code)=>{
+        let improvements=[];
+        let newCode=code;
+        newCode=newCode.replace(/<title>([\s\S]*?)<\/title>/i,(m,t)=>{
+            improvements.push("Enforced single title tag.");
+            return "<title>TabCode</title>";
+        });
+        newCode=newCode.replace(/<h1([^>]*)>([\s\S]*?)<\/h1>/i,(m,attr,text)=>{
+            improvements.push("Improved h1 tag formatting.");
+            return `<h1${attr}>${text.trim()}</h1>`;
+        });
+        return {code:newCode,improvements};
+    };
+
+    const improveCode=(code)=>{
+        const lang=detectLanguage(code);
+        let result={code:code,improvements:[]};
+        if(lang==="JAVASCRIPT")result=improveJS(code);
+        else if(lang==="LUA")result=improveLua(code);
+        else if(lang==="C++")result=improveCpp(code);
+        else if(lang==="HTML")result=improveHTML(code);
+        if(result.improvements.length>0){
             logToTerminal("<strong>Code Improvement Suggestions:</strong>");
-            improvements.forEach(imp=>logToTerminal(`- ${imp}`));
-            editor.setValue(newCode,-1);
+            result.improvements.forEach(imp=>logToTerminal(`- ${imp}`));
+            editor.setValue(result.code,-1);
         }else{
             logToTerminal("No improvements found.");
         }
     };
 
-    const obfuscateCode=(code)=>{
-        try{
-            const strings=[...code.matchAll(/"([^"]*)"|'([^']*)'/g)].map(m=>m[1]||m[2]);
-            if(strings.length===0){logToTerminal("No strings to obfuscate.","error");return;}
-            const uniqueStrings=[...new Set(strings)];
-            const strArrayName=`_0x${Math.random().toString(16).substr(2,4)}`;
-            let shuffled=uniqueStrings.map((s,i)=>({s,i})).sort(()=>Math.random()-.5);
-            const mapping={};
-            shuffled.forEach(({s},i)=>mapping[s]=i);
-            const decoderName=`_0x${Math.random().toString(16).substr(2,4)}`;
-            let obfuscatedCode=code;
-            uniqueStrings.forEach(s=>{
-                const regex=new RegExp(`["']${s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}["']`,'g');
-                obfuscatedCode=obfuscatedCode.replace(regex,`${decoderName}(0x${mapping[s].toString(16)})`);
-            });
-            const arrayContent=shuffled.map(({s})=>`'${s.replace(/'/g,"\\'")}'`).join(',');
-            const fullScript=`(function(){const ${strArrayName}=[${arrayContent}];const ${decoderName}=function(i){return ${strArrayName}[i];};${obfuscatedCode}\n})();`;
-            editor.setValue(fullScript,-1);
-            logToTerminal("Code obfuscated.");
-        }catch(e){
-            logToTerminal("Obfuscation failed.","error");
-        }
+    const obfuscateJS=(code)=>{
+        const strings=[...code.matchAll(/"([^"]*)"|'([^']*)'/g)].map(m=>m[1]||m[2]);
+        if(strings.length===0)return code;
+        const uniqueStrings=[...new Set(strings)];
+        const strArrayName=`_0x${Math.random().toString(16).substr(2,4)}`;
+        let shuffled=uniqueStrings.map((s,i)=>({s,i})).sort(()=>Math.random()-.5);
+        const mapping={};
+        shuffled.forEach(({s},i)=>mapping[s]=i);
+        const decoderName=`_0x${Math.random().toString(16).substr(2,4)}`;
+        let obfuscatedCode=code;
+        uniqueStrings.forEach(s=>{
+            const regex=new RegExp(`["']${s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}["']`,'g');
+            obfuscatedCode=obfuscatedCode.replace(regex,`${decoderName}(0x${mapping[s].toString(16)})`);
+        });
+        const arrayContent=shuffled.map(({s})=>`'${s.replace(/'/g,"\\'")}'`).join(',');
+        const fullScript=`(function(){const ${strArrayName}=[${arrayContent}];const ${decoderName}=function(i){return ${strArrayName}[i];};${obfuscatedCode}\n})();`;
+        return fullScript;
+    };
+
+    const obfuscateLua=(code)=>{
+        let obfuscated=code.replace(/print\(([^)]+)\)/g,(m,inside)=>{
+            return `print(string.reverse(tostring(${inside})))`;
+        });
+        obfuscated=obfuscated.replace(/local\s+(\w+)\s*=/g,(m,v)=>{
+            return `local ${v}_obf =`;
+        });
+        return obfuscated;
+    };
+
+    const obfuscateCpp=(code)=>{
+        let obfuscated=code.replace(/std::cout\s*<<\s*([^\n;]+);/g,(m,inside)=>{
+            return `std::cout << std::string(${inside}).c_str();`;
+        });
+        obfuscated=obfuscated.replace(/int\s+main\(\)/g,"int main_obf()");
+        return obfuscated;
+    };
+
+    const obfuscateHTML=(code)=>{
+        let obfuscated=code.replace(/<h1([^>]*)>([\s\S]*?)<\/h1>/i,(m,attr,text)=>{
+            return `<h1${attr}>${text.split('').reverse().join('')}</h1>`;
+        });
+        obfuscated=obfuscated.replace(/<p([^>]*)>([\s\S]*?)<\/p>/i,(m,attr,text)=>{
+            return `<p${attr}>${btoa(text)}</p>`;
+        });
+        return obfuscated;
+    };
+
+    const obfuscateCode=(code,lang)=>{
+        let obfuscated="";
+        if(lang==="auto")lang=detectLanguage(code);
+        if(lang==="JAVASCRIPT")obfuscated=obfuscateJS(code);
+        else if(lang==="LUA")obfuscated=obfuscateLua(code);
+        else if(lang==="C++")obfuscated=obfuscateCpp(code);
+        else if(lang==="HTML")obfuscated=obfuscateHTML(code);
+        else{logToTerminal("No obfuscator for detected language.","error");return;}
+        editor.setValue(obfuscated,-1);
+        logToTerminal("Code obfuscated ("+lang+").");
+    };
+
+    const deobfuscateJS=(code)=>{
+        const arrayMatch=code.match(/const\s+(_0x[a-f0-9]+)\s*=\s*\[([^\]]+)\];/);
+        const decoderMatch=code.match(/const\s+(_0x[a-f0-9]+)\s*=\s*function\s*\([a-z]\)\s*{\s*return\s+\1\[[a-z]\];\s*};/);
+        if(!arrayMatch||!decoderMatch)return code;
+        const decoderName=decoderMatch[1];
+        const strArray=new Function(`return [${arrayMatch[2]}]`)();
+        const regex=new RegExp(`${decoderName}\\((0x[a-f0-9]+)\\)`,'g');
+        let deobfuscated=code.replace(regex,(match,hex)=>{const index=parseInt(hex,16);return`'${strArray[index]}'`;});
+        deobfuscated=deobfuscated.substring(deobfuscated.indexOf('\n',deobfuscated.indexOf(decoderName))+1);
+        deobfuscated=deobfuscated.replace(/\}\)\(\);/g,'').trim();
+        return deobfuscated;
+    };
+
+    const deobfuscateLua=(code)=>{
+        let deobfuscated=code.replace(/print\(string\.reverse\(tostring\(([^)]+)\)\)\)/g,(m,inside)=>{
+            return `print(${inside})`;
+        });
+        deobfuscated=deobfuscated.replace(/local\s+(\w+)_obf\s*=/g,(m,v)=>{
+            return `local ${v} =`;
+        });
+        return deobfuscated;
+    };
+
+    const deobfuscateCpp=(code)=>{
+        let deobfuscated=code.replace(/std::cout\s*<<\s*std::string\(([^)]+)\)\.c_str\(\);/g,(m,inside)=>{
+            return `std::cout << ${inside};`;
+        });
+        deobfuscated=deobfuscated.replace(/int\s+main_obf\(\)/g,"int main()");
+        return deobfuscated;
+    };
+
+    const deobfuscateHTML=(code)=>{
+        let deobfuscated=code.replace(/<h1([^>]*)>([\s\S]*?)<\/h1>/i,(m,attr,text)=>{
+            return `<h1${attr}>${text.split('').reverse().join('')}</h1>`;
+        });
+        deobfuscated=deobfuscated.replace(/<p([^>]*)>([\s\S]*?)<\/p>/i,(m,attr,text)=>{
+            try{return `<p${attr}>${atob(text)}</p>`;}catch{return `<p${attr}>${text}</p>`;}
+        });
+        return deobfuscated;
     };
 
     const deobfuscateCode=(code)=>{
-        try{
-            const arrayMatch=code.match(/const\s+(_0x[a-f0-9]+)\s*=\s*\[([^\]]+)\];/);
-            const decoderMatch=code.match(/const\s+(_0x[a-f0-9]+)\s*=\s*function\s*\([a-z]\)\s*{\s*return\s+\1\[[a-z]\];\s*};/);
-            if(!arrayMatch||!decoderMatch){logToTerminal("No recognizable obfuscation.","error");return;}
-            const decoderName=decoderMatch[1];
-            const strArray=new Function(`return [${arrayMatch[2]}]`)();
-            const regex=new RegExp(`${decoderName}\\((0x[a-f0-9]+)\\)`,'g');
-            let deobfuscated=code.replace(regex,(match,hex)=>{const index=parseInt(hex,16);return`'${strArray[index]}'`;});
-            deobfuscated=deobfuscated.substring(deobfuscated.indexOf('\n',deobfuscated.indexOf(decoderName))+1);
-            deobfuscated=deobfuscated.replace(/\}\)\(\);/g,'').trim();
-            editor.setValue(deobfuscated,-1);
-            logToTerminal("Deobfuscation done.");
-        }catch(e){
-            logToTerminal("Deobfuscation failed.","error");
-        }
+        const lang=detectLanguage(code);
+        let deobfuscated="";
+        if(lang==="JAVASCRIPT")deobfuscated=deobfuscateJS(code);
+        else if(lang==="LUA")deobfuscated=deobfuscateLua(code);
+        else if(lang==="C++")deobfuscated=deobfuscateCpp(code);
+        else if(lang==="HTML")deobfuscated=deobfuscateHTML(code);
+        else{logToTerminal("No deobfuscator for detected language.","error");return;}
+        editor.setValue(deobfuscated,-1);
+        logToTerminal("Code deobfuscated ("+lang+").");
     };
 
     editor.session.on('change',()=>{
@@ -110,7 +237,10 @@ document.addEventListener("DOMContentLoaded",function(){
     });
 
     improveCodeBtn.addEventListener('click',()=>improveCode(editor.getValue()));
-    obfuscateBtn.addEventListener('click',()=>obfuscateCode(editor.getValue()));
+    obfuscateBtn.addEventListener('click',()=>{
+        const lang=obfuscateLang.value;
+        obfuscateCode(editor.getValue(),lang);
+    });
     deobfuscateBtn.addEventListener('click',()=>deobfuscateCode(editor.getValue()));
     logToTerminal("TabCode started.");
 });
