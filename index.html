@@ -11,8 +11,8 @@
     <div id="main-container">
         <aside id="sidebar">
             <div class="sidebar-header">Files</div>
-            <ul class="file-explorer" id="file-explorer"></ul>
-            <button id="add-file-btn" class="add-file-btn">+ Add files</button>
+            <ul class="file-explorer" id="fileExplorer"></ul>
+            <button id="add-file-btn" class="sidebar-action">+ Add files</button>
         </aside>
         <section id="content-container">
             <div id="editor-wrapper">
@@ -20,10 +20,16 @@
             </div>
             <div id="console-wrapper">
                 <div class="console-header">
-                    <div id="lang-detector">LANGUAGE: NONE</div>
+                    <div id="lang-detector">LANGUAGE: </div>
                     <div class="button-bar">
                         <button id="improve-code">Improve</button>
-                        <select id="obfuscate-language" class="clean-dropdown"></select>
+                        <select id="obfuscate-language" class="dropdown-clean">
+                            <option value="auto">Auto</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="lua">Lua</option>
+                            <option value="cpp">C++</option>
+                            <option value="html">HTML</option>
+                        </select>
                         <button id="obfuscate">Obfuscate</button>
                         <button id="deobfuscate">Deobfuscate</button>
                     </div>
@@ -32,39 +38,37 @@
             </div>
         </section>
     </div>
-    
-    <div id="add-file-modal" class="modal-bg">
-        <div class="modal">
-            <div class="modal-title">Add a File</div>
-            <input class="modal-input" id="modal-language" placeholder="What will you code this in?" autocomplete="off">
-            <input class="modal-input" id="modal-filename" placeholder="Name the file here." autocomplete="off">
-            <div class="modal-buttons">
-                <button id="modal-create">Create</button>
-                <button id="modal-cancel">Cancel</button>
+    <div id="modal-backdrop"></div>
+    <div id="modal-addfile">
+        <div class="modal-content">
+            <div class="modal-title">Add a new file</div>
+            <input type="text" id="file-language" placeholder="What will you code this in?">
+            <input type="text" id="file-name" placeholder="Name the file here.">
+            <div class="modal-actions">
+                <button id="create-file">Create</button>
+                <button id="close-modal">Cancel</button>
             </div>
         </div>
     </div>
-
-    <div id="aiagent-modal" class="modal-bg">
-        <div class="modal">
-            <div class="modal-title">AI Agent Mode</div>
-            <input class="modal-input" id="gemini-key" placeholder="Enter your gemini api key:" autocomplete="off">
-            <div class="modal-register">
-                If you want to save your coding projects please create account <button id="register-link" class="register-link">here</button>.
+    <div id="modal-aiagent">
+        <div class="modal-content">
+            <div class="modal-title">TabCode AI Agent Setup</div>
+            <input type="text" id="gemini-key" placeholder="Enter your gemini api key:">
+            <div class="modal-link">
+                If you want to save your coding projects please create account <a id="register-link" href="/registeraccount" target="_blank" class="highlight-link">here</a>.
             </div>
-            <div class="modal-buttons">
-                <button id="save-gemini-key">Save</button>
+            <div class="modal-actions">
+                <button id="save-gemini">Save</button>
             </div>
         </div>
     </div>
-
-    <div id="aiagent-chat" class="aiagent-chat">
-        <div class="aiagent-header">
+    <div id="aiagent-box">
+        <div id="aiagent-header">
             <span>What do you need help with coding?</span>
-            <button id="aiagent-close" class="aiagent-close">✕</button>
+            <button id="aiagent-close">✕</button>
         </div>
-        <textarea id="aiagent-input" class="aiagent-input" placeholder="Type your question..."></textarea>
-        <button id="aiagent-send" class="aiagent-send">Send</button>
+        <textarea id="aiagent-input" placeholder="Type your question..."></textarea>
+        <button id="aiagent-send">Send</button>
     </div>
     <script src="script.js"></script>
 </body>
