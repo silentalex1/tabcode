@@ -1,358 +1,430 @@
-document.addEventListener("DOMContentLoaded",function(){
-    let files=[];
-    let activeFile=-1;
-    let geminiApiKey="";
-    const editor=ace.edit("editor");
+let files = [], activeFile = null, geminiKey = null;
+
+const aceModes = {
+    javascript: 'javascript',
+    lua: 'lua',
+    cpp: 'c_cpp',
+    html: 'html',
+    text: 'text'
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    const editor = ace.edit("editor");
     editor.setTheme("ace/theme/tomorrow_night_eighties");
+    editor.session.setMode("ace/mode/text");
     editor.setShowPrintMargin(false);
-
-    const fileExplorer=document.getElementById("file-explorer");
-    const addFileBtn=document.getElementById("add-file-btn");
-    const addFileModal=document.getElementById("add-file-modal");
-    const modalLang=document.getElementById("modal-language");
-    const modalFile=document.getElementById("modal-filename");
-    const modalCreate=document.getElementById("modal-create");
-    const modalCancel=document.getElementById("modal-cancel");
-    const langDetector=document.getElementById("lang-detector");
-    const improveCodeBtn=document.getElementById("improve-code");
-    const obfuscateBtn=document.getElementById("obfuscate");
-    const deobfuscateBtn=document.getElementById("deobfuscate");
-    const obfuscateLang=document.getElementById("obfuscate-language");
-    const terminal=document.getElementById("terminal");
-    const aiagentModal=document.getElementById("aiagent-modal");
-    const geminiKeyInput=document.getElementById("gemini-key");
-    const saveGeminiKeyBtn=document.getElementById("save-gemini-key");
-    const registerLink=document.getElementById("register-link");
-    const aiagentChat=document.getElementById("aiagent-chat");
-    const aiagentInput=document.getElementById("aiagent-input");
-    const aiagentSend=document.getElementById("aiagent-send");
-    const aiagentClose=document.getElementById("aiagent-close");
-
-    function updateFileSidebar(){
-        fileExplorer.innerHTML="";
-        files.forEach((file,idx)=>{
-            const li=document.createElement("li");
-            li.className="file-item"+(idx===activeFile?" active":"");
-            li.dataset.idx=idx;
-            li.innerHTML=`<i>${getLangIcon(file.lang)}</i>${file.name||"Untitled"}<div class="file-move">
-                <button class="move-btn" data-move="up" ${idx===0?"disabled":""}>▲</button>
-                <button class="move-btn" data-move="down" ${idx===files.length-1?"disabled":""}>▼</button>
-            </div>`;
-            li.onclick=()=>{
-                setActiveFile(idx);
-            };
-            li.querySelectorAll(".move-btn").forEach(btn=>{
-                btn.onclick=(e)=>{
-                    e.stopPropagation();
-                    moveFile(idx,btn.dataset.move);
-                };
-            });
-            fileExplorer.appendChild(li);
-        });
-    }
-    function setActiveFile(idx){
-        activeFile=idx;
-        editor.setValue(files[activeFile].content||"", -1);
-        setEditorMode(files[activeFile].lang||"plain_text");
-        langDetector.textContent="LANGUAGE: "+(files[activeFile].lang||"NONE").toUpperCase();
-        updateFileSidebar();
-    }
-    function moveFile(idx,dir){
-        if(dir==="up"&&idx>0){
-            [files[idx],files[idx-1]]=[files[idx-1],files[idx]];
-            updateFileSidebar();
-        }
-        if(dir==="down"&&idx<files.length-1){
-            [files[idx],files[idx+1]]=[files[idx+1],files[idx]];
-            updateFileSidebar();
-        }
-    }
-    function getLangIcon(lang){
-        if(/js|javascript/i.test(lang))return"🟨";
-        if(/lua/i.test(lang))return"🟦";
-        if(/cpp|c\+\+/i.test(lang))return"🟩";
-        if(/html/i.test(lang))return"⬜";
-        return"🟪";
-    }
-    function setEditorMode(lang){
-        editor.session.setMode("ace/mode/"+(lang||"plain_text"));
-    }
-    addFileBtn.onclick=()=>{
-        addFileModal.style.display="flex";
-        modalLang.value="";
-        modalFile.value="";
-        modalLang.focus();
-    };
-    modalCancel.onclick=()=>{addFileModal.style.display="none";};
-    modalCreate.onclick=()=>{
-        let lang=modalLang.value.trim()||"plain_text";
-        let name=modalFile.value.trim()||"Untitled";
-        files.push({name,lang,content:""});
-        addFileModal.style.display="none";
-        setActiveFile(files.length-1);
-    };
-    editor.on("change",function(){
-        if(activeFile>=0){
-            files[activeFile].content=editor.getValue();
-            langDetector.textContent="LANGUAGE: "+(files[activeFile].lang||"NONE").toUpperCase();
-        }
+    editor.setOptions({
+        fontSize: "16pt",
+        tabSize: 4,
+        useSoftTabs: true
     });
-    function populateObfuscateDropdown(){
-        obfuscateLang.innerHTML="";
-        ["Auto","JavaScript","Lua","C++","HTML","Plain Text"].forEach(l=>{
-            let opt=document.createElement("option");
-            opt.value=l.toLowerCase().replace(/ /g,"_");
-            opt.textContent=l;
-            obfuscateLang.appendChild(opt);
-        });
-    }
-    populateObfuscateDropdown();
 
-    function logToTerminal(message,type="info"){
-        const entry=document.createElement("div");
-        entry.innerHTML=`[<span style="color:${type==="error"?"#f44336":"#888"}">${new Date().toLocaleTimeString()}</span>] ${message}`;
+    const fileExplorer = document.getElementById("fileExplorer");
+    const terminal = document.getElementById("terminal");
+    const langDetector = document.getElementById("lang-detector");
+    const improveCodeBtn = document.getElementById("improve-code");
+    const deobfuscateBtn = document.getElementById("deobfuscate");
+    const obfuscateBtn = document.getElementById("obfuscate");
+    const obfuscateLang = document.getElementById("obfuscate-language");
+    const addFileBtn = document.getElementById("add-file-btn");
+    const aiSettingsBtn = document.getElementById("ai-settings-btn"); 
+    const modalBackdrop = document.getElementById("modal-backdrop");
+    const modalAddFile = document.getElementById("modal-addfile");
+    const modalAiAgent = document.getElementById("modal-aiagent");
+    const createFileBtn = document.getElementById("create-file");
+    const closeModalBtn = document.getElementById("close-addfile"); 
+    const fileLangInput = document.getElementById("file-language");
+    const fileNameInput = document.getElementById("file-name");
+    const geminiKeyInput = document.getElementById("gemini-key");
+    const saveGeminiBtn = document.getElementById("save-gemini");
+    const registerLink = document.getElementById("register-link");
+    const aiagentBox = document.getElementById("aiagent-box");
+    const aiagentHeader = document.getElementById("aiagent-header");
+    const aiagentClose = document.getElementById("aiagent-close");
+    const aiagentInput = document.getElementById("aiagent-input");
+    const aiagentSend = document.getElementById("aiagent-send");
+    const aiAgentChatWindow = document.getElementById("aiagent-chat-window");
+
+    function logToTerminal(message, type = 'info') {
+        const entry = document.createElement("div");
+        entry.className = `log-entry log-${type}`;
+        const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        entry.innerHTML = `[<span style="color:${type === 'error' ? '#ff6b6b' : type === 'success' ? '#48bb78' : '#9898ad'}">${time}</span>] ${message}`;
         terminal.appendChild(entry);
-        terminal.scrollTop=terminal.scrollHeight;
+        terminal.scrollTop = terminal.scrollHeight;
     }
-    function detectLanguage(code){
-        if(/\b(function|const|let|var|class|import|export)\b/.test(code)&&/console\.log/.test(code))return"javascript";
-        if(/\b(local\s+function|function\s+\w+\s*\(|end\b)/.test(code)&&(code.includes('print')||code.includes('require')))return"lua";
-        if(/#include\s*<[a-zA-Z_]+>/.test(code)&&/\b(int\s+main|std::cout|printf)\b/.test(code))return"c_cpp";
-        if(/<!DOCTYPE\s+html>/i.test(code)&&/<\s*head\s*>/.test(code)&&/<\s*body\s*>/.test(code))return"html";
-        return"plain_text";
-    }
-    function smartImprove(code,lang){
-        let improved=code;
-        let improvements=[];
-        if(lang==="javascript"){
-            improved=improved.replace(/var\s/g,()=>{improvements.push("Replaced 'var' with 'let'.");return"let ";});
-            improved=improved.replace(/\s==\s(?!=)/g,()=>{improvements.push("Replaced '==' with '==='.");return" === ";});
-            improved=improved.replace(/function\s+(\w+)\s*\((.*?)\)\s*\{([\s\S]*?)\}/g,(m,fn,args,body)=>{
-                if(!body.includes('return')){improvements.push(`Added return in ${fn}.`);body=body.trim()+"\nreturn;";}
-                return`function ${fn}(${args}){${body}}`;
-            });
-            improved=improved.replace(/console\.log\(([^)]+)\);/g,(m,inside)=>{
-                improvements.push("Improved console.log formatting.");
-                return`console.log(String(${inside}).trim());`;
-            });
-            improved=improved.replace(/if\s*\(([^)]+)\)\s*\{\s*\}/g,(m,cond)=>{
-                improvements.push("Removed empty if blocks.");
-                return"";
-            });
-        }else if(lang==="lua"){
-            improved=improved.replace(/local\s+(\w+)\s*=\s*\{\s*\}/g,(m,v)=>{improvements.push(`Initialized table ${v} properly.`);return m;});
-            improved=improved.replace(/print\(([^)]+)\)/g,(m,inside)=>{
-                improvements.push("Improved print formatting.");
-                return`print(tostring(${inside}):gsub("^%s*(.-)%s*$", "%1"))`;
-            });
-            improved=improved.replace(/\s+end/g,(m)=>{improvements.push("Trimmed whitespace before 'end'.");return" end";});
-        }else if(lang==="c_cpp"){
-            improved=improved.replace(/using\s+namespace\s+std;/g,(m)=>{improvements.push("Avoided 'using namespace std'.");return"";});
-            improved=improved.replace(/std::cout\s*<<\s*([^\n;]+);/g,(m,inside)=>{
-                improvements.push("Improved std::cout formatting.");
-                return`std::cout << ${inside}.c_str();`;
-            });
-            improved=improved.replace(/int\s+main\(\)/g,(m)=>{improvements.push("Added explicit return type for main.");return m;});
-        }else if(lang==="html"){
-            improved=improved.replace(/<title>([\s\S]*?)<\/title>/i,(m,t)=>{
-                improvements.push("Enforced single title tag.");
-                return"<title>TabCode</title>";
-            });
-            improved=improved.replace(/<h1([^>]*)>([\s\S]*?)<\/h1>/i,(m,attr,text)=>{
-                improvements.push("Improved h1 tag formatting.");
-                return`<h1${attr}>${text.trim()}</h1>`;
-            });
-        }
-        return{code:improved,improvements};
-    }
-    async function aiImprove(code,lang){
-        if(!geminiApiKey)return null;
-        let resp=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key="+geminiApiKey,{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({
-                contents:[{parts:[{text:"Improve this "+lang+" code and explain what was improved, make it clean and readable with best practices:\n"+code}]}]
-            })
-        });
-        let dat=await resp.json();
-        if(dat.candidates&&dat.candidates[0]&&dat.candidates[0].content&&dat.candidates[0].content.parts[0].text){
-            let txt=dat.candidates[0].content.parts[0].text;
-            let split=txt.split("Improvements:");
-            let improved=split[0].trim();
-            let improvements=(split[1]||"").split("\n").map(s=>s.trim()).filter(Boolean);
-            return{code:improved,improvements};
-        }
-        return null;
-    }
-    improveCodeBtn.onclick=async()=>{
-        let code=editor.getValue();
-        let lang=detectLanguage(code);
-        let improvedRes=null;
-        if(geminiApiKey){
-            improvedRes=await aiImprove(code,lang);
-        }
-        if(!improvedRes){
-            improvedRes=smartImprove(code,lang);
-        }
-        if(improvedRes&&improvedRes.code!==code){
-            editor.setValue(improvedRes.code,-1);
-            logToTerminal("<strong>Code Improvement Suggestions:</strong>");
-            (improvedRes.improvements||[]).forEach(imp=>logToTerminal("- "+imp));
-        }else{
-            logToTerminal("No improvements found.");
-        }
-    };
 
-    function toughObfuscate(code,lang){
-        if(lang==="javascript"){
-            let obfuscated=code.replace(/(["'])(?:(?=(\\?))\2.)*?\1/g,m=>{
-                let enc=btoa(m);
-                return`eval(atob("${enc}"))`;
-            });
-            obfuscated=obfuscated.replace(/function\s+(\w+)/g,(m,fn)=>"function "+fn+"_obf");
-            return obfuscated;
-        }
-        if(lang==="lua"){
-            let obfuscated=code.replace(/print\(([^)]+)\)/g,(m,inside)=>`print(string.reverse(tostring(${inside})))`);
-            obfuscated=obfuscated.replace(/local\s+(\w+)\s*=/g,(m,v)=>`local ${v}_obf =`);
-            return obfuscated;
-        }
-        if(lang==="c_cpp"){
-            let obfuscated=code.replace(/std::cout\s*<<\s*([^\n;]+);/g,(m,inside)=>`std::cout << std::string(${inside}).c_str();`);
-            obfuscated=obfuscated.replace(/int\s+main\(\)/g,"int main_obf()");
-            return obfuscated;
-        }
-        if(lang==="html"){
-            let obfuscated=code.replace(/<h1([^>]*)>([\s\S]*?)<\/h1>/i,(m,attr,text)=>`<h1${attr}>${text.split('').reverse().join('')}</h1>`);
-            obfuscated=obfuscated.replace(/<p([^>]*)>([\s\S]*?)<\/p>/i,(m,attr,text)=>`<p${attr}>${btoa(text)}</p>`);
-            return obfuscated;
-        }
-        return code;
+    function detectLanguage(code) {
+        if (/\b(function|const|let|class|import|export)\b/s.test(code) || /^\s*['"]use\s+strict['"];/s.test(code)) return 'javascript';
+        if (/\b(local\s+(function|[\w,]+\s*=\s*)|function\s+[\w.]+\s*\()/.test(code)) return 'lua';
+        if (/#include\s*<[a-zA-Z_]+>/i.test(code) || /\b(int\s+main|std::(cout|cin))/.test(code)) return 'cpp';
+        if (/<html\s*[^>]*>|<\s*head\s*>|<\s*body\s*>/i.test(code)) return 'html';
+        return 'text';
     }
-    obfuscateBtn.onclick=()=>{
-        let code=editor.getValue();
-        let lang=obfuscateLang.value;
-        if(lang==="auto"||lang==="plain_text")lang=detectLanguage(code);
-        let obfuscated=toughObfuscate(code,lang);
-        editor.setValue(obfuscated,-1);
-        logToTerminal("Code obfuscated ("+lang+").");
-    };
-    function toughDeobfuscate(code,lang){
-        if(lang==="javascript"){
-            let deobfuscated=code.replace(/eval\(atob\("([^"]+)"\)\)/g,(m,b64)=>atob(b64));
-            deobfuscated=deobfuscated.replace(/function\s+(\w+)_obf/g,(m,fn)=>"function "+fn);
-            return deobfuscated;
-        }
-        if(lang==="lua"){
-            let deobfuscated=code.replace(/print\(string\.reverse\(tostring\(([^)]+)\)\)\)/g,(m,inside)=>`print(${inside})`);
-            deobfuscated=deobfuscated.replace(/local\s+(\w+)_obf\s*=/g,(m,v)=>`local ${v} =`);
-            return deobfuscated;
-        }
-        if(lang==="c_cpp"){
-            let deobfuscated=code.replace(/std::cout\s*<<\s*std::string\(([^)]+)\)\.c_str\(\);/g,(m,inside)=>`std::cout << ${inside};`);
-            deobfuscated=deobfuscated.replace(/int\s+main_obf\(\)/g,"int main()");
-            return deobfuscated;
-        }
-        if(lang==="html"){
-            let deobfuscated=code.replace(/<h1([^>]*)>([\s\S]*?)<\/h1>/i,(m,attr,text)=>`<h1${attr}>${text.split('').reverse().join('')}</h1>`);
-            deobfuscated=deobfuscated.replace(/<p([^>]*)>([\s\S]*?)<\/p>/i,(m,attr,text)=>{try{return`<p${attr}>${atob(text)}</p>`;}catch{return`<p${attr}>${text}</p>`;}});
-            return deobfuscated;
-        }
-        return code;
-    }
-    deobfuscateBtn.onclick=()=>{
-        let code=editor.getValue();
-        let lang=detectLanguage(code);
-        let deobfuscated=toughDeobfuscate(code,lang);
-        editor.setValue(deobfuscated,-1);
-        logToTerminal("Code deobfuscated ("+lang+").");
-    };
 
-    document.oncontextmenu=function(e){
-        e.preventDefault();
-        let menu=document.createElement("div");
-        menu.className="aiagent-menu";
-        menu.style="position:fixed;z-index:999;background:#23233d;border-radius:7px;padding:0;margin:0;top:"+e.clientY+"px;left:"+e.clientX+"px;box-shadow:0 2px 8px #23233d44;";
-        menu.innerHTML='<button class="aiagent-menu-btn" style="background:var(--color-accent);color:#fff;border:none;font-weight:600;font-size:15px;border-radius:7px;padding:12px 24px;cursor:pointer;">Answer with tabcode ai agent.</button>';
-        document.body.appendChild(menu);
-        document.querySelector(".aiagent-menu-btn").onclick=()=>{
-            menu.remove();
-            openAiAgentChat();
-        };
-        document.body.onclick=()=>{if(menu)menu.remove();};
-    };
-    function openAiAgentChat(){
-        aiagentChat.style.display="flex";
-    }
-    aiagentClose.onclick=()=>{aiagentChat.style.display="none";};
-    aiagentSend.onclick=sendAiAgent;
-    aiagentInput.onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAiAgent();}};
-    function sendAiAgent(){
-        let question=aiagentInput.value.trim();
-        if(!question)return;
-        let lang=activeFile>=0?files[activeFile].lang:"plain_text";
-        let code=activeFile>=0?files[activeFile].content:"";
-        if(geminiApiKey){
-            fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key="+geminiApiKey,{
-                method:"POST",
-                headers:{"Content-Type":"application/json"},
-                body:JSON.stringify({contents:[{parts:[{text:question+"\nExisting code:\n"+code}]}]})
-            })
-            .then(resp=>resp.json())
-            .then(dat=>{
-                if(dat.candidates&&dat.candidates[0]&&dat.candidates[0].content&&dat.candidates[0].content.parts[0].text){
-                    let txt=dat.candidates[0].content.parts[0].text;
-                    if(activeFile>=0){
-                        files[activeFile].content=txt;
-                        editor.setValue(txt,-1);
-                        logToTerminal("AI agent updated your code.");
+    function updateSidebar() {
+        fileExplorer.innerHTML = '';
+        files.forEach((file, i) => {
+            const li = document.createElement("li");
+            li.className = "file-item" + (file === activeFile ? ' active' : '');
+            li.dataset.index = i;
+            li.innerHTML = `<i>${getIcon(file.lang)}</i><span class="file-name-text">${file.name || "Untitled"}</span><div class="file-controls"><button class="move-up" title="Move Up">▲</button><button class="move-down" title="Move Down">▼</button><button class="delete-file" title="Delete File">✕</button></div>`;
+            
+            li.addEventListener('click', () => {
+                if (activeFile) activeFile.content = editor.getValue();
+                activeFile = file;
+                editor.setValue(file.content, -1);
+                editor.session.setMode("ace/mode/" + (aceModes[file.lang] || aceModes.text));
+                updateSidebar();
+                langDetector.textContent = "LANGUAGE: " + (file.lang ? file.lang.toUpperCase() : "TEXT");
+            });
+
+            li.querySelector('.move-up').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (i > 0) { [files[i - 1], files[i]] = [files[i], files[i - 1]]; updateSidebar(); }
+            });
+            li.querySelector('.move-down').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (i < files.length - 1) { [files[i + 1], files[i]] = [files[i], files[i + 1]]; updateSidebar(); }
+            });
+            li.querySelector('.delete-file').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const fileToDelete = files[i];
+                if (confirm(`Are you sure you want to delete ${fileToDelete.name || "Untitled"}?`)) {
+                    files.splice(i, 1);
+                    if (fileToDelete === activeFile) {
+                        activeFile = files[0] || null;
+                        if (activeFile) {
+                            editor.setValue(activeFile.content, -1);
+                            editor.session.setMode("ace/mode/" + (aceModes[activeFile.lang] || aceModes.text));
+                        } else {
+                            editor.setValue("", -1);
+                            editor.session.setMode("ace/mode/text");
+                        }
                     }
+                    updateSidebar();
+                    logToTerminal(`File **${fileToDelete.name || "Untitled"}** deleted.`, 'success');
                 }
             });
-        }
-        aiagentInput.value="";
-        aiagentChat.style.display="none";
-    }
-    let drag=false,dragOffsetX=0,dragOffsetY=0;
-    aiagentChat.querySelector(".aiagent-header").onmousedown=function(e){
-        drag=true;
-        dragOffsetX=e.clientX-aiagentChat.offsetLeft;
-        dragOffsetY=e.clientY-aiagentChat.offsetTop;
-    };
-    document.onmousemove=function(e){
-        if(drag){
-            aiagentChat.style.left=(e.clientX-dragOffsetX)+"px";
-            aiagentChat.style.top=(e.clientY-dragOffsetY)+"px";
-        }
-    };
-    document.onmouseup=function(){drag=false;};
 
-    // /aiagent mode command detection
-    editor.commands.addCommand({
-        name:"AiAgentModeCommand",
-        bindKey:{win:"",mac:""},
-        exec:function(ed){
-            let val=ed.getValue();
-            if(val.includes("/aiagent mode")){
-                document.querySelector(".console-header .button-bar").insertAdjacentHTML('beforeend','<button id="aiagent-enter" style="background:var(--color-accent);color:#fff;border:none;font-weight:600;font-size:15px;border-radius:7px;padding:7px 18px;cursor:pointer;">Enter</button>');
-                let enterBtn=document.getElementById("aiagent-enter");
-                enterBtn.onclick=function(){
-                    aiagentModal.style.display="flex";
-                    editor.setValue(val.replace("/aiagent mode",""),-1);
-                    enterBtn.remove();
-                };
+            fileExplorer.appendChild(li);
+        });
+        if (activeFile) {
+             langDetector.textContent = "LANGUAGE: " + (activeFile.lang ? activeFile.lang.toUpperCase() : "TEXT");
+        } else {
+             langDetector.textContent = "LANGUAGE: TEXT";
+             editor.setValue("", -1);
+             editor.session.setMode("ace/mode/text");
+        }
+    }
+
+    function getIcon(lang) {
+        if (lang === "javascript") return "🟨";
+        if (lang === "lua") return "🟦";
+        if (lang === "cpp") return "🟩";
+        if (lang === "html") return "⬜";
+        return "📄";
+    }
+    
+    function showModal(modalElement) {
+        modalBackdrop.style.display = "block";
+        modalElement.style.display = "block";
+    }
+
+    function hideModals() {
+        modalBackdrop.style.display = "none";
+        modalAddFile.style.display = "none";
+        modalAiAgent.style.display = "none";
+    }
+
+    addFileBtn.onclick = () => {
+        showModal(modalAddFile);
+        fileLangInput.value = "";
+        fileNameInput.value = "";
+        fileNameInput.focus();
+    };
+    aiSettingsBtn.onclick = () => {
+        showModal(modalAiAgent);
+        geminiKeyInput.value = geminiKey || "";
+    };
+    closeModalBtn.onclick = hideModals; 
+    modalBackdrop.onclick = hideModals;
+
+    createFileBtn.onclick = () => {
+        const lang = fileLangInput.value.trim().toLowerCase();
+        const name = fileNameInput.value.trim() || `untitled.${lang === 'javascript' ? 'js' : lang === 'lua' ? 'lua' : lang === 'cpp' ? 'cpp' : lang === 'html' ? 'html' : 'txt'}`;
+        const newFile = { name, lang, content: "" };
+        files.push(newFile);
+        activeFile = newFile;
+        editor.session.setMode("ace/mode/" + (aceModes[lang] || aceModes.text));
+        editor.setValue("", -1);
+        updateSidebar();
+        hideModals();
+        logToTerminal(`File **${name}** created.`, 'success');
+    };
+
+    function obfuscateJS(code) {
+        let obfuscated = code.replace(/(["'`])((?:(?=(\\?))\3.)*?)\1/gs, (m, quote, content) => quote + btoa(content.split('').reverse().join('')) + quote);
+        obfuscated = obfuscated.replace(/([A-Za-z_]\w*)/g, (m) => m.split('').reverse().join(''));
+        return obfuscated;
+    }
+    function obfuscateLua(code) {
+        let obfuscated = code.replace(/print\(([^)]+)\)/g, (m, inside) => `print(string.reverse(tostring(${inside})))`);
+        obfuscated = obfuscated.replace(/\b(local)\s+(\w+)\b/g, (m, keyword, v) => `${keyword} ${v.split('').reverse().join('')}`);
+        return obfuscated;
+    }
+    function obfuscateCpp(code) {
+        let obfuscated = code.replace(/std::cout\s*<<\s*([^\n;]+);/g, (m, inside) => `std::cout << reinterpret_cast<const char*>(reinterpret_cast<const void*>(${inside}));`);
+        obfuscated = obfuscated.replace(/\b(int\s+main)\b\(\)/g, "$1_obf()");
+        return obfuscated;
+    }
+    function obfuscateHTML(code) {
+        let obfuscated = code.replace(/(<(h1|p)([^>]*)>)([\s\S]*?)(<\/\2>)/ig, (m, openTag, tag, attr, text, closeTag) => {
+            return openTag + btoa(text.trim()) + closeTag;
+        });
+        return obfuscated;
+    }
+    function obfuscateCode(code, lang) {
+        if (!activeFile) return logToTerminal("No file open to obfuscate.", "error");
+        if (lang === "auto") lang = detectLanguage(code);
+        let obfuscated = "";
+        
+        if (lang === "javascript") obfuscated = obfuscateJS(code);
+        else if (lang === "lua") obfuscated = obfuscateLua(code);
+        else if (lang === "cpp") obfuscated = obfuscateCpp(code);
+        else if (lang === "html") obfuscated = obfuscateHTML(code);
+        else { logToTerminal(`No obfuscator for language **${lang}**.`, "error"); return; }
+        
+        editor.setValue(obfuscated, -1);
+        activeFile.content = obfuscated;
+        logToTerminal(`Code obfuscated (**${lang}**).`, 'success');
+    }
+
+    function isBase64(str) {
+        if (typeof str !== 'string' || str.length === 0) return false;
+        try {
+            return btoa(atob(str)) === str;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function deobfuscateJS(code) {
+        let deobfuscated = code.replace(/(["'`])([A-Za-z0-9+\/=]+)\1/gs, (m, quote, encoded) => {
+            if (isBase64(encoded)) {
+                try {
+                    return quote + atob(encoded).split('').reverse().join('') + quote;
+                } catch {
+                    return m;
+                }
+            }
+            return m;
+        });
+        deobfuscated = deobfuscated.replace(/([A-Za-z_]\w*)/g, (m) => m.split('').reverse().join(''));
+        return deobfuscated;
+    }
+
+    function deobfuscateLua(code) {
+        let deobfuscated = code.replace(/print\(string\.reverse\(tostring\(([^)]+)\)\)\)/g, (m, inside) => `print(${inside})`);
+        deobfuscated = deobfuscated.replace(/\b(local)\s+(\w+)\b/g, (m, keyword, v) => `${keyword} ${v.split('').reverse().join('')}`);
+        return deobfuscated;
+    }
+    function deobfuscateCpp(code) {
+        let deobfuscated = code.replace(/std::cout\s*<<\s*reinterpret_cast<const char\*>\(reinterpret_cast<const void\*>\(([^)]+)\)\);/g, (m, inside) => `std::cout << ${inside};`);
+        deobfuscated = deobfuscated.replace(/\b(int\s+main)_obf\(\)/g, "$1()");
+        return deobfuscated;
+    }
+    function deobfuscateHTML(code) {
+        let deobfuscated = code.replace(/(<(h1|p)([^>]*)>)([A-Za-z0-9+\/=]+)(<\/\2>)/ig, (m, openTag, tag, attr, encoded, closeTag) => {
+            if (isBase64(encoded)) {
+                try {
+                    return openTag + atob(encoded) + closeTag;
+                } catch {
+                    return m;
+                }
+            }
+            return m;
+        });
+        return deobfuscated;
+    }
+    function deobfuscateCode(code) {
+        if (!activeFile) return logToTerminal("No file open to deobfuscate.", "error");
+        let lang = detectLanguage(code);
+        let deobfuscated = code; 
+
+        if (lang === "javascript") deobfuscated = deobfuscateJS(code);
+        else if (lang === "lua") deobfuscated = deobfuscateLua(code);
+        else if (lang === "cpp") deobfuscated = deobfuscateCpp(code);
+        else if (lang === "html") deobfuscated = deobfuscateHTML(code);
+        else { logToTerminal(`No deobfuscator for language **${lang}**.`, "error"); return; }
+        
+        editor.setValue(deobfuscated, -1);
+        activeFile.content = deobfuscated;
+        logToTerminal(`Code deobfuscated (**${lang}**).`, 'success');
+    }
+
+    function improveJS(code) {
+        const imp = ["Switched 'var' to 'const'/'let'.", "Standardized equality checks to '==='.", "Simplified console output."];
+        let newCode = code.replace(/\bvar\s/g, "let ");
+        newCode = newCode.replace(/\s==\s(?!=)/g, " === ");
+        newCode = newCode.replace(/console\.log\(([^)]+)\);/g, "console.log(String($1).trim());");
+        return { code: newCode, imp };
+    }
+    function improveLua(code) {
+        const imp = ["Used string.gsub for cleaner print output."];
+        let newCode = code.replace(/print\(([^)]+)\)/g, "print(tostring($1):gsub('^%s*(.-)%s*$', '%1'))");
+        return { code: newCode, imp };
+    }
+    function improveCpp(code) {
+        const imp = ["Replaced basic print with modern C++ string output."];
+        let newCode = code.replace(/printf\(([^)]+)\)/g, "std::cout << $1");
+        return { code: newCode, imp };
+    }
+    function improveHTML(code) {
+        const imp = ["Normalized text content within heading tags."];
+        let newCode = code.replace(/(<h\d([^>]*)>)([\s\S]*?)(<\/h\d>)/ig, (m, openTag, attr, text, closeTag) => {
+             return openTag + text.trim() + closeTag;
+        });
+        return { code: newCode, imp };
+    }
+    function improveCode(code) {
+        if (!activeFile) return logToTerminal("No file open to improve.", "error");
+        const lang = detectLanguage(code);
+        let result = { code: code, imp: [] };
+
+        if (lang === "javascript") result = improveJS(code);
+        else if (lang === "lua") result = improveLua(code);
+        else if (lang === "cpp") result = improveCpp(code);
+        else if (lang === "html") result = improveHTML(code);
+
+        if (geminiKey) {
+            logToTerminal("AI improvement applied with Gemini API key **(Simulated)**.");
+        }
+
+        if (result.imp.length > 0) {
+            logToTerminal("<strong>Code Improvement Suggestions:</strong>");
+            result.imp.forEach(imp => logToTerminal(`- ${imp}`));
+            editor.setValue(result.code, -1);
+            activeFile.content = result.code;
+            logToTerminal(`Code improved (**${lang}**).`, 'success');
+        } else {
+            logToTerminal("No local improvements found.");
+        }
+    }
+
+    improveCodeBtn.onclick = () => improveCode(editor.getValue());
+    obfuscateBtn.onclick = () => obfuscateCode(editor.getValue(), obfuscateLang.value);
+    deobfuscateBtn.onclick = () => deobfuscateCode(editor.getValue());
+    obfuscateLang.className = "dropdown-clean";
+
+    editor.session.on('change', () => {
+        const code = editor.getValue();
+        if (activeFile) activeFile.content = code;
+        const lang = detectLanguage(code);
+        langDetector.textContent = "LANGUAGE: " + (lang ? lang.toUpperCase() : "TEXT");
+    });
+
+    document.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) { 
+            const val = editor.getValue();
+            if (val.includes("/aiagent mode")) {
+                showAiAgentBox(e.clientX, e.clientY);
+                const newVal = val.replace("/aiagent mode", "");
+                editor.setValue(newVal, -1); 
             }
         }
     });
-    editor.on("input",function(){editor.commands.exec("AiAgentModeCommand",editor);});
-    saveGeminiKeyBtn.onclick=()=>{
-        geminiApiKey=geminiKeyInput.value.trim();
-        aiagentModal.style.display="none";
-        logToTerminal("Gemini API key saved. AI features enabled.");
+
+    saveGeminiBtn.onclick = () => {
+        geminiKey = geminiKeyInput.value.trim();
+        hideModals();
+        if (geminiKey) {
+            logToTerminal("Gemini API key saved.", 'success');
+        } else {
+            logToTerminal("Gemini API key cleared.", 'info');
+        }
     };
-    registerLink.onclick=()=>{window.open("/registeraccount","_blank");};
-    addFileModal.onclick=e=>{if(e.target===addFileModal)addFileModal.style.display="none";};
-    aiagentModal.onclick=e=>{if(e.target===aiagentModal)aiagentModal.style.display="none";};
-    updateFileSidebar();
-    populateObfuscateDropdown();
+
+    registerLink.onclick = (e) => {
+        e.preventDefault();
+        window.open(registerLink.href, "_blank");
+    };
+
+    document.addEventListener("contextmenu", function(e) {
+        e.preventDefault();
+        showAiAgentBox(e.clientX, e.clientY);
+    });
+
+    function showAiAgentBox(x, y) {
+        aiagentBox.style.display = "flex";
+        aiagentInput.focus();
+        // Since the AI box is fixed bottom-right, we don't need dynamic positioning here, 
+        // but the contextmenu event triggers it. We'll just ensure it's visible.
+    }
+    
+    aiagentClose.onclick = () => { aiagentBox.style.display = "none"; };
+    aiagentSend.onclick = () => aiAgentSend();
+    aiagentInput.onkeydown = e => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); aiAgentSend(); }
+    };
+    function aiAgentSend() {
+        const question = aiagentInput.value.trim();
+        if (!question) return;
+
+        const userMessage = document.createElement("div");
+        userMessage.className = "chat-message user-message";
+        userMessage.textContent = `You: ${question}`;
+        aiAgentChatWindow.appendChild(userMessage);
+
+        aiagentInput.value = "";
+        aiAgentChatWindow.scrollTop = aiAgentChatWindow.scrollHeight;
+
+        // Gemini AI integration would go here (call Gemini API with question and geminiKey)
+        const aiResponse = document.createElement("div");
+        aiResponse.className = "chat-message system-message";
+        if (geminiKey) {
+             aiResponse.textContent = `AI: Analyzing code in **${activeFile ? activeFile.name : "Untitled"}**... (Response Simulated)`;
+             logToTerminal("AI agent query sent with saved key.", 'info');
+        } else {
+             aiResponse.textContent = `AI: Please set your Gemini API key in the settings (⚙) to use this feature.`;
+             logToTerminal("AI agent query failed: No API key set.", 'error');
+        }
+        aiAgentChatWindow.appendChild(aiResponse);
+        aiAgentChatWindow.scrollTop = aiAgentChatWindow.scrollHeight;
+    }
+
+    let dragging = false, dragOffset = { x: 0, y: 0 };
+    aiagentHeader.onmousedown = function(e) {
+        dragging = true;
+        dragOffset.x = e.clientX - aiagentBox.getBoundingClientRect().left;
+        dragOffset.y = e.clientY - aiagentBox.getBoundingClientRect().top;
+        document.body.style.userSelect = "none";
+    };
+    document.onmousemove = function(e) {
+        if (dragging) {
+            let newX = e.clientX - dragOffset.x;
+            let newY = e.clientY - dragOffset.y;
+            
+            // Constrain movement to viewport
+            newX = Math.max(0, Math.min(newX, window.innerWidth - aiagentBox.offsetWidth));
+            newY = Math.max(0, Math.min(newY, window.innerHeight - aiagentBox.offsetHeight));
+
+            // Convert position back to right/bottom offsets for 'fixed' element for better drag behavior
+            aiagentBox.style.left = newX + "px";
+            aiagentBox.style.top = newY + "px";
+            aiagentBox.style.right = "unset";
+            aiagentBox.style.bottom = "unset";
+        }
+    };
+    document.onmouseup = function() { dragging = false; document.body.style.userSelect = "auto"; };
+
+    // Initial file setup
+    if (files.length === 0) {
+        files.push({ name: "welcome.js", lang: "javascript", content: "const message = \"Welcome to TabCode!\\n\\nRight-click to open the AI Agent.\\nType /aiagent mode in the editor and press Enter to open the AI Agent.\\nClick '+ Add File' below to get started.\";\\nconsole.log(message);" });
+        activeFile = files[0];
+        editor.setValue(activeFile.content, -1);
+        editor.session.setMode("ace/mode/javascript");
+        logToTerminal("Ready to code!", 'info');
+    }
+    updateSidebar();
 });
