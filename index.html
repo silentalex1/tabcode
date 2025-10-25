@@ -2,81 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TabCode</title>
+    <title>TabCode - Calculator</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.0/ace.min.js"></script>
 </head>
 <body>
-    <div id="main-container">
-        <aside id="sidebar">
-            <div class="sidebar-header">FILES</div>
-            <button id="add-file-btn" class="sidebar-action">+ Add File</button>
-            <ul class="file-explorer" id="fileExplorer"></ul>
-            <div class="sidebar-bottom-controls">
-                <button id="ai-settings-btn" class="sidebar-action settings-icon" title="User Settings">⚙ Settings</button>
+    <div id="calculator-container">
+        <div id="calculator">
+            <div id="display-container">
+                <input type="text" id="display" readonly value="">
             </div>
-        </aside>
-        <section id="content-container">
-            <div id="editor-wrapper">
-                <div id="editor"></div>
+            <div id="buttons">
+                <button class="btn func" data-value="C">C</button>
+                <button class="btn func" data-value="del">DEL</button>
+                <button class="btn func" data-value="**">&deg;</button>
+                <button class="btn op" data-value="/">/</button>
+
+                <button class="btn num" data-value="7">7</button>
+                <button class="btn num" data-value="8">8</button>
+                <button class="btn num" data-value="9">9</button>
+                <button class="btn op" data-value="*">*</button>
+
+                <button class="btn num" data-value="4">4</button>
+                <button class="btn num" data-value="5">5</button>
+                <button class="btn num" data-value="6">6</button>
+                <button class="btn op" data-value="-">-</button>
+
+                <button class="btn num" data-value="1">1</button>
+                <button class="btn num" data-value="2">2</button>
+                <button class="btn num" data-value="3">3</button>
+                <button class="btn op" data-value="+">+</button>
+                
+                <button class="btn num zero" data-value="0">0</button>
+                <button class="btn num" data-value=".">.</button>
+                <button class="btn equals" data-value="=">=</button>
             </div>
-            <div id="console-wrapper">
-                <div class="console-header">
-                    <div id="lang-detector">LANGUAGE: TEXT</div>
-                    <div class="button-bar">
-                        <button id="improve-code" title="Use AI to improve code quality">Improve</button>
-                        <select id="obfuscate-language" class="dropdown-clean" title="Select language for obfuscation">
-                            <option value="auto">Auto</option>
-                            <option value="javascript">JavaScript</option>
-                            <option value="lua">Lua</option>
-                            <option value="cpp">C++</option>
-                            <option value="html">HTML</option>
-                        </select>
-                        <button id="obfuscate" title="Obfuscate the current file's content">Obfuscate</button>
-                        <button id="deobfuscate" title="Attempt to deobfuscate the current file's content">Deobfuscate</button>
-                    </div>
-                </div>
-                <div id="terminal"></div>
-            </div>
-        </section>
-    </div>
-    <div id="modal-backdrop"></div>
-    <div id="modal-addfile" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Add a new file</div>
-            <input type="text" id="file-name" placeholder="Name the file (e.g., script.js)">
-            <input type="text" id="file-language" placeholder="Language (e.g., javascript, lua)">
-            <div class="modal-actions">
-                <button id="create-file">Create</button>
-                <button id="close-addfile">Cancel</button>
-            </div>
-        </div>
-    </div>
-    <div id="modal-settings" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">User Settings</div>
-            <input type="password" id="gemini-key" placeholder="Enter your API key:">
-            <div class="modal-link">
-                <p>For persistent projects, <a id="register-link" href="/registeraccount" target="_blank" class="highlight-link">create an account</a>.</p>
-            </div>
-            <div class="modal-actions">
-                <button id="save-gemini">Save Key</button>
-                <button id="close-settings">Close</button>
-            </div>
-        </div>
-    </div>
-    <div id="aiagent-box" role="dialog" aria-labelledby="aiagent-header">
-        <div id="aiagent-header">
-            <span>What do you need help with coding?</span>
-            <button id="aiagent-close" aria-label="Close Agent">✕</button>
-        </div>
-        <div id="aiagent-chat-window">
-            <div class="chat-message system-message">Agent: I can help you with coding questions and suggestions for the current file.</div>
-        </div>
-        <div id="aiagent-input-container">
-            <textarea id="aiagent-input" placeholder="Type your question..."></textarea>
-            <button id="aiagent-send" aria-label="Send Message">Send</button>
         </div>
     </div>
     <script src="script.js"></script>
