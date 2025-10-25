@@ -122,7 +122,8 @@ body {
     gap: 10px;
 }
 
-.console-header button {
+.console-header button,
+.console-header select {
     border: 0;
     outline: none;
     padding: 7px 18px;
@@ -135,7 +136,8 @@ body {
     transition: background .2s, color .2s;
 }
 
-.console-header button:hover {
+.console-header button:hover,
+.console-header select:hover {
     background: var(--color-accent);
     color: #fff;
 }
