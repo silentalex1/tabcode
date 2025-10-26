@@ -3,96 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prysmis AI</title>
-    <link rel="stylesheet" href="style.css">
+    <title>TabCode - Helper</title>
+    <link rel="stylesheet" href="helper.css">
 </head>
 <body>
 
-<div id="login-screen" class="login-container">
-    <h1>TabCode - Helper</h1>
-    <input type="text" id="username-input" placeholder="Enter your username.">
-    <input type="password" id="password-input" placeholder="Enter your password.">
-    <input type="password" id="invite-code-input" placeholder="Enter the invite code that was given to you.">
-    <div id="error-message"></div>
-    <button id="submit-login">Enter</button>
-</div>
-
-<div id="chat-screen" class="chat-ui">
-    <div class="chat-navbar">
-        <h2>Prysmis AI</h2>
-        <button id="puter-login-btn">Login.</button>
+<div class="helper-container">
+    <div class="header">
+        <h1>TabCode Homework Helper</h1>
+        <p>problem solving and solution generation.</p>
     </div>
 
-    <div id="chat-messages" class="chat-area">
-        <div class="chat-message greeting">do you need anything? Ask **prysmis ai** everything that you need.</div>
+    <div class="input-group">
+        <label for="problem-input">Enter your homework problem or question here:</label>
+        <textarea id="problem-input" placeholder="e.g., Explain the process of photosynthesis and its chemical equation, or type 'calculate: 2*15/3'"></textarea>
     </div>
 
-    <div class="input-area">
-        <textarea id="chat-input" placeholder="Ask prysmis ai or use '/' commands" rows="1"></textarea>
+    <div class="action-buttons">
+        <button id="clear-button">Clear</button>
+        <button id="submit-button">Get Solution</button>
     </div>
 
-    <button id="settings-btn" class="settings-button">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M19.4 12.98l.05-.38c.08-.55.13-1.12.13-1.7s-.05-1.15-.13-1.7l-.05-.38c.11-.8.06-1.61-.13-2.38-.19-.77-.52-1.48-.99-2.09l-.24-.31c-.69-.87-1.57-1.55-2.58-1.92l-.3-.11c-.74-.27-1.53-.42-2.34-.44l-.4-.01c-.63-.04-1.27-.04-1.9 0l-.4.01c-.81.02-1.6.17-2.34.44l-.3.11c-1.01.37-1.89 1.05-2.58 1.92l-.24.31c-.47.61-.8 1.32-.99 2.09-.19.77-.24 1.58-.13 2.38l.05.38c.08.55.13 1.12.13 1.7s-.05 1.15-.13 1.7l-.05.38c-.11.8-.06 1.61.13 2.38.19.77.52 1.48.99 2.09l.24.31c.69.87 1.57 1.55 2.58 1.92l.3.11c.74.27 1.53.42 2.34.44l.4.01c.63.04 1.27.04 1.9 0l.4-.01c.81-.02 1.6-.17 2.34-.44l.3-.11c1.01-.37 1.89-1.05 2.58-1.92l.24-.31c.47-.61.8-1.32.99-2.09.19-.77.24-1.58.13-2.38zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
-        </svg>
-    </button>
-
-    <div id="settings-modal" class="settings-modal">
-        <div class="settings-content">
-            <button id="close-settings" class="close-button">X</button>
-            
-            <div class="settings-navbar">
-                <button id="ai-settings-tab" class="active">AI Settings</button>
-                <button id="user-settings-tab">User Settings</button>
-            </div>
-
-            <div id="ai-settings-content" class="settings-tab-content active">
-                <div class="ai-setting-item">
-                    <span>AI Model:</span>
-                    <select id="ai-model-dropdown" class="dropdown-select">
-                        <option value="puter-lumi-1">puter-lumi-1 (Default)</option>
-                        <option value="puter-lumi-2-turbo">puter-lumi-2-turbo</option>
-                        <option value="puter-code-genius">puter-code-genius</option>
-                        <option value="puter-creative-pro">puter-creative-pro</option>
-                        <option value="puter-data-analyst">puter-data-analyst</option>
-                        <option value="puter-fast-response">puter-fast-response</option>
-                        <option value="puter-logic-solver">puter-logic-solver</option>
-                        <option value="puter-narrative-writer">puter-narrative-writer</option>
-                        <option value="puter-research-agent">puter-research-agent</option>
-                        <option value="puter-general-v1">puter-general-v1</option>
-                        <option value="gpt-4o">GPT-4o</option>
-                        <option value="gemini-2-5-pro">Gemini 2.5 Pro</option>
-                        <option value="claude-3-opus">Claude 3 Opus</option>
-                        <option value="mistral-large">Mistral Large</option>
-                        <option value="llama-3-70b">Llama 3 70B</option>
-                    </select>
-                </div>
-                
-                <div class="ai-setting-item">
-                    <span>Enable fast ai response speed.</span>
-                    <label class="switch">
-                        <input type="checkbox" id="fast-ai-switch">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                
-                <div class="save-settings-container">
-                    <button id="save-ai-settings" class="save-settings-button">Save Settings</button>
-                </div>
-            </div>
-
-            <div id="user-settings-content" class="settings-tab-content">
-                <p>User-specific settings (e.g., theme, profile details) would go here.</p>
-                
-                <div class="save-settings-container">
-                    <button id="save-user-settings" class="save-settings-button">Save Settings</button>
-                </div>
-            </div>
-        </div>
+    <div class="output-area">
+        <h2>Solution:</h2>
+        <div id="output-content">The generated solution will appear here.</div>
     </div>
 </div>
 
-<script src="https://docs.puter.com/AI/puter.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
