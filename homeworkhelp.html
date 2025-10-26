@@ -4,37 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TabCoded your best #1 calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="helper.css">
 </head>
 <body>
 
     <main id="invite-container">
         <div class="card">
-            <input type="text" id="invite-input" placeholder="Enter the invite code given to you." required>
-            <button id="submit-button">Submit</button>
+            <h1 class="card-title">Access Required</h1>
+            <p class="card-text">Enter the invite code given to you.</p>
+            <input type="password" id="invite-input" placeholder="••••••••••••••••" required>
+            <button id="submit-button">Unlock Assistant</button>
             <p id="error-message" class="error"></p>
         </div>
     </main>
 
     <div id="chat-interface" class="hidden">
-        
-        <div id="navbar">
-            <div id="logo">prysmis ai</div>
-            <div id="nav-empty"></div> 
-            <button id="settings-button">⚙️</button>
+        <header class="chat-header">
+            TabCoded AI Homework Help 
+            <span id="user-id-display" class="user-id-display-text"></span>
+        </header>
+        <div id="messages-container">
+            <div class="message ai-message">
+                <div class="message-sender">TabCoded AI</div>
+                <div class="message-content">Hello! Welcome to your secure homework helper. Please ask me any school-related question you need assistance with!</div>
+            </div>
         </div>
-
-        <div id="chat-content">
-            <div id="ai-greeting">Welcome to prysmis ai! How may i help you?</div>
-            
+        <div class="input-area">
+            <textarea id="message-input" placeholder="Ask your question..." rows="1"></textarea>
+            <button id="send-button">Send</button>
         </div>
-
-        <div id="chat-input-container">
-            <input type="text" id="chat-input" placeholder="Ask prysmis ai anything.. or use '/' commands.">
-        </div>
-
     </div>
 
-    <script src="backend.js"></script>
+    <script type="module" src="backend.js"></script>
 </body>
 </html>
