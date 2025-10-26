@@ -3,36 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TabCode Helper Login</title>
+    <title>TabCode Helper</title>
     <link rel="stylesheet" href="helper.css">
 </head>
 <body>
 
-<div id="helper-login-screen" class="login-container-helper">
-    <h1>Secondary Helper Access</h1>
-    <input type="text" id="helper-username-input" placeholder="Enter your username.">
-    <input type="password" id="helper-password-input" placeholder="Enter your password.">
-    <input type="password" id="helper-invite-code-input" placeholder="Enter the invite code that was given to you.">
-    <div id="helper-error-message"></div>
-    <button id="helper-submit-login">Enter Helper Chat</button>
+<div id="login-screen" class="login-container">
+    <h1>Account Registration</h1>
+    <input type="text" id="username-input" placeholder="Enter your username.">
+    <input type="password" id="password-input" placeholder="Enter your password.">
+    <input type="password" id="invite-code-input" placeholder="Enter the invite code that was given to you.">
+    <div id="error-message"></div>
+    <button id="create-account-btn">Create Account.</button>
 </div>
 
-<div id="helper-chat-screen" class="chat-ui-helper">
-    <div class="chat-navbar-helper">
-        <h2>Prysmis AI (Basic Helper)</h2>
-        <!-- This button provides a simple way to return to the main site -->
-        <button onclick="window.location.href = 'index.html'">Main Chat</button>
+<div id="chat-screen" class="chat-ui">
+    <div class="chat-navbar">
+        <h2>TabCode Helper</h2>
+        <div class="nav-buttons">
+            <button id="puter-login-btn">Login.</button>
+            <button onclick="window.open('https://discord.com/', '_blank')">our discord community</button>
+        </div>
     </div>
 
-    <div id="helper-chat-messages" class="chat-area-helper">
-        <div class="chat-message-helper">Welcome to the basic chat interface. Ask away!</div>
+    <div id="chat-messages" class="chat-area">
+        <div class="chat-message ai-message">Hello and welcome to prysmis ai what can i do for you?</div>
     </div>
 
-    <div class="input-area-helper">
-        <textarea id="chat-input-helper" placeholder="Send a message..." rows="1"></textarea>
+    <div class="input-area">
+        <textarea id="chat-input" placeholder="Ask anything..." rows="1"></textarea>
     </div>
+
+    <button id="settings-btn" class="settings-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M19.4 12.98l.05-.38c.08-.55.13-1.12.13-1.7s-.05-1.15-.13-1.7l-.05-.38c.11-.8.06-1.61-.13-2.38-.19-.77-.52-1.48-.99-2.09l-.24-.31c-.69-.87-1.57-1.55-2.58-1.92l-.3-.11c-.74-.27-1.53-.42-2.34-.44l-.4-.01c-.63-.04-1.27-.04-1.9 0l-.4.01c-.81.02-1.6.17-2.34.44l-.3.11c-1.01.37-1.89 1.05-2.58 1.92l-.24.31c-.47.61-.8 1.32-.99 2.09-.19.77-.24 1.58-.13 2.38l.05.38c.08.55.13 1.12.13 1.7s-.05 1.15-.13 1.7l-.05.38c-.11.8-.06 1.61.13 2.38.19.77.52 1.48.99 2.09l.24.31c.69.87 1.57 1.55 2.58 1.92l.3.11c.74.27 1.53.42 2.34.44l.4.01c.63.04 1.27.04 1.9 0l.4-.01c.81-.02 1.6-.17 2.34-.44l.3-.11c1.01-.37 1.89-1.05 2.58-1.92l.24-.31c.47-.61.8-1.32.99-2.09.19-.77.24-1.58.13-2.38zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+        </svg>
+    </button>
 </div>
 
-<script src="script.js"></script>
+<script src="https://docs.puter.com/AI/puter.js"></script>
+<script src="backend.js"></script>
 </body>
 </html>
