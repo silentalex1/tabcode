@@ -360,7 +360,7 @@ body {
     color: var(--color-text);
 }
 
-#gemini-api-key, #keybind-input, #new-username, #new-password {
+#gemini-api-key, #keybind-input, #new-username, #new-password, #model-select {
     padding: 12px;
     border: 1px solid var(--color-border);
     border-radius: 8px;
@@ -368,6 +368,15 @@ body {
     color: var(--color-text);
     font-size: 1em;
     outline: none;
+    transition: border-color 0.2s;
+    /* Custom styling for select dropdown */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23E5E7EB' d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 1.2em;
 }
 
 #new-username:disabled {
