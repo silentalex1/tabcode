@@ -3,30 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TabCode - Helper</title>
+    <title>TabCode Helper Login</title>
     <link rel="stylesheet" href="helper.css">
 </head>
 <body>
 
-<div class="helper-container">
-    <div class="header">
-        <h1>TabCode Homework Helper</h1>
-        <p>problem solving and solution generation.</p>
+<div id="helper-login-screen" class="login-container-helper">
+    <h1>Secondary Helper Access</h1>
+    <input type="text" id="helper-username-input" placeholder="Enter your username.">
+    <input type="password" id="helper-password-input" placeholder="Enter your password.">
+    <input type="password" id="helper-invite-code-input" placeholder="Enter the invite code that was given to you.">
+    <div id="helper-error-message"></div>
+    <button id="helper-submit-login">Enter Helper Chat</button>
+</div>
+
+<div id="helper-chat-screen" class="chat-ui-helper">
+    <div class="chat-navbar-helper">
+        <h2>Prysmis AI (Basic Helper)</h2>
+        <!-- This button provides a simple way to return to the main site -->
+        <button onclick="window.location.href = 'index.html'">Main Chat</button>
     </div>
 
-    <div class="input-group">
-        <label for="problem-input">Enter your homework problem or question here:</label>
-        <textarea id="problem-input" placeholder="e.g., Explain the process of photosynthesis and its chemical equation, or type 'calculate: 2*15/3'"></textarea>
+    <div id="helper-chat-messages" class="chat-area-helper">
+        <div class="chat-message-helper">Welcome to the basic chat interface. Ask away!</div>
     </div>
 
-    <div class="action-buttons">
-        <button id="clear-button">Clear</button>
-        <button id="submit-button">Get Solution</button>
-    </div>
-
-    <div class="output-area">
-        <h2>Solution:</h2>
-        <div id="output-content">The generated solution will appear here.</div>
+    <div class="input-area-helper">
+        <textarea id="chat-input-helper" placeholder="Send a message..." rows="1"></textarea>
     </div>
 </div>
 
