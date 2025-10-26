@@ -26,8 +26,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const NEW_PASSWORD = document.getElementById("new-password");
     const SAVE_SETTINGS_BTN = document.getElementById("save-settings-btn");
 
+    
     const INVITE_CODE = "Tabcode44$$";
 
+    
     let storedApiKey = localStorage.getItem('geminiApiKey') || '';
     let currentUsername = localStorage.getItem('username') || '';
     let selectedModel = localStorage.getItem('selectedModel') || 'gemini-2.5-pro';
@@ -35,6 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function getSelectedModel() {
         return localStorage.getItem('selectedModel') || 'gemini-2.5-pro';
     }
+
+    
 
     function transitionToChat(username) {
         REG_ERROR_MSG.style.visibility = "hidden";
@@ -74,6 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
         transitionToChat(username);
     });
 
+    
+
     SETTINGS_BTN.addEventListener("click", () => {
         GEMINI_API_KEY_INPUT.value = storedApiKey;
         KEYBIND_INPUT.value = localStorage.getItem('keybind') || 'a+i';
@@ -92,6 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const newKeybind = KEYBIND_INPUT.value.trim();
         const newModel = MODEL_SELECT.value;
 
+        
         if (newKey && newKey.length > 5 && newKey !== storedApiKey) { 
             validateApiKey(newKey).then(isValid => {
                 if (isValid) {
@@ -110,16 +117,19 @@ document.addEventListener("DOMContentLoaded", () => {
             MODAL_BACKDROP.classList.add("hidden");
         }
         
+        
         if (newModel) {
             localStorage.setItem('selectedModel', newModel);
             selectedModel = newModel;
         }
 
+        
         if (NEW_PASSWORD.value.trim()) {
             localStorage.setItem('password', NEW_PASSWORD.value.trim());
             NEW_PASSWORD.value = ""; 
         }
 
+        
         localStorage.setItem('keybind', newKeybind);
     });
 
@@ -132,6 +142,8 @@ document.addEventListener("DOMContentLoaded", () => {
         clickedTab.classList.add("active");
         contentTab.classList.add("active");
     }
+
+    
 
     function appendMessage(sender, text) {
         const messageDiv = document.createElement("div");
@@ -156,6 +168,8 @@ document.addEventListener("DOMContentLoaded", () => {
             setTimeout(() => alertBox.remove(), 500);
         }, 3000);
     }
+
+    
 
     async function validateApiKey(key) {
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`;
@@ -196,6 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedModel = getSelectedModel(); 
         let apiModelName = selectedModel;
 
+        
         if (selectedModel.includes('llama') || selectedModel.includes('mistral')) {
             appendMessage("system", `⚠️ The selected model, **${selectedModel}**, is currently a placeholder for the Prysmis AI platform. Using **Gemini 2.5 Pro** for generation.`);
             apiModelName = 'gemini-2.5-pro'; 
@@ -263,6 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    
     if (currentUsername) {
         transitionToChat(currentUsername);
     } else {
