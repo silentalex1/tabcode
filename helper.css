@@ -1,53 +1,63 @@
 body {
     font-family: 'Poppins', sans-serif;
-    background: #0F172A; 
     color: white;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     margin: 0;
+    /* Visual Background Improvement */
+    background: radial-gradient(circle at 15% 50%, #1e3a8a 0%, transparent 25%),
+                radial-gradient(circle at 85% 50%, #4c1d95 0%, transparent 25%),
+                #0F172A; /* Base dark color */
+    background-blend-mode: screen, difference, normal;
+    background-size: cover;
     transition: background-color 0.5s;
 }
 
 main {
     width: 100%;
-    max-width: 400px;
+    max-width: 450px; /* Slightly wider card */
     padding: 20px;
     text-align: center;
 }
 
+/* Enhanced Card Style */
 .card {
-    background: #1E293B;
-    padding: 40px;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    background: rgba(30, 41, 59, 0.95); /* Semi-transparent background */
+    backdrop-filter: blur(10px); /* Subtle blur effect */
+    padding: 50px;
+    border-radius: 20px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8);
     transition: opacity 0.5s ease-out;
-    border: 1px solid #334155;
+    border: 1px solid rgba(51, 65, 85, 0.5); /* Lighter, subtle border */
 }
 
 .card-title {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 800;
-    color: #FBBF24;
+    color: #3B82F6; /* Use a cool blue accent */
     margin-bottom: 5px;
+    letter-spacing: 1px;
 }
 
 .card-text {
-    font-size: 1rem;
+    font-size: 1.1rem;
     color: #94A3B8;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
+    font-weight: 400;
 }
 
+/* Input Styling */
 #invite-input {
     width: 100%;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    border: 1px solid #475569;
+    padding: 18px;
+    margin-bottom: 25px;
+    border-radius: 10px;
+    border: 2px solid #475569;
     background-color: #0F172A;
     color: #F8FAFC;
-    font-size: 1.2rem;
+    font-size: 1.4rem; /* Larger text for focus */
     text-align: center;
     transition: border-color 0.3s, box-shadow 0.3s;
     font-weight: 600;
@@ -55,25 +65,27 @@ main {
 
 #invite-input:focus {
     outline: none;
-    border-color: #FBBF24;
-    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.4);
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
 }
 
+/* Button Styling */
 #submit-button {
     width: 100%;
-    padding: 15px;
-    background-color: #FBBF24;
-    color: #1E293B;
+    padding: 16px;
+    background-color: #3B82F6; /* Blue button */
+    color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 1.2rem;
+    border-radius: 10px;
+    font-size: 1.3rem;
     font-weight: 700;
     cursor: pointer;
     transition: background-color 0.3s, transform 0.1s;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
 #submit-button:hover {
-    background-color: #EAB308;
+    background-color: #2563EB;
 }
 
 #submit-button:active {
@@ -82,7 +94,7 @@ main {
 
 .error {
     color: #F87171;
-    margin-top: 15px;
+    margin-top: 20px;
     font-weight: 600;
 }
 
@@ -90,24 +102,25 @@ main {
     display: none !important;
 }
 
+/* Chat Interface Styling */
 #chat-interface {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 650px;
+    max-width: 700px; /* Slightly wider chat window */
     height: 90vh;
     background-color: #1E293B;
     border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 15px 60px rgba(0, 0, 0, 0.9);
     overflow: hidden;
     border: 1px solid #334155;
 }
 
 .chat-header {
     background-color: #334155;
-    color: #FBBF24;
-    padding: 15px 20px;
-    font-size: 1.5rem;
+    color: #3B82F6;
+    padding: 18px 25px;
+    font-size: 1.6rem;
     font-weight: 800;
     border-bottom: 1px solid #475569;
     display: flex;
@@ -116,7 +129,7 @@ main {
 }
 
 .user-id-display-text {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 400;
     color: #94A3B8;
     padding: 5px 10px;
@@ -126,31 +139,31 @@ main {
 
 #messages-container {
     flex-grow: 1;
-    padding: 20px;
+    padding: 25px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
 }
 
 .message {
-    max-width: 90%;
-    padding: 12px 18px;
-    border-radius: 12px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    max-width: 85%;
+    padding: 14px 20px;
+    border-radius: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .user-message {
     align-self: flex-end;
-    background-color: #FBBF24; 
-    color: #1E293B; 
+    background-color: #3B82F6; 
+    color: white; 
     border-bottom-right-radius: 4px;
 }
 
 .ai-message {
     align-self: flex-start;
     background-color: #334155; 
-    color: white;
+    color: #E2E8F0;
     border-bottom-left-radius: 4px;
 }
 
@@ -158,20 +171,21 @@ main {
     font-size: 0.75rem;
     font-weight: 700;
     margin-bottom: 4px;
-    opacity: 0.8;
+    opacity: 0.9;
+    text-transform: uppercase;
 }
 
 .user-message .message-sender {
-    color: #1E293B;
+    color: white;
 }
 
 .ai-message .message-sender {
-    color: #FBBF24;
+    color: #3B82F6;
 }
 
 .message-content {
-    font-size: 0.95rem;
-    line-height: 1.4;
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
 .input-area {
@@ -185,24 +199,25 @@ main {
     flex-grow: 1;
     padding: 12px;
     border-radius: 8px;
-    border: none;
+    border: 1px solid #475569;
     background-color: #334155;
     color: white;
     font-size: 1rem;
     resize: none;
     max-height: 100px;
     margin-right: 10px;
-    transition: box-shadow 0.3s;
+    transition: box-shadow 0.3s, border-color 0.3s;
 }
 
 #message-input:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.4);
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
 }
 
 #send-button {
-    background-color: #FBBF24;
-    color: #1E293B;
+    background-color: #3B82F6;
+    color: white;
     border: none;
     border-radius: 8px;
     padding: 10px 20px;
@@ -213,7 +228,7 @@ main {
 }
 
 #send-button:hover {
-    background-color: #EAB308;
+    background-color: #2563EB;
 }
 
 #send-button:active {
