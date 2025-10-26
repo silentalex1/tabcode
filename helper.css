@@ -1,145 +1,168 @@
 :root {
-    --primary-color: #f7a072;
-    --secondary-color: #8c8c8c;
-    --background-color: #0d0d1a;
-    --card-background: #1a1a2e;
-    --text-color: #e0e0f0;
-    --input-background: #23233b;
-    --border-radius-sm: 8px;
-    --border-radius-lg: 16px;
-    --padding-lg: 30px;
+    /* Basic, less vibrant colors for the "old" interface */
+    --primary-color: #3f51b5; /* Simple blue */
+    --secondary-color: #999;
+    --background-color: #121212; /* Deep dark gray */
+    --card-background: #1e1e1e;
+    --text-color: #f0f0f0;
+    --input-background: #2c2c2c;
+    --border-radius-sm: 4px;
+    --border-radius-lg: 8px;
+    --padding-md: 20px;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 0;
     background-color: var(--background-color);
     color: var(--text-color);
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
     min-height: 100vh;
-    justify-content: center;
+    transition: background-color 0.3s;
+    overflow: hidden;
 }
 
-.helper-container {
-    width: 90%;
-    max-width: 850px;
+/* --- Login Container Style (for homeworkhelper.html) --- */
+.login-container-helper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
     background-color: var(--card-background);
     border-radius: var(--border-radius-lg);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
-    padding: var(--padding-lg);
-    margin: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 350px;
 }
 
-.header {
-    text-align: center;
-    margin-bottom: var(--padding-lg);
+.login-container-helper h1 {
     color: var(--primary-color);
-    border-bottom: 2px solid var(--input-background);
-    padding-bottom: 15px;
+    margin-bottom: 25px;
+    font-size: 1.8em;
 }
 
-.header h1 {
-    margin: 0;
-    font-size: 2.8em;
-    font-weight: 700;
-}
-
-.header p {
-    color: var(--secondary-color);
-    font-size: 1.1em;
-}
-
-.input-group {
-    margin-bottom: 30px;
-}
-
-.input-group label {
-    display: block;
-    margin-bottom: 10px;
-    font-weight: 600;
-    color: var(--text-color);
-    font-size: 1.1em;
-}
-
-.input-group textarea {
+.login-container-helper input {
     width: 100%;
-    padding: 18px;
-    border: 1px solid #36365c;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid var(--input-background);
     border-radius: var(--border-radius-sm);
     background-color: var(--input-background);
     color: var(--text-color);
     box-sizing: border-box;
-    font-size: 16px;
-    resize: vertical;
-    min-height: 150px;
-    transition: box-shadow 0.3s;
+    font-size: 14px;
 }
 
-.input-group textarea:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px var(--primary-color);
-}
-
-.action-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 20px;
-}
-
-.action-buttons button {
-    padding: 14px 30px;
+.login-container-helper button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 20px;
     border: none;
     border-radius: var(--border-radius-sm);
+    background-color: var(--primary-color);
+    color: white;
     font-size: 16px;
     cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s, transform 0.1s;
+    transition: background-color 0.2s;
 }
 
-#submit-button {
-    background-color: var(--primary-color);
-    color: var(--background-color);
+.login-container-helper button:hover {
+    background-color: #3041a0;
 }
 
-#clear-button {
-    background-color: var(--secondary-color);
-    color: var(--text-color);
+#helper-error-message {
+    color: #ff5555;
+    margin-top: 10px;
+    height: 20px;
+    font-size: 12px;
 }
 
-#submit-button:hover {
-    background-color: #e58757;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(247, 160, 114, 0.4);
-}
-    
-#clear-button:hover {
-    background-color: #707070;
-    transform: translateY(-2px);
+
+/* --- Chat UI Style (for homeworkhelper.html after login) --- */
+.chat-ui-helper {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    max-width: 100vw;
+    position: absolute;
+    z-index: 1;
 }
 
-.output-area {
-    margin-top: 40px;
-    padding-top: 30px;
-    border-top: 2px solid var(--input-background);
+.chat-navbar-helper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #282828;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-.output-area h2 {
+.chat-navbar-helper h2 {
+    margin: 0;
     color: var(--primary-color);
-    margin-top: 0;
-    font-size: 1.8em;
-    margin-bottom: 15px;
+    font-size: 1.2em;
 }
 
-#output-content {
-    background-color: var(--input-background);
-    padding: 20px;
+.chat-navbar-helper button {
+    padding: 6px 12px;
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    border: none;
     border-radius: var(--border-radius-sm);
-    white-space: pre-wrap;
-    min-height: 200px;
-    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
-    line-height: 1.7;
-    font-size: 1em;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.chat-area-helper {
+    flex-grow: 1;
+    padding: 70px 20px 100px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-message-helper {
+    max-width: 70%;
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 15px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    background-color: #444; /* Standard message background */
+    align-self: flex-start;
+}
+
+.input-area-helper {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    padding: 15px; 
+    background-color: #121212;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+#chat-input-helper {
+    flex-grow: 1;
+    max-width: 800px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 20px;
+    background-color: var(--input-background);
+    color: var(--text-color);
+    font-size: 14px;
+    resize: none;
+    overflow: hidden;
+}
+
+#chat-input-helper:focus {
+    outline: 1px solid var(--primary-color);
 }
