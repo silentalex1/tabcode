@@ -2,44 +2,161 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TabCode - Calculator</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TabCoded your best #1 calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; 
+        }
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+        .btn {
+            font-weight: 600;
+            padding: 1rem;
+            min-height: 4.5rem;
+            transition: transform 0.1s, background-color 0.1s, box-shadow 0.1s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .btn:active {
+            transform: scale(0.95);
+            box-shadow: none;
+        }
+    </style>
 </head>
-<body>
-    <div id="calculator-container">
-        <div id="calculator">
-            <div id="display-container">
-                <input type="text" id="display" value="">
-            </div>
-            <div id="buttons">
-                <button class="btn func special-clear" data-value="C">C</button>
-                <button class="btn func special-del" data-value="del">DEL</button>
-                <button class="btn func special-deg" data-value="**">&deg;</button>
-                <button class="btn op" data-value="/">÷</button>
+<body class="flex items-center justify-center min-h-screen p-4">
 
-                <button class="btn num" data-value="7">7</button>
-                <button class="btn num" data-value="8">8</button>
-                <button class="btn num" data-value="9">9</button>
-                <button class="btn op" data-value="*">×</button>
-
-                <button class="btn num" data-value="4">4</button>
-                <button class="btn num" data-value="5">5</button>
-                <button class="btn num" data-value="6">6</button>
-                <button class="btn op" data-value="-">−</button>
-
-                <button class="btn num" data-value="1">1</button>
-                <button class="btn num" data-value="2">2</button>
-                <button class="btn num" data-value="3">3</button>
-                <button class="btn op" data-value="+">+</button>
-                
-                <button class="btn num double-zero" data-value="00">00</button>
-                <button class="btn num single-zero" data-value="0">0</button>
-                <button class="btn num decimal" data-value=".">.</button>
-                <button class="btn equals" data-value="=">=</button>
-            </div>
+    <div class="w-full max-w-sm bg-gray-900 p-6 rounded-[2rem] shadow-[0_15px_30px_-5px_rgba(0,0,0,0.5)]">
+        
+        <div class="text-white text-right mb-6">
+            <div id="input-buffer" class="text-yellow-400 text-xl font-medium min-h-6 mb-1 opacity-75"></div>
+            <input type="text" id="display" class="w-full bg-gray-900 text-6xl font-extrabold p-3 rounded-2xl focus:outline-none placeholder-gray-600 transition-all duration-150 border-4 border-gray-800" value="" placeholder="0" readonly>
         </div>
+
+        <div class="calculator-grid">
+            
+            <button class="btn bg-gray-700 text-yellow-400 rounded-2xl text-2xl" onclick="clearDisplay()">C</button>
+            <button class="btn bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('(')">(</button>
+            <button class="btn bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput(')')">)</button>
+            <button class="btn bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-2xl text-2xl" onclick="appendInput('/')">÷</button>
+
+            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('7')">7</button>
+            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('8')">8</button>
+            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('9')">9</button>
+            <button class="btn bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-2xl text-2xl" onclick="appendInput('*')">×</button>
+
+            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('4')">4</button>
+            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('5')">5</button>
+            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('6')">6</button>
+            <button class="btn bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-2xl text-2xl" onclick="appendInput('-')">-</button>
+
+            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('1')">1</button>
+            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('2')">2</button>
+            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('3')">3</button>
+            <button class="btn bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-2xl text-2xl" onclick="appendInput('+')">+</button>
+
+            <button class="btn bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('°')">°</button>
+            <button class="btn bg-gray-700 text-white rounded-2xl text-2xl" onclick="backspace()">DEL</button>
+            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('0')">0</button>
+            <button class="btn bg-gray-700 text-white rounded-2xl text-2xl" onclick="appendInput('.')">.</button>
+            
+        </div>
+        <button class="w-full btn bg-yellow-400 hover:bg-yellow-300 text-gray-900 rounded-2xl text-3xl mt-3" onclick="calculate()">=</button>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        const display = document.getElementById('display');
+        const buffer = document.getElementById('input-buffer');
+        
+        let currentInput = '';
+        let hasError = false;
+
+        const allowedKeys = '0123456789+-*/.()caAiI'; 
+
+        function appendInput(value) {
+            if (hasError) {
+                clearDisplay();
+            }
+            currentInput += value;
+            display.value = currentInput;
+        }
+
+        function clearDisplay() {
+            currentInput = '';
+            display.value = '';
+            buffer.textContent = '';
+            hasError = false;
+        }
+
+        function backspace() {
+            if (currentInput.length > 0) {
+                currentInput = currentInput.slice(0, -1);
+                display.value = currentInput;
+                hasError = false;
+            }
+        }
+
+        function calculate() {
+            if (currentInput === '') return;
+
+            if (currentInput.toLowerCase().replace(/\s/g, '') === 'a+i') {
+                window.location.href = '/homeworkhelp';
+                return;
+            }
+
+            try {
+                let expression = currentInput.replace(/×/g, '*').replace(/÷/g, '/');
+                
+                if (expression.includes('°')) {
+                    expression = expression.replace(/(\d+(\.\d+)?)\s*°/g, (match, p1) => {
+                        return `(${p1} * (Math.PI / 180))`;
+                    });
+                }
+                
+                const result = eval(expression);
+                
+                buffer.textContent = currentInput;
+
+                if (result === undefined || result === null || isNaN(result) || !isFinite(result)) {
+                    throw new Error("Invalid calculation");
+                }
+                
+                currentInput = String(result);
+                display.value = currentInput;
+                hasError = false;
+
+            } catch (error) {
+                currentInput = '';
+                display.value = 'Error';
+                buffer.textContent = '';
+                hasError = true;
+                
+            }
+        }
+
+        document.addEventListener('keydown', (event) => {
+            const key = event.key;
+            
+            if (allowedKeys.includes(key)) {
+                event.preventDefault(); 
+                if (key.toLowerCase() === 'c') {
+                    clearDisplay();
+                } else {
+                    appendInput(key);
+                }
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                calculate();
+            } else if (key === 'Backspace') {
+                event.preventDefault();
+                backspace();
+            }
+        });
+    </script>
 </body>
 </html>
