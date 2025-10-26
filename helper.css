@@ -1,18 +1,16 @@
 :root {
-    /* Basic, less vibrant colors for the "old" interface */
-    --primary-color: #3f51b5; /* Simple blue */
-    --secondary-color: #999;
-    --background-color: #121212; /* Deep dark gray */
-    --card-background: #1e1e1e;
-    --text-color: #f0f0f0;
-    --input-background: #2c2c2c;
-    --border-radius-sm: 4px;
-    --border-radius-lg: 8px;
-    --padding-md: 20px;
+    --primary-color: #5d5dff;
+    --secondary-color: #8c8c8c;
+    --background-color: #1a1a2e;
+    --card-background: #272744;
+    --text-color: #e0e0f0;
+    --input-background: #36365c;
+    --border-radius-sm: 8px;
+    --border-radius-lg: 12px;
 }
 
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 0;
     background-color: var(--background-color);
@@ -21,148 +19,260 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    transition: background-color 0.3s;
-    overflow: hidden;
 }
 
-/* --- Login Container Style (for homeworkhelper.html) --- */
-.login-container-helper {
+/* --- Login / Register UI --- */
+.login-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 30px;
+    padding: 40px;
     background-color: var(--card-background);
     border-radius: var(--border-radius-lg);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
     width: 90%;
-    max-width: 350px;
+    max-width: 450px;
+    transition: opacity 0.5s ease-out;
 }
 
-.login-container-helper h1 {
+.login-container h1 {
     color: var(--primary-color);
-    margin-bottom: 25px;
+    margin-bottom: 30px;
+    text-align: center;
     font-size: 1.8em;
 }
 
-.login-container-helper input {
+.login-container input {
     width: 100%;
-    padding: 10px;
-    margin: 10px 0;
+    padding: 15px 20px;
+    margin: 12px 0;
     border: 1px solid var(--input-background);
     border-radius: var(--border-radius-sm);
     background-color: var(--input-background);
     color: var(--text-color);
     box-sizing: border-box;
-    font-size: 14px;
+    font-size: 16px;
+    transition: border-color 0.3s;
 }
 
-.login-container-helper button {
+.login-container input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.login-container button {
     width: 100%;
-    padding: 10px;
-    margin-top: 20px;
+    padding: 15px;
+    margin-top: 30px;
     border: none;
     border-radius: var(--border-radius-sm);
     background-color: var(--primary-color);
-    color: white;
-    font-size: 16px;
+    color: var(--background-color);
+    font-size: 18px;
+    font-weight: bold;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.1s;
 }
 
-.login-container-helper button:hover {
-    background-color: #3041a0;
+.login-container button:hover {
+    background-color: #4b4bdf;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(93, 93, 255, 0.4);
 }
 
-#helper-error-message {
-    color: #ff5555;
+#error-message {
+    color: #ff6b6b;
     margin-top: 10px;
     height: 20px;
-    font-size: 12px;
+    font-size: 14px;
+    text-align: center;
 }
 
-
-/* --- Chat UI Style (for homeworkhelper.html after login) --- */
-.chat-ui-helper {
+/* --- Chat UI --- */
+.chat-ui {
     display: none;
     flex-direction: column;
     width: 100%;
     height: 100vh;
-    max-width: 100vw;
-    position: absolute;
-    z-index: 1;
 }
 
-.chat-navbar-helper {
+.chat-navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
-    background-color: #282828;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    padding: 15px 30px;
+    background-color: var(--card-background);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    margin: 10px auto;
+    width: calc(100% - 60px);
+    max-width: 1200px;
+    border-radius: var(--border-radius-lg);
 }
 
-.chat-navbar-helper h2 {
+.chat-navbar h2 {
     margin: 0;
-    color: var(--primary-color);
-    font-size: 1.2em;
+    color: var(--text-color);
+    font-size: 1.5em;
 }
 
-.chat-navbar-helper button {
-    padding: 6px 12px;
+.nav-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-buttons button {
+    padding: 10px 18px;
     background-color: var(--primary-color);
     color: var(--text-color);
     border: none;
     border-radius: var(--border-radius-sm);
     cursor: pointer;
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: background-color 0.2s;
 }
 
-.chat-area-helper {
+.nav-buttons button:nth-child(2) {
+    background-color: var(--input-background);
+    border: 1px solid var(--primary-color);
+}
+
+.nav-buttons button:hover {
+    background-color: #4b4bdf;
+}
+
+.chat-area {
     flex-grow: 1;
-    padding: 70px 20px 100px 20px;
+    padding: 100px 30px 100px 30px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    margin: 0 auto;
+    width: calc(100% - 60px);
+    max-width: 1200px;
 }
 
-.chat-message-helper {
-    max-width: 70%;
-    padding: 10px 15px;
-    margin: 5px 0;
-    border-radius: 15px;
-    line-height: 1.4;
+.chat-message {
+    max-width: 65%;
+    padding: 12px 18px;
+    margin: 8px 0;
+    border-radius: 18px;
+    line-height: 1.5;
     word-wrap: break-word;
-    background-color: #444; /* Standard message background */
-    align-self: flex-start;
 }
 
-.input-area-helper {
+.ai-message {
+    background-color: var(--input-background);
+    align-self: flex-start;
+    color: var(--text-color);
+    border-bottom-left-radius: 4px; 
+}
+
+.user-message {
+    background-color: var(--primary-color);
+    align-self: flex-end;
+    color: var(--card-background);
+    border-bottom-right-radius: 4px;
+}
+
+.input-area {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     display: flex;
     justify-content: center;
-    padding: 15px; 
-    background-color: #121212;
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.5);
+    padding: 20px; 
+    background-color: var(--background-color);
     z-index: 10;
 }
 
-#chat-input-helper {
+#chat-input {
     flex-grow: 1;
     max-width: 800px;
-    padding: 12px 20px;
+    padding: 15px 25px;
     border: none;
-    border-radius: 20px;
+    border-radius: 30px;
     background-color: var(--input-background);
     color: var(--text-color);
-    font-size: 14px;
+    font-size: 16px;
     resize: none;
     overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
-#chat-input-helper:focus {
-    outline: 1px solid var(--primary-color);
+#chat-input:focus {
+    outline: 2px solid var(--primary-color);
+}
+
+/* --- Settings Button --- */
+.settings-button {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    background: var(--card-background);
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s, background-color 0.2s;
+    z-index: 20;
+}
+
+.settings-button:hover {
+    transform: rotate(30deg);
+    background-color: var(--primary-color);
+}
+
+.settings-button svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--text-color);
+}
+
+/* --- AI Thinking Animation --- */
+.thinking-animation {
+    display: flex;
+    align-items: center;
+    padding: 12px 18px;
+    margin: 8px 0;
+    border-radius: 18px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    background-color: var(--input-background);
+    align-self: flex-start;
+}
+
+.thinking-dot {
+    width: 8px;
+    height: 8px;
+    margin: 0 4px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    opacity: 0;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.thinking-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.thinking-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
