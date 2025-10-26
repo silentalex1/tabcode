@@ -17,8 +17,22 @@
     </main>
 
     <div id="chat-interface" class="hidden">
-        <h1 class="chat-header">Welcome to TabCoded AI Help!</h1>
-        <p class="chat-placeholder">The chat interface will appear here once it's ready.</p>
+        
+        <div id="navbar">
+            <div id="logo">prysmis ai</div>
+            <div id="nav-empty"></div> 
+            <button id="settings-button">⚙️</button>
+        </div>
+
+        <div id="chat-content">
+            <div id="ai-greeting">Welcome to prysmis ai! How may i help you?</div>
+            
+        </div>
+
+        <div id="chat-input-container">
+            <input type="text" id="chat-input" placeholder="Ask prysmis ai anything.. or use '/' commands.">
+        </div>
+
     </div>
 
     <script src="backend.js"></script>
