@@ -1,632 +1,71 @@
-:root {
-    --color-bg: #111827;
-    --color-card-bg: #1f2937;
-    --color-text: #f3f4f6;
-    --color-primary: #3b82f6;
-    --color-primary-hover: #2563eb;
-    --color-border: #374151;
-    --color-input-bg: #141a24;
-    --color-error: #ef4444;
-    --color-sidebar-bg: #171f2c;
-    --color-tab-active: #1f2937;
-    --shadow-deep: 0 12px 30px rgba(0, 0, 0, 0.5);
-    --font-main: 'Inter', sans-serif;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-html, body {
-    height: 100%;
-}
-
 body {
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-family: var(--font-main);
+    font-family: Arial, sans-serif;
+    background-color: #f3f4f6;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    height: 100vh;
+    margin: 0;
 }
 
-#registration-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: var(--color-bg);
-    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
-    z-index: 1000;
-}
-
-#registration-modal.fade-out {
-    opacity: 0;
-    visibility: hidden;
-}
-
-#reg-content {
-    background: var(--color-card-bg);
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: var(--shadow-deep);
-    width: 100%;
-    max-width: 380px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.container {
     text-align: center;
 }
 
-#reg-content h1 {
-    font-size: 1.5em;
-    margin-bottom: 5px;
-    color: var(--color-primary);
-}
-
-#reg-content input {
-    padding: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    background: var(--color-input-bg);
-    color: var(--color-text);
-    font-size: 1em;
-    outline: none;
-}
-
-#reg-content input:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 1px var(--color-primary);
-}
-
-#register-btn {
-    padding: 12px;
-    background: var(--color-primary);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-#register-btn:hover {
-    background: var(--color-primary-hover);
-}
-
-.error-message {
-    color: var(--color-error);
-    font-size: 0.9em;
-    height: 1.2em;
-    visibility: hidden;
-}
-
-#chat-interface {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 20px;
-}
-
-#chat-interface.hidden {
-    display: none;
-}
-
-#chat-window {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    max-height: 100%;
-}
-
-#chat-messages {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding-right: 15px;
-    padding-bottom: 20px;
-}
-
-.ai-message, .user-message {
-    padding: 10px 15px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    line-height: 1.4;
-    max-width: 80%;
-}
-
-.ai-message {
-    background: var(--color-card-bg);
-    color: var(--color-text);
-    align-self: flex-start;
-}
-
-.user-message {
-    background: var(--color-primary);
-    color: white;
-    align-self: flex-end;
-    margin-left: auto;
-}
-
-.ai-message span, .user-message span {
-    font-weight: 600;
-}
-
-#chat-input-container {
-    display: flex;
-    padding-top: 20px;
-    border-top: 1px solid var(--color-border);
-}
-
-#chat-input {
-    flex-grow: 1;
-    padding: 15px;
-    border: 1px solid var(--color-border);
-    border-radius: 10px 0 0 10px;
-    background: var(--color-input-bg);
-    color: var(--color-text);
-    font-size: 1em;
-    outline: none;
-}
-
-#send-btn {
-    padding: 15px 25px;
-    background: var(--color-primary);
-    color: white;
-    border: none;
-    border-radius: 0 10px 10px 0;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-#send-btn:hover {
-    background: var(--color-primary-hover);
-}
-
-.settings-icon-placeholder {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: var(--color-primary);
-}
-
-#settings-btn {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    width: 50px;
-    height: 50px;
-    background: var(--color-card-bg);
-    border: none;
-    border-radius: 50%;
-    box-shadow: var(--shadow-deep);
-    cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 900;
-}
-
-#settings-btn:hover {
-    background: var(--color-border);
-    transform: rotate(15deg);
-}
-
-#settings-btn svg {
-    width: 24px;
-    height: 24px;
-    color: var(--color-primary);
-}
-
-#settings-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 800px;
-    height: 80%;
-    max-height: 600px;
-    background: var(--color-card-bg);
-    border-radius: 12px;
-    box-shadow: var(--shadow-deep);
-    z-index: 1000;
-    display: none;
-}
-
-#settings-modal.show {
+.form input {
     display: block;
-}
-
-#settings-panel {
-    display: flex;
-    height: 100%;
-}
-
-#settings-sidebar {
-    width: 200px;
-    background: var(--color-sidebar-bg);
-    border-right: 1px solid var(--color-border);
-    padding: 20px 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.settings-tab {
-    background: none;
-    border: none;
-    padding: 15px 20px;
-    text-align: left;
-    color: var(--color-text);
-    font-size: 1em;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.settings-tab:hover:not(.active) {
-    background: var(--color-border);
-}
-
-.settings-tab.active {
-    background: var(--color-card-bg);
-    border-left: 3px solid var(--color-primary);
-    font-weight: 600;
-}
-
-#settings-content {
-    flex-grow: 1;
-    padding: 30px;
-    position: relative;
-}
-
-.settings-tab-content {
-    display: none;
-    flex-direction: column;
-    gap: 25px;
-}
-
-.settings-tab-content.active {
-    display: flex;
-}
-
-.setting-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.setting-group label {
-    font-weight: 600;
-    font-size: 0.95em;
-}
-
-#gemini-api-key, #keybind-input, #new-username, #new-password {
+    margin: 10px auto;
     padding: 10px;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    background: var(--color-input-bg);
-    color: var(--color-text);
-    font-size: 1em;
-    outline: none;
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
-#generate-key-link {
-    color: var(--color-primary);
-    text-decoration: none;
-    font-size: 0.9em;
-    transition: color 0.2s;
-}
-
-#generate-key-link:hover {
-    color: var(--color-primary-hover);
-    text-decoration: underline;
-}
-
-#save-settings-btn {
-    position: absolute;
-    bottom: 30px;
-    right: 30px;
+button {
     padding: 10px 20px;
-    background: var(--color-primary);
+    background-color: #007bff;
     color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 1em;
+    border-radius: 5px;
     cursor: pointer;
-    transition: background 0.2s;
 }
 
-#save-settings-btn:hover {
-    background: var(--color-primary-hover);
+.hidden {
+    display: none;
 }
 
-.setting-group-switch {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
+.greeting {
+    margin: 20px 0;
 }
 
-.switch-label {
-    color: white;
-}
-
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 48px;
-    height: 24px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
+.settings-icon {
     cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--color-btn-func);
-    transition: .4s;
+    font-size: 24px;
 }
 
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
+#settingsUI {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -20%);
     background-color: white;
-    transition: .4s;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-input:checked + .slider {
-    background-color: var(--color-primary);
+.close {
+    cursor: pointer;
+    float: right;
 }
 
-input:checked + .slider:before {
-    transform: translateX(24px);
+.sidebar {
+    margin-bottom: 20px;
 }
 
-.slider.round {
-    border-radius: 24px;
+.toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
-
-.slider.round:before {
-    border-radius: 50%;
-}
-```eof
-
----
-
-## 🛠️ `backend.js` (Core Logic)
-
-```javascript
-document.addEventListener("DOMContentLoaded", () => {
-    const REG_MODAL = document.getElementById("registration-modal");
-    const REG_USERNAME_INPUT = document.getElementById("reg-username");
-    const REG_PASSWORD_INPUT = document.getElementById("reg-password");
-    const REG_INVITE_INPUT = document.getElementById("reg-invite");
-    const REGISTER_BTN = document.getElementById("register-btn");
-    const REG_ERROR_MSG = document.getElementById("reg-error");
-
-    const CHAT_INTERFACE = document.getElementById("chat-interface");
-    const CHAT_USERNAME_SPAN = document.getElementById("chat-username");
-    const SETTINGS_BTN = document.getElementById("settings-btn");
-    const CHAT_INPUT = document.getElementById("chat-input");
-    const SEND_BTN = document.getElementById("send-btn");
-    const CHAT_MESSAGES_DIV = document.getElementById("chat-messages");
-
-    const SETTINGS_MODAL = document.getElementById("settings-modal");
-    const MODAL_BACKDROP = document.getElementById("modal-backdrop");
-    const TAB_AI = document.getElementById("tab-ai");
-    const TAB_USER = document.getElementById("tab-user");
-    const AI_SETTINGS_TAB = document.getElementById("ai-settings-tab");
-    const USER_SETTINGS_TAB = document.getElementById("user-settings-tab");
-    const GEMINI_API_KEY_INPUT = document.getElementById("gemini-api-key");
-    const KEYBIND_INPUT = document.getElementById("keybind-input");
-    const FAST_AI_SWITCH = document.getElementById("fast-ai-switch");
-    const NEW_USERNAME_INPUT = document.getElementById("new-username");
-    const SAVE_SETTINGS_BTN = document.getElementById("save-settings-btn");
-
-    const INVITE_CODE = "Tabcode44$$";
-    const GEMINI_MODEL = "gemini-2.5-pro";
-
-    let storedApiKey = localStorage.getItem('geminiApiKey') || '';
-    let currentUsername = localStorage.getItem('username') || '';
-
-    function transitionToChat(username) {
-        REG_ERROR_MSG.style.visibility = "hidden";
-        REG_MODAL.classList.add("fade-out");
-        
-        setTimeout(() => {
-            REG_MODAL.style.display = "none";
-            CHAT_INTERFACE.classList.remove("hidden");
-            CHAT_USERNAME_SPAN.textContent = username;
-            NEW_USERNAME_INPUT.value = username;
-        }, 500);
-    }
-
-    function displayError(message) {
-        REG_ERROR_MSG.textContent = message;
-        REG_ERROR_MSG.style.visibility = "visible";
-    }
-
-    REGISTER_BTN.addEventListener("click", () => {
-        const username = REG_USERNAME_INPUT.value.trim();
-        const password = REG_PASSWORD_INPUT.value.trim();
-        const invite = REG_INVITE_INPUT.value;
-
-        if (!username || !password || !invite) {
-            displayError("Please fill out all fields.");
-            return;
-        }
-
-        if (invite !== INVITE_CODE) {
-            displayError("Invalid invite code.");
-            return;
-        }
-
-        localStorage.setItem('username', username);
-        localStorage.setItem('password', password); 
-        currentUsername = username;
-        transitionToChat(username);
-    });
-
-    SETTINGS_BTN.addEventListener("click", () => {
-        GEMINI_API_KEY_INPUT.value = storedApiKey; 
-        SETTINGS_MODAL.classList.add("show");
-        MODAL_BACKDROP.classList.remove("hidden");
-    });
-
-    MODAL_BACKDROP.addEventListener("click", () => {
-        SETTINGS_MODAL.classList.remove("show");
-        MODAL_BACKDROP.classList.add("hidden");
-    });
-
-    SAVE_SETTINGS_BTN.addEventListener("click", () => {
-        const newKey = GEMINI_API_KEY_INPUT.value.trim();
-        const newKeybind = KEYBIND_INPUT.value.trim();
-
-        if (newKey && newKey.length > 5) { 
-            validateApiKey(newKey).then(isValid => {
-                if (isValid) {
-                    storedApiKey = newKey;
-                    localStorage.setItem('geminiApiKey', newKey);
-                    
-                    SETTINGS_MODAL.classList.remove("show");
-                    MODAL_BACKDROP.classList.add("hidden");
-                    appendMessage("system", "Gemini API key saved and validated. You can now chat.");
-                } else {
-                    alert("Invalid Gemini API Key. Please check the key and try again.");
-                }
-            });
-        } else {
-            SETTINGS_MODAL.classList.remove("show");
-            MODAL_BACKDROP.classList.add("hidden");
-        }
-        
-        if (NEW_PASSWORD.value.trim()) {
-            localStorage.setItem('password', NEW_PASSWORD.value.trim());
-            NEW_PASSWORD.value = ""; 
-        }
-
-        localStorage.setItem('keybind', newKeybind);
-        localStorage.setItem('fastAiMode', FAST_AI_SWITCH.checked);
-    });
-
-    TAB_AI.addEventListener("click", () => switchTab(TAB_AI, AI_SETTINGS_TAB));
-    TAB_USER.addEventListener("click", () => switchTab(TAB_USER, USER_SETTINGS_TAB));
-
-    function switchTab(clickedTab, contentTab) {
-        document.querySelectorAll(".settings-tab").forEach(tab => tab.classList.remove("active"));
-        document.querySelectorAll(".settings-tab-content").forEach(content => content.classList.remove("active"));
-        clickedTab.classList.add("active");
-        contentTab.classList.add("active");
-    }
-
-    function appendMessage(sender, text) {
-        const messageDiv = document.createElement("div");
-        messageDiv.className = sender === "user" ? "user-message" : "ai-message";
-        const senderSpan = document.createElement("span");
-        senderSpan.textContent = sender === "user" ? `${currentUsername}: ` : "Prysmis AI: ";
-        messageDiv.appendChild(senderSpan);
-        messageDiv.appendChild(document.createTextNode(text));
-        CHAT_MESSAGES_DIV.appendChild(messageDiv);
-        CHAT_MESSAGES_DIV.scrollTop = CHAT_MESSAGES_DIV.scrollHeight;
-    }
-
-    async function validateApiKey(key) {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`;
-        const payload = {
-            contents: [{ parts: [{ text: "test" }] }],
-            config: { maxOutputTokens: 1 }
-        };
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            return response.ok;
-        } catch (error) {
-            return false;
-        }
-    }
-
-    async function handleChat() {
-        const userPrompt = CHAT_INPUT.value.trim();
-        if (!userPrompt) return;
-
-        CHAT_INPUT.value = "";
-        appendMessage("user", userPrompt);
-
-        if (!storedApiKey) {
-            appendMessage("system", "Please enter your Gemini API key in the settings (⚙) to enable chat.");
-            return;
-        }
-
-        appendMessage("system", "Thinking...");
-
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${storedApiKey}`;
-        const payload = {
-            contents: [{ parts: [{ text: userPrompt }] }],
-            config: {
-                maxOutputTokens: 2048,
-                temperature: 0.7
-            }
-        };
-
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error("API Error:", errorData);
-                appendMessage("system", "Error: The API key may be invalid, or an external error occurred. Check the key in settings.");
-                return;
-            }
-
-            const data = await response.json();
-            const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "No valid response from AI.";
-            
-            CHAT_MESSAGES_DIV.lastChild.remove(); 
-            appendMessage("system", aiResponse);
-
-        } catch (error) {
-            console.error("Fetch Error:", error);
-            appendMessage("system", "A network error occurred. Please try again later.");
-        }
-    }
-
-    SEND_BTN.addEventListener("click", handleChat);
-    CHAT_INPUT.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            handleChat();
-        }
-    });
-
-    if (currentUsername) {
-        transitionToChat(currentUsername);
-    } else {
-        REG_MODAL.style.display = "flex";
-    }
-});
