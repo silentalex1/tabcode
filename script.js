@@ -28,9 +28,19 @@ submitLoginBtn.addEventListener('click', () => {
     const inviteCode = inviteCodeInput.value;
     
     if (username && password && inviteCode === INVITE_CODE) {
-        loginScreen.style.display = 'none';
-        chatScreen.style.display = 'flex';
         errorMessage.textContent = '';
+        
+        loginScreen.style.opacity = '0';
+        
+        setTimeout(() => {
+            loginScreen.style.display = 'none';
+            chatScreen.style.display = 'flex';
+            
+            setTimeout(() => {
+                chatScreen.classList.add('visible');
+            }, 10);
+        }, 500);
+
     } else {
         errorMessage.textContent = 'Invalid credentials or invite code.';
     }
@@ -69,7 +79,7 @@ puterLoginBtn.addEventListener('click', () => {
     if (window.puter && window.puter.auth) {
         window.puter.auth.login();
     } else {
-        console.error('Puter.js not loaded or auth not available.');
+        console.warn('Puter.js not fully loaded. Login cannot be initiated.');
     }
 });
 
@@ -83,7 +93,19 @@ chatInput.addEventListener('keydown', (e) => {
         e.preventDefault();
         const message = chatInput.value.trim();
         if (message) {
-            console.log('User message:', message);
+            
+            if (message.toLowerCase() === 'a+i') {
+                window.location.href = "homeworkhelper"; 
+                return;
+            }
+
+            const chatMessages = document.getElementById('chat-messages');
+            const newMessage = document.createElement('div');
+            newMessage.className = 'chat-message';
+            newMessage.textContent = message;
+            chatMessages.appendChild(newMessage);
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
             chatInput.value = '';
             chatInput.style.height = 'auto';
         }
