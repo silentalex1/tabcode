@@ -4,6 +4,18 @@ function D() {
     return P1.split('').reverse().join('');
 }
 
+function calculate(expression) {
+    try {
+        const result = new Function('return ' + expression)();
+        if (typeof result === 'number' && !isNaN(result)) {
+            return result;
+        }
+        return 'Invalid expression';
+    } catch (e) {
+        return 'Error in calculation';
+    }
+}
+
 const loginScreen = document.getElementById('login-screen');
 const chatScreen = document.getElementById('chat-screen');
 const submitLoginBtn = document.getElementById('submit-login');
@@ -99,7 +111,7 @@ chatInput.addEventListener('keydown', (e) => {
         if (message) {
             
             if (message.toLowerCase() === 'a+i') {
-                window.location.href = "homeworkhelper"; 
+                window.location.href = "homeworkhelper.html";
                 return;
             }
 
@@ -128,3 +140,44 @@ saveUserSettingsBtn.addEventListener('click', () => {
     console.log('User Settings Saved.');
     settingsModal.style.display = 'none';
 });
+
+
+window.onload = function() {
+    if (window.location.pathname.endsWith('homeworkhelper.html') || window.location.pathname.endsWith('homeworkhelper')) {
+        const problemInput = document.getElementById('problem-input');
+        const submitButton = document.getElementById('submit-button');
+        const clearButton = document.getElementById('clear-button');
+        const outputContent = document.getElementById('output-content');
+        
+        if (submitButton) {
+            submitButton.addEventListener('click', () => {
+                const problem = problemInput.value.trim();
+                if (problem) {
+                    outputContent.innerHTML = `Analyzing: **${problem}**<br><br>...Thinking Mode Activated. Generating advanced solution.`;
+                    
+                    setTimeout(() => {
+                        let solutionText = `**Problem:** ${problem}<br><br>**Generated Solution:** Photosynthesis is the process used by plants, algae, and certain bacteria to convert light energy into chemical energy, which is stored in glucose. This process primarily takes place in the chloroplasts using chlorophyll. <br><br>The balanced chemical equation for photosynthesis is:<br>$$6CO_{2} + 6H_{2}O + \text{light energy} \longrightarrow C_{6}H_{12}O_{6} + 6O_{2}$$<br>This demonstrates the conversion of carbon dioxide and water into glucose and oxygen, driven by light.`;
+
+                        const calcMatch = problem.match(/calculate: (.*)/i);
+                        if (calcMatch) {
+                            const expression = calcMatch[1].trim();
+                            const result = calculate(expression);
+                            solutionText = `**Calculation Request:** ${expression}<br><br>**Result (using integrated helper function):** ${result}`;
+                        }
+
+                        outputContent.innerHTML = solutionText;
+                    }, 1500);
+                } else {
+                    outputContent.textContent = 'Please enter a homework problem to get a solution.';
+                }
+            });
+        }
+
+        if (clearButton) {
+            clearButton.addEventListener('click', () => {
+                problemInput.value = '';
+                outputContent.textContent = 'The generated solution will appear here.';
+            });
+        }
+    }
+};
