@@ -1,4 +1,8 @@
-const INVITE_CODE = "tabcoded44$$";
+const P1 = "$$44dedocbat";
+
+function D() {
+    return P1.split('').reverse().join('');
+}
 
 const loginScreen = document.getElementById('login-screen');
 const chatScreen = document.getElementById('chat-screen');
@@ -27,7 +31,7 @@ submitLoginBtn.addEventListener('click', () => {
     const password = passwordInput.value.trim();
     const inviteCode = inviteCodeInput.value;
     
-    if (username && password && inviteCode === INVITE_CODE) {
+    if (username && password && inviteCode === D()) {
         errorMessage.textContent = '';
         
         loginScreen.style.opacity = '0';
