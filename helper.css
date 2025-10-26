@@ -106,6 +106,7 @@ body {
     width: calc(100% - 40px);
     max-width: 1200px;
     border-radius: var(--border-radius-lg);
+    z-index: 5;
 }
 
 @media (max-width: 768px) {
@@ -280,4 +281,206 @@ body {
         transform: scale(1);
         opacity: 1;
     }
+}
+
+/* --- Settings Modal Styles --- */
+#settings-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 30;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-content {
+    background-color: var(--card-background);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9);
+    width: 90%;
+    max-width: 800px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--input-background);
+}
+
+.settings-header h2 {
+    margin: 0;
+    color: var(--primary-color);
+}
+
+#close-settings-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+#close-settings-btn:hover {
+    color: #ff6b6b;
+}
+
+.settings-body {
+    display: flex;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.settings-sidebar {
+    width: 200px;
+    background-color: var(--input-background);
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sidebar-button {
+    text-align: left;
+    padding: 15px 20px;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar-button:hover {
+    background-color: #4b4bdf;
+}
+
+.sidebar-button.active {
+    background-color: var(--card-background);
+    color: var(--primary-color);
+    border-left: 4px solid var(--primary-color);
+}
+
+.settings-main {
+    flex-grow: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.settings-tab {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.settings-tab.active {
+    display: flex;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    border-radius: var(--border-radius-sm);
+    background-color: #2e2e4e;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.setting-label {
+    font-size: 16px;
+}
+
+.setting-control select {
+    padding: 10px 15px;
+    border-radius: var(--border-radius-sm);
+    border: none;
+    background-color: var(--card-background);
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.settings-footer {
+    padding: 15px 30px;
+    border-top: 1px solid var(--input-background);
+    text-align: center;
+}
+
+#save-settings-btn {
+    padding: 12px 40px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#save-settings-btn:hover {
+    background-color: #4b4bdf;
 }
