@@ -1,11 +1,12 @@
 :root {
-    --primary-color: #007bff;
-    --secondary-color: #6c757d;
-    --background-color: #1a1a2e;
-    --card-background: #1e213a;
-    --text-color: #ffffff;
-    --input-background: #3e4460;
-    --border-radius: 8px;
+    --primary-color: #5d5dff; 
+    --secondary-color: #8c8c8c;
+    --background-color: #0d0d1a; 
+    --card-background: #1a1a2e;
+    --text-color: #e0e0f0;
+    --input-background: #23233b;
+    --border-radius-sm: 8px;
+    --border-radius-lg: 16px;
     --padding-md: 20px;
 }
 
@@ -28,10 +29,10 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--padding-md);
+    padding: 40px;
     background-color: var(--card-background);
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
     width: 90%;
     max-width: 400px;
     transition: opacity 0.5s ease-out;
@@ -42,39 +43,50 @@ body {
 .login-container h1 {
     color: var(--primary-color);
     margin-bottom: var(--padding-md);
+    font-size: 2em;
+    font-weight: bold;
 }
 
 .login-container input {
     width: 100%;
-    padding: 12px 15px;
-    margin: 10px 0;
-    border: none;
-    border-radius: var(--border-radius);
+    padding: 15px 20px;
+    margin: 12px 0;
+    border: 1px solid var(--input-background);
+    border-radius: var(--border-radius-sm);
     background-color: var(--input-background);
     color: var(--text-color);
     box-sizing: border-box;
     font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.login-container input:focus {
+    outline: none;
+    border-color: var(--primary-color);
 }
 
 .login-container button {
     width: 100%;
-    padding: 12px;
-    margin-top: 20px;
+    padding: 14px;
+    margin-top: 30px;
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-sm);
     background-color: var(--primary-color);
-    color: var(--text-color);
+    color: var(--background-color);
     font-size: 18px;
+    font-weight: bold;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.1s;
 }
 
 .login-container button:hover {
-    background-color: #0056b3;
+    background-color: #4b4bdf;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(93, 93, 255, 0.4);
 }
 
 #error-message {
-    color: #ff4d4d;
+    color: #ff6b6b;
     margin-top: 10px;
     height: 20px;
     font-size: 14px;
@@ -103,7 +115,7 @@ body {
     align-items: center;
     padding: 15px 30px;
     background-color: var(--card-background);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     position: fixed;
     top: 0;
     left: 0;
@@ -114,6 +126,7 @@ body {
 .chat-navbar h2 {
     margin: 0;
     color: var(--primary-color);
+    font-size: 1.5em;
 }
 
 .chat-navbar button {
@@ -121,37 +134,38 @@ body {
     background-color: var(--primary-color);
     color: var(--text-color);
     border: none;
-    border-radius: 5px;
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
     font-size: 16px;
     transition: background-color 0.2s;
 }
 
 .chat-navbar button:hover {
-    background-color: #0056b3;
+    background-color: #4b4bdf;
 }
 
 .chat-area {
     flex-grow: 1;
-    padding: 80px 20px 100px 20px;
+    padding: 90px 40px 130px 40px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
 }
 
 .chat-message {
-    max-width: 70%;
-    padding: 10px 15px;
-    margin: 10px 0;
-    border-radius: var(--border-radius);
+    max-width: 60%;
+    padding: 12px 18px;
+    margin: 8px 0;
+    border-radius: 18px;
     line-height: 1.5;
+    word-wrap: break-word;
 }
 
 .greeting {
     background-color: var(--input-background);
     align-self: flex-start;
     color: var(--text-color);
+    border-bottom-left-radius: 4px; 
 }
 
 .input-area {
@@ -161,24 +175,25 @@ body {
     right: 0;
     display: flex;
     justify-content: center;
-    padding: 25px; 
+    padding: 30px; 
     background-color: var(--background-color);
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);
     z-index: 10;
 }
 
 #chat-input {
     flex-grow: 1;
-    max-width: 800px;
-    padding: 15px 20px;
+    max-width: 900px;
+    padding: 18px 25px;
     border: none;
-    border-radius: 25px;
+    border-radius: 30px;
     background-color: var(--input-background);
     color: var(--text-color);
     font-size: 16px;
     resize: none;
     overflow: hidden;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-    margin: 0 15px;
+    margin: 0 20px; 
 }
 
 #chat-input:focus {
@@ -192,25 +207,27 @@ body {
     background: var(--primary-color);
     border: none;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 55px;
+    height: 55px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    transition: background-color 0.2s;
+    box-shadow: 0 4px 15px rgba(93, 93, 255, 0.5);
+    transition: background-color 0.2s, transform 0.1s;
     z-index: 20;
 }
 
 .settings-button:hover {
-    background-color: #0056b3;
+    background-color: #4b4bdf;
+    transform: rotate(45deg);
 }
 
 .settings-button svg {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     fill: var(--text-color);
+    transition: transform 0.2s;
 }
 
 .settings-modal {
@@ -220,7 +237,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.85);
     justify-content: center;
     align-items: center;
     z-index: 30;
@@ -228,23 +245,28 @@ body {
 
 .settings-content {
     background-color: var(--card-background);
-    padding: var(--padding-md);
-    border-radius: var(--border-radius);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.8);
+    padding: 30px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
     width: 90%;
-    max-width: 600px;
+    max-width: 650px;
     position: relative;
 }
 
 .close-button {
     position: absolute;
-    top: 10px;
-    right: 15px;
+    top: 15px;
+    right: 20px;
     background: none;
     border: none;
-    color: var(--text-color);
-    font-size: 24px;
+    color: var(--secondary-color);
+    font-size: 28px;
     cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-button:hover {
+    color: #fff;
 }
 
 .settings-navbar {
@@ -254,23 +276,24 @@ body {
 }
 
 .settings-navbar button {
-    padding: 10px 15px;
+    padding: 12px 20px;
     border: none;
     background: none;
     color: var(--secondary-color);
     font-size: 16px;
     cursor: pointer;
     transition: color 0.2s;
+    font-weight: 600;
 }
 
 .settings-navbar button.active {
     color: var(--primary-color);
-    border-bottom: 2px solid var(--primary-color);
+    border-bottom: 3px solid var(--primary-color);
 }
 
 .settings-tab-content {
     display: none;
-    padding: 10px 0;
+    padding: 15px 0;
 }
 
 .settings-tab-content.active {
@@ -281,25 +304,30 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 1px solid var(--input-background);
+    border-bottom: 1px solid #2e2e4c;
 }
 
 .dropdown-select {
-    padding: 8px;
-    border-radius: 5px;
+    padding: 10px;
+    border-radius: var(--border-radius-sm);
     background-color: var(--input-background);
     color: var(--text-color);
-    border: 1px solid var(--input-background);
-    min-width: 150px;
+    border: 1px solid #2e2e4c;
+    min-width: 200px;
+    appearance: none; 
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23e0e0f0' d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px top 50%;
+    background-size: 12px auto;
 }
 
 .switch {
     position: relative;
     display: inline-block;
-    width: 45px;
-    height: 25px;
+    width: 50px;
+    height: 30px;
 }
 
 .switch input {
@@ -317,14 +345,14 @@ body {
     bottom: 0;
     background-color: var(--secondary-color);
     transition: 0.4s;
-    border-radius: 25px;
+    border-radius: 30px;
 }
 
 .slider:before {
     position: absolute;
     content: "";
-    height: 17px;
-    width: 17px;
+    height: 22px;
+    width: 22px;
     left: 4px;
     bottom: 4px;
     background-color: white;
@@ -342,22 +370,24 @@ input:checked + .slider:before {
 
 .save-settings-container {
     text-align: center;
-    padding-top: 20px;
-    border-top: 1px solid var(--input-background);
-    margin-top: 10px;
+    padding-top: 25px;
+    border-top: 1px solid #2e2e4c;
+    margin-top: 15px;
 }
 
 .save-settings-button {
-    padding: 10px 20px;
+    padding: 12px 30px;
     background-color: var(--primary-color);
-    color: var(--text-color);
+    color: var(--background-color);
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.2s;
+    font-weight: bold;
+    transition: background-color 0.2s, transform 0.1s;
 }
 
 .save-settings-button:hover {
-    background-color: #0056b3;
+    background-color: #4b4bdf;
+    transform: translateY(-2px);
 }
