@@ -14,9 +14,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function calculate() {
         let expression = display.value;
-        
-        if (expression.trim() === "a+i") {
-            window.location.href = "/homeworkhelper";
+        const customKeybind = localStorage.getItem('keybind') || 'a+i';
+
+        if (expression.trim().toLowerCase() === customKeybind.toLowerCase()) {
+            window.location.href = "homeworkhelper.html";
             return;
         }
 
@@ -84,9 +85,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 appendToDisplay('×');
                 lastAsteriskTime = currentTime;
             }
-        } else if (key === 'a' || key === 'i') {
         } else {
-            e.preventDefault();
+            const customKeybind = localStorage.getItem('keybind') || 'a+i';
+            const currentInput = display.value + key;
+
+            if (currentInput.toLowerCase().endsWith(customKeybind.toLowerCase())) {
+            } else {
+                if (key.length === 1 && /[a-zA-Z]/.test(key)) {
+                } else {
+                    e.preventDefault();
+                }
+            }
         }
     });
 
