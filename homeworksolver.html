@@ -2,87 +2,442 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Prysmis AI - Homework Solver</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <link rel="stylesheet" href="helper.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homework Helper</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #1a1a2e;
+            --card-background: #1e213a;
+            --text-color: #ffffff;
+            --input-background: #3e4460;
+            --border-radius: 8px;
+            --padding-md: 20px;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s;
+        }
+
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--padding-md);
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .login-container h1 {
+            color: var(--primary-color);
+            margin-bottom: var(--padding-md);
+        }
+
+        .login-container input {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--input-background);
+            color: var(--text-color);
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .login-container button:hover {
+            background-color: #0056b3;
+        }
+
+        #error-message {
+            color: #ff4d4d;
+            margin-top: 10px;
+            height: 20px;
+            font-size: 14px;
+        }
+
+        .chat-ui {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100vh;
+            max-width: 100vw;
+            transition: opacity 0.3s;
+        }
+
+        .chat-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background-color: var(--card-background);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        .chat-navbar h2 {
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        .chat-navbar button {
+            padding: 8px 15px;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .chat-navbar button:hover {
+            background-color: #0056b3;
+        }
+
+        .chat-area {
+            flex-grow: 1;
+            padding: 80px 20px 100px 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .chat-message {
+            max-width: 70%;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: var(--border-radius);
+            line-height: 1.5;
+        }
+
+        .greeting {
+            background-color: var(--input-background);
+            align-self: flex-start;
+            color: var(--text-color);
+        }
+
+        .input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            padding: var(--padding-md);
+            background-color: var(--background-color);
+            z-index: 10;
+        }
+
+        #chat-input {
+            flex-grow: 1;
+            max-width: 800px;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 25px;
+            background-color: var(--input-background);
+            color: var(--text-color);
+            font-size: 16px;
+            resize: none;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #chat-input:focus {
+            outline: 2px solid var(--primary-color);
+        }
+
+        .settings-button {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            transition: background-color 0.2s;
+            z-index: 20;
+        }
+
+        .settings-button:hover {
+            background-color: #0056b3;
+        }
+
+        .settings-button svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-color);
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+        }
+
+        .settings-content {
+            background-color: var(--card-background);
+            padding: var(--padding-md);
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.8);
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .settings-navbar {
+            display: flex;
+            margin-bottom: var(--padding-md);
+            border-bottom: 2px solid var(--input-background);
+        }
+
+        .settings-navbar button {
+            padding: 10px 15px;
+            border: none;
+            background: none;
+            color: var(--secondary-color);
+            font-size: 16px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .settings-navbar button.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .settings-tab-content {
+            display: none;
+            padding: 10px 0;
+        }
+
+        .settings-tab-content.active {
+            display: block;
+        }
+
+        .ai-setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--input-background);
+        }
+
+        .dropdown-select {
+            padding: 8px;
+            border-radius: 5px;
+            background-color: var(--input-background);
+            color: var(--text-color);
+            border: 1px solid var(--input-background);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 45px;
+            height: 25px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--secondary-color);
+            transition: 0.4s;
+            border-radius: 25px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 17px;
+            width: 17px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .save-settings-container {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--input-background);
+            margin-top: 10px;
+        }
+
+        .save-settings-button {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .save-settings-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <div id="registration-modal">
-        <div id="reg-content">
-            <h1>Create Solver Account</h1>
-            <input type="text" id="reg-username" placeholder="Username" required>
-            <input type="password" id="reg-password" placeholder="Password" required>
-            <input type="password" id="reg-invite" placeholder="Invite Code" required>
-            <button id="register-btn">Activate Solver</button>
-            <p id="reg-error" class="error-message"></p>
-        </div>
+
+<div id="login-screen" class="login-container">
+    <h1>Login to Prysmis</h1>
+    <input type="text" id="username-input" placeholder="Enter your username.">
+    <input type="password" id="password-input" placeholder="Enter your password.">
+    <input type="text" id="invite-code-input" placeholder="Enter the invite code that was given to you.">
+    <div id="error-message"></div>
+    <button id="submit-login">Enter</button>
+</div>
+
+<div id="chat-screen" class="chat-ui">
+    <div class="chat-navbar">
+        <h2>Prysmis AI</h2>
+        <button id="puter-login-btn">Login.</button>
     </div>
 
-    <div id="chat-interface" class="hidden">
-        <div id="chat-window">
-            <div id="chat-messages">
-                <div class="ai-message">
-                    <span>Prysmis AI:</span> Hello <span id="chat-username">User</span>! I'm ready to help you with your homework. Please use the settings gear <span class="settings-icon-placeholder">⚙</span> to enter your API key and select your preferred AI model.
-                </div>
-            </div>
-            <div id="chat-input-container">
-                <input type="text" id="chat-input" placeholder="Ask Prysmis AI anything..." autocomplete="off">
-                <button id="send-btn">Send</button>
-            </div>
-        </div>
-
-        <button id="settings-btn" class="custom-svg-button" title="Settings">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C11.85 2 11.75 2.1 11.75 2.25V4.38C9.69 4.67 7.78 5.76 6.3 7.24L4.85 5.8C4.75 5.7 4.55 5.7 4.45 5.8L3.05 7.2C2.95 7.3 2.95 7.5 3.05 7.6L4.5 9.05C4.38 9.35 4.28 9.68 4.2 10.03L2.25 9.85C2.1 9.85 2 9.95 2 10.1V11.95C2 12.1 2.1 12.2 2.25 12.2L4.2 12.03C4.28 12.38 4.38 12.7 4.5 13L3.05 14.45C2.95 14.55 2.95 14.75 3.05 14.85L4.45 16.25C4.55 16.35 4.75 16.35 4.85 16.25L6.3 14.8C7.78 16.27 9.69 17.36 11.75 17.65V19.75C11.75 19.9 11.85 20 12 20H13.85C14 20 14.1 19.9 14.1 19.75V17.65C16.16 17.36 18.07 16.27 19.55 14.8L21 16.25C21.1 16.35 21.3 16.35 21.4 16.25L22.8 14.85C22.9 14.75 22.9 14.55 22.8 14.45L21.35 13C21.47 12.7 21.57 12.38 21.65 12.03L23.6 12.2C23.75 12.2 23.85 12.1 23.85 11.95V10.1C23.85 9.95 23.75 9.85 23.6 9.85L21.65 10.03C21.57 9.68 21.47 9.35 21.35 9.05L22.8 7.6C22.9 7.5 22.9 7.3 22.8 7.2L21.4 5.8C21.3 5.7 21.1 5.7 21 5.8L19.55 7.24C18.07 5.76 16.16 4.67 14.1 4.38V2.25C14.1 2.1 14 2 13.85 2H12ZM12.95 13.9C10.7 13.9 8.85 12.05 8.85 9.8C8.85 7.55 10.7 5.7 12.95 5.7C15.2 5.7 17.05 7.55 17.05 9.8C17.05 12.05 15.2 13.9 12.95 13.9Z" fill="currentColor"/>
-            </svg>
-        </button>
+    <div id="chat-messages" class="chat-area">
+        <div class="chat-message greeting">do you need anything? Ask **prysmis ai** everything that you need.</div>
     </div>
 
-    <div id="settings-modal" class="hidden">
-        <div id="settings-panel">
-            <div id="settings-sidebar">
-                <button id="tab-ai" class="settings-tab active">AI & Keybind</button>
-                <button id="tab-user" class="settings-tab">User & Security</button>
+    <div class="input-area">
+        <textarea id="chat-input" placeholder="Ask prysmis ai or use '/' commands" rows="1"></textarea>
+    </div>
+
+    <button id="settings-btn" class="settings-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M19.4 12.98l.05-.38c.08-.55.13-1.12.13-1.7s-.05-1.15-.13-1.7l-.05-.38c.11-.8.06-1.61-.13-2.38-.19-.77-.52-1.48-.99-2.09l-.24-.31c-.69-.87-1.57-1.55-2.58-1.92l-.3-.11c-.74-.27-1.53-.42-2.34-.44l-.4-.01c-.63-.04-1.27-.04-1.9 0l-.4.01c-.81.02-1.6.17-2.34.44l-.3.11c-1.01.37-1.89 1.05-2.58 1.92l-.24.31c-.47.61-.8 1.32-.99 2.09-.19.77-.24 1.58-.13 2.38l.05.38c.08.55.13 1.12.13 1.7s-.05 1.15-.13 1.7l-.05.38c-.11.8-.06 1.61.13 2.38.19.77.52 1.48.99 2.09l.24.31c.69.87 1.57 1.55 2.58 1.92l.3.11c.74.27 1.53.42 2.34.44l.4.01c.63.04 1.27.04 1.9 0l.4-.01c.81-.02 1.6-.17 2.34-.44l.3-.11c1.01-.37 1.89-1.05 2.58-1.92l.24-.31c.47-.61.8-1.32.99-2.09.19-.77.24-1.58.13-2.38zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+        </svg>
+    </button>
+
+    <div id="settings-modal" class="settings-modal">
+        <div class="settings-content">
+            <button id="close-settings" class="close-button">X</button>
+            
+            <div class="settings-navbar">
+                <button id="ai-settings-tab" class="active">AI Settings</button>
+                <button id="user-settings-tab">User Settings</button>
             </div>
-            <div id="settings-content">
-                <div id="ai-settings-tab" class="settings-tab-content active">
-                    <div class="setting-group">
-                        <label for="gemini-api-key">Gemini API Key (Required for AI chat)</label>
-                        <input type="password" id="gemini-api-key" placeholder="••••••••••••••••••••••••••••••••" required>
-                        <a id="generate-key-link" href="https://aistudio.google.com/app/apikey" target="_blank">Generate your Gemini API Key here.</a>
-                    </div>
-                    <div class="setting-group">
-                        <label for="model-select">Select AI Model</label>
-                        <select id="model-select">
-                            <option value="gemini-2.5-pro">Gemini 2.5 Pro (Powerful, Complex Tasks)</option>
-                            <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash (Fast, General Tasks)</option>
-                            <option value="llama-3-8b">Llama 3 8B (Placeholder, Open Source)</option>
-                            <option value="mistral-7b">Mistral 7B (Placeholder, High Efficiency)</option>
-                        </select>
-                    </div>
-                    <div class="setting-group">
-                        <label for="keybind-input">Calculator Escape Keybind</label>
-                        <input type="text" id="keybind-input" value="a+i" placeholder="e.g. secret">
-                        <small>Type this into the calculator to switch back to the Homework Solver.</small>
-                    </div>
+
+            <div id="ai-settings-content" class="settings-tab-content active">
+                <div class="ai-setting-item">
+                    <span>AI Model:</span>
+                    <select id="ai-model-dropdown" class="dropdown-select">
+                        <option value="puter-lumi-1">puter-lumi-1 (Default)</option>
+                        <option value="puter-lumi-2-turbo">puter-lumi-2-turbo</option>
+                        <option value="puter-code-genius">puter-code-genius</option>
+                        <option value="puter-creative-pro">puter-creative-pro</option>
+                        <option value="puter-data-analyst">puter-data-analyst</option>
+                        <option value="puter-fast-response">puter-fast-response</option>
+                        <option value="puter-logic-solver">puter-logic-solver</option>
+                        <option value="puter-narrative-writer">puter-narrative-writer</option>
+                        <option value="puter-research-agent">puter-research-agent</option>
+                        <option value="puter-general-v1">puter-general-v1</option>
+                    </select>
                 </div>
-                <div id="user-settings-tab" class="settings-tab-content">
-                    <div class="setting-group">
-                        <label for="new-username">Username</label>
-                        <input type="text" id="new-username" disabled>
-                    </div>
-                    <div class="setting-group">
-                        <label for="new-password">Change Password</label>
-                        <input type="password" id="new-password" placeholder="Enter new password to update">
-                    </div>
+                
+                <div class="ai-setting-item">
+                    <span>Enable fast ai response speed.</span>
+                    <label class="switch">
+                        <input type="checkbox" id="fast-ai-switch">
+                        <span class="slider"></span>
+                    </label>
                 </div>
-                <button id="save-settings-btn">Save Settings</button>
+                
+                <div class="save-settings-container">
+                    <button id="save-ai-settings" class="save-settings-button">Save Settings</button>
+                </div>
+            </div>
+
+            <div id="user-settings-content" class="settings-tab-content">
+                <p>User-specific settings (e.g., theme, profile details) would go here.</p>
+                
+                <div class="save-settings-container">
+                    <button id="save-user-settings" class="save-settings-button">Save Settings</button>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div id="modal-backdrop" class="hidden"></div>
-
-    <script src="backend.js"></script>
+<script src="https://example.com/puter.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
