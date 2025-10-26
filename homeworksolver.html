@@ -22,7 +22,7 @@
         <div id="chat-window">
             <div id="chat-messages">
                 <div class="ai-message">
-                    <span>Prysmis AI:</span> Hello <span id="chat-username">User</span>! I'm ready to help you with your homework. Please use the settings gear <span class="settings-icon-placeholder">⚙</span> to enter your API key first.
+                    <span>Prysmis AI:</span> Hello <span id="chat-username">User</span>! I'm ready to help you with your homework. Please use the settings gear <span class="settings-icon-placeholder">⚙</span> to enter your API key and select your preferred AI model.
                 </div>
             </div>
             <div id="chat-input-container">
@@ -52,16 +52,18 @@
                         <a id="generate-key-link" href="https://aistudio.google.com/app/apikey" target="_blank">Generate your Gemini API Key here.</a>
                     </div>
                     <div class="setting-group">
+                        <label for="model-select">Select AI Model</label>
+                        <select id="model-select">
+                            <option value="gemini-2.5-pro">Gemini 2.5 Pro (Powerful, Complex Tasks)</option>
+                            <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash (Fast, General Tasks)</option>
+                            <option value="llama-3-8b">Llama 3 8B (Placeholder, Open Source)</option>
+                            <option value="mistral-7b">Mistral 7B (Placeholder, High Efficiency)</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
                         <label for="keybind-input">Calculator Escape Keybind</label>
                         <input type="text" id="keybind-input" value="a+i" placeholder="e.g. secret">
                         <small>Type this into the calculator to switch back to the Homework Solver.</small>
-                    </div>
-                    <div class="setting-group-switch">
-                        <span class="switch-label">Use Fast AI Model (Flash)</span>
-                        <label class="switch">
-                            <input type="checkbox" id="fast-ai-switch">
-                            <span class="slider round"></span>
-                        </label>
                     </div>
                 </div>
                 <div id="user-settings-tab" class="settings-tab-content">
