@@ -1,12 +1,22 @@
 const INVITE_CODE = "tabcoded44$$";
 const AI_MODEL = "grok-4";
+const CHAT_HISTORY_KEY = 'chatHistory';
 
 function autoResizeTextarea() {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
 }
 
-function handleLogin() {
+function saveChatHistory(history) {
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
+}
+
+function getChatHistory() {
+    const history = localStorage.getItem(CHAT_HISTORY_KEY);
+    return history ? JSON.parse(history) : [];
+}
+
+function handleRegistration() {
     const username = document.getElementById('username-input').value.trim();
     const password = document.getElementById('password-input').value.trim();
     const inviteCode = document.getElementById('invite-code-input').value;
@@ -23,7 +33,11 @@ function handleLogin() {
         setTimeout(() => {
             loginScreen.style.display = 'none';
             chatScreen.style.display = 'flex';
-            chatScreen.style.opacity = '1';
+            
+            const history = getChatHistory();
+            if (history.length > 0) {
+                renderHistory(history);
+            }
         }, 500);
 
     } else {
@@ -33,7 +47,7 @@ function handleLogin() {
 
 function createThinkingAnimation() {
     const thinking = document.createElement('div');
-    thinking.className = 'thinking-animation';
+    thinking.className = 'thinking-animation ai-message';
     for (let i = 0; i < 3; i++) {
         const dot = document.createElement('div');
         dot.className = 'thinking-dot';
@@ -42,7 +56,25 @@ function createThinkingAnimation() {
     return thinking;
 }
 
-function handleChatInput(event) {
+function renderMessage(content, role) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageElement = document.createElement('div');
+    messageElement.className = `chat-message ${role}-message`;
+    messageElement.textContent = content;
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function renderHistory(history) {
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.innerHTML = ''; 
+    renderMessage("Hello and welcome to prysmis ai what can i do for you?", "ai");
+    history.forEach(item => {
+        renderMessage(item.content, item.role);
+    });
+}
+
+async function handleChatInput(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         const chatInput = document.getElementById('chat-input');
@@ -50,36 +82,39 @@ function handleChatInput(event) {
         const chatMessages = document.getElementById('chat-messages');
 
         if (message) {
-            const userMessage = document.createElement('div');
-            userMessage.className = 'chat-message user-message';
-            userMessage.textContent = message;
-            chatMessages.appendChild(userMessage);
+            
+            renderMessage(message, "user");
 
-            chatMessages.scrollTop = chatMessages.scrollHeight;
             chatInput.value = '';
             chatInput.style.height = 'auto';
 
-            
             const thinkingAnimation = createThinkingAnimation();
             chatMessages.appendChild(thinkingAnimation);
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            
-            setTimeout(() => {
-                chatMessages.removeChild(thinkingAnimation);
+            const history = getChatHistory();
+            history.push({ role: "user", content: message });
+            saveChatHistory(history);
 
-                const aiMessage = document.createElement('div');
-                aiMessage.className = 'chat-message ai-message';
+            try {
+                const aiResponse = await puter.ai.chat.complete({
+                    model: AI_MODEL,
+                    messages: history.slice(-5) 
+                });
+
+                chatMessages.removeChild(thinkingAnimation);
+                const responseText = aiResponse.choices[0].message.content;
+
+                renderMessage(responseText, "ai");
                 
-                let mockResponse = `I processed your request using the ${AI_MODEL} model. Please ask me a question!`;
-                if (message.toLowerCase().includes("hello") || message.toLowerCase().includes("hi")) {
-                    mockResponse = "Hello! I am ready to help you with your query. What can I assist you with today?";
-                }
-                
-                aiMessage.textContent = mockResponse;
-                chatMessages.appendChild(aiMessage);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 1800);
+                history.push({ role: "ai", content: responseText });
+                saveChatHistory(history);
+
+            } catch (e) {
+                console.error("AI response error:", e);
+                chatMessages.removeChild(thinkingAnimation);
+                renderMessage("Sorry, I ran into an error trying to get a response.", "ai");
+            }
         }
     }
 }
@@ -92,13 +127,24 @@ function handlePuterLogin() {
     }
 }
 
+function handlePuterLogout() {
+    if (window.puter && window.puter.auth && window.puter.auth.signOut) {
+        window.puter.auth.signOut().then(() => {
+            alert("Logged out successfully.");
+        }).catch(e => {
+            console.error("Logout failed:", e);
+        });
+    }
+}
+
 window.onload = function() {
     const createAccountBtn = document.getElementById('create-account-btn');
     const chatInput = document.getElementById('chat-input');
     const puterLoginBtn = document.getElementById('puter-login-btn');
+    const settingsBtn = document.getElementById('settings-btn');
 
     if (createAccountBtn) {
-        createAccountBtn.addEventListener('click', handleLogin);
+        createAccountBtn.addEventListener('click', handleRegistration);
     }
 
     if (chatInput) {
@@ -109,4 +155,12 @@ window.onload = function() {
     if (puterLoginBtn) {
         puterLoginBtn.addEventListener('click', handlePuterLogin);
     }
+
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            alert("Settings functionality would be implemented here, perhaps for user preferences or model selection!");
+        });
+    }
+
+    renderHistory(getChatHistory());
 };
