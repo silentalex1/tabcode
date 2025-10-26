@@ -21,7 +21,6 @@ body {
     min-height: 100vh;
 }
 
-/* --- Login / Register UI --- */
 .login-container {
     display: flex;
     flex-direction: column;
@@ -38,26 +37,27 @@ body {
     color: var(--primary-color);
     margin-bottom: 30px;
     text-align: center;
-    font-size: 1.8em;
+    font-size: 2.2em;
+    font-weight: 700;
 }
 
 .login-container input {
     width: 100%;
-    padding: 15px 20px;
+    padding: 18px 20px;
     margin: 12px 0;
-    border: 1px solid var(--input-background);
+    border: 2px solid transparent;
     border-radius: var(--border-radius-sm);
     background-color: var(--input-background);
     color: var(--text-color);
     box-sizing: border-box;
     font-size: 16px;
-    transition: border-color 0.3s;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .login-container input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 1px var(--primary-color);
+    box-shadow: 0 0 10px rgba(93, 93, 255, 0.5);
 }
 
 .login-container button {
@@ -67,7 +67,7 @@ body {
     border: none;
     border-radius: var(--border-radius-sm);
     background-color: var(--primary-color);
-    color: var(--background-color);
+    color: white;
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
@@ -88,12 +88,11 @@ body {
     text-align: center;
 }
 
-/* --- Chat UI --- */
 .chat-ui {
     display: none;
     flex-direction: column;
     width: 100%;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 .chat-navbar {
@@ -103,10 +102,18 @@ body {
     padding: 15px 30px;
     background-color: var(--card-background);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    margin: 10px auto;
-    width: calc(100% - 60px);
+    margin: 10px auto 0 auto;
+    width: calc(100% - 40px);
     max-width: 1200px;
     border-radius: var(--border-radius-lg);
+}
+
+@media (max-width: 768px) {
+    .chat-navbar {
+        width: calc(100% - 20px);
+        margin: 5px auto 0 auto;
+        padding: 12px 15px;
+    }
 }
 
 .chat-navbar h2 {
@@ -123,7 +130,7 @@ body {
 .nav-buttons button {
     padding: 10px 18px;
     background-color: var(--primary-color);
-    color: var(--text-color);
+    color: white;
     border: none;
     border-radius: var(--border-radius-sm);
     cursor: pointer;
@@ -133,17 +140,18 @@ body {
 }
 
 .nav-buttons button:nth-child(2) {
-    background-color: var(--input-background);
-    border: 1px solid var(--primary-color);
+    background-color: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
 }
 
 .nav-buttons button:hover {
-    background-color: #4b4bdf;
+    opacity: 0.8;
 }
 
 .chat-area {
     flex-grow: 1;
-    padding: 100px 30px 100px 30px;
+    padding: 30px 30px 100px 30px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -159,6 +167,7 @@ body {
     border-radius: 18px;
     line-height: 1.5;
     word-wrap: break-word;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .ai-message {
@@ -171,7 +180,7 @@ body {
 .user-message {
     background-color: var(--primary-color);
     align-self: flex-end;
-    color: var(--card-background);
+    color: white;
     border-bottom-right-radius: 4px;
 }
 
@@ -205,7 +214,6 @@ body {
     outline: 2px solid var(--primary-color);
 }
 
-/* --- Settings Button --- */
 .settings-button {
     position: fixed;
     bottom: 30px;
@@ -235,7 +243,6 @@ body {
     fill: var(--text-color);
 }
 
-/* --- AI Thinking Animation --- */
 .thinking-animation {
     display: flex;
     align-items: center;
@@ -244,8 +251,6 @@ body {
     border-radius: 18px;
     line-height: 1.5;
     word-wrap: break-word;
-    background-color: var(--input-background);
-    align-self: flex-start;
 }
 
 .thinking-dot {
