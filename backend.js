@@ -3,22 +3,17 @@ let conversationHistory = [];
 
 function getInviteCode() {
     const charCodes = [116, 97, 98, 99, 111, 100, 101, 100, 52, 52, 36, 36];
-    let code = '';
-    for (let i = 0; i < charCodes.length; i++) {
-        code += String.fromCharCode(charCodes[i]);
-    }
-    return code;
+    return charCodes.map(c => String.fromCharCode(c)).join('');
 }
 
-function createMessageElement(message, isStreaming = false) {
-    const messagesContainer = document.getElementById('messages-container');
-    const messageDiv = document.createElement('div');
+function createMessageElement(message) {
     const isUser = message.role === 'user';
+    const messageDiv = document.createElement('div');
     messageDiv.className = isUser ? 'message user-message' : 'message ai-message';
 
     const senderDiv = document.createElement('div');
     senderDiv.className = 'message-sender';
-    senderDiv.textContent = isUser ? 'You' : 'TabCoded AI';
+    senderDiv.textContent = isUser ? 'You' : 'TABCODED AI';
 
     const wrapperDiv = document.createElement('div');
     wrapperDiv.className = 'message-content-wrapper';
@@ -27,24 +22,15 @@ function createMessageElement(message, isStreaming = false) {
     contentDiv.className = 'message-content';
     contentDiv.textContent = message.content;
     
-    if (!isUser && messagesContainer.lastChild) {
-        const lastMessage = messagesContainer.lastChild;
-        const lastSender = lastMessage.querySelector('.message-sender');
-        if(lastSender && lastSender.textContent === 'You') {
-            const replyLine = document.createElement('div');
-            replyLine.className = 'ai-reply-line';
-            wrapperDiv.appendChild(replyLine);
-        }
+    if (!isUser) {
+        const replyLine = document.createElement('div');
+        replyLine.className = 'ai-reply-line';
+        wrapperDiv.prepend(replyLine);
     }
 
     wrapperDiv.appendChild(contentDiv);
     messageDiv.appendChild(senderDiv);
     messageDiv.appendChild(wrapperDiv);
-
-    if (isStreaming) {
-        messageDiv.dataset.streaming = "true";
-    }
-
     return messageDiv;
 }
 
@@ -58,7 +44,6 @@ function appendMessage(message) {
 async function sendMessage() {
     const messageInput = document.getElementById('message-input');
     const text = messageInput.value.trim();
-
     if (text === '') return;
 
     const userMessage = { role: 'user', content: text };
@@ -68,29 +53,21 @@ async function sendMessage() {
     messageInput.style.height = 'auto';
 
     const aiMessage = { role: 'assistant', content: '' };
-    const aiMessageElement = createMessageElement(aiMessage, true);
-    document.getElementById('messages-container').appendChild(aiMessageElement);
+    const aiMessageElement = createMessageElement(aiMessage);
     const aiContentDiv = aiMessageElement.querySelector('.message-content');
+    document.getElementById('messages-container').appendChild(aiMessageElement);
     
     try {
-        const stream = await puter.ai.chat(conversationHistory, {
-            model: currentModel,
-            stream: true,
-        });
-
+        const stream = await puter.ai.chat(conversationHistory, { model: currentModel, stream: true });
         for await (const chunk of stream) {
             aiMessage.content += chunk;
             aiContentDiv.textContent = aiMessage.content;
             document.getElementById('messages-container').scrollTop = document.getElementById('messages-container').scrollHeight;
         }
-        
         conversationHistory.push(aiMessage);
-
     } catch (error) {
         aiContentDiv.textContent = 'Sorry, an error occurred. Please try again.';
         console.error("Error with AI chat:", error);
-    } finally {
-        aiMessageElement.removeAttribute('data-streaming');
     }
 }
 
@@ -99,11 +76,7 @@ function handleSubmission() {
     const inviteContainer = document.getElementById('invite-container');
     const chatInterface = document.getElementById('chat-interface');
     const errorMessage = document.getElementById('error-message');
-
-    const userInput = inviteInput.value.trim();
-    const correctCode = getInviteCode();
-
-    if (userInput === correctCode) {
+    if (inviteInput.value.trim() === getInviteCode()) {
         inviteContainer.style.opacity = '0';
         setTimeout(() => {
             inviteContainer.classList.add('hidden');
@@ -113,40 +86,87 @@ function handleSubmission() {
     } else {
         errorMessage.textContent = 'Incorrect code. Please try again.';
         inviteInput.value = '';
-        setTimeout(() => {
-            errorMessage.textContent = '';
-        }, 3000);
+        setTimeout(() => { errorMessage.textContent = ''; }, 3000);
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function updateLoginState(user) {
+    const loginButton = document.getElementById('login-button');
+    const logoutButton = document.getElementById('logout-button');
+    if (user) {
+        loginButton.classList.add('hidden');
+        logoutButton.classList.remove('hidden');
+    } else {
+        loginButton.classList.remove('hidden');
+        logoutButton.classList.add('hidden');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
     const submitButton = document.getElementById('submit-button');
     const inviteInput = document.getElementById('invite-input');
     const sendButton = document.getElementById('send-button');
     const messageInput = document.getElementById('message-input');
     const modelSwitcher = document.getElementById('model-switcher');
+    const settingsButton = document.getElementById('settings-button');
+    const closeSettingsButton = document.getElementById('close-settings-button');
+    const settingsModal = document.getElementById('settings-modal');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const loginButton = document.getElementById('login-button');
+    const logoutButton = document.getElementById('logout-button');
 
     submitButton.addEventListener('click', handleSubmission);
-    inviteInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            handleSubmission();
-        }
-    });
+    inviteInput.addEventListener('keypress', (e) => e.key === 'Enter' && handleSubmission());
 
     sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            sendMessage();
-        }
-    });
+    messageInput.addEventListener('keypress', (e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage()));
     
     messageInput.addEventListener('input', () => {
         messageInput.style.height = 'auto';
-        messageInput.style.height = (messageInput.scrollHeight) + 'px';
+        messageInput.style.height = `${messageInput.scrollHeight}px`;
     });
 
-    modelSwitcher.addEventListener('change', (event) => {
-        currentModel = event.target.value;
+    modelSwitcher.addEventListener('change', (e) => { currentModel = e.target.value; });
+
+    settingsButton.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+    closeSettingsButton.addEventListener('click', () => settingsModal.classList.add('hidden'));
+    settingsModal.addEventListener('click', (e) => e.target === settingsModal && settingsModal.classList.add('hidden'));
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(button.dataset.tab).classList.add('active');
+        });
     });
+
+    loginButton.addEventListener('click', async () => {
+        try {
+            const user = await puter.auth.signIn();
+            if (user) {
+                updateLoginState(user);
+                settingsModal.classList.add('hidden');
+            }
+        } catch (error) {
+            console.error("Login failed:", error);
+        }
+    });
+
+    logoutButton.addEventListener('click', async () => {
+        try {
+            await puter.auth.signOut();
+            updateLoginState(null);
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    });
+
+    try {
+        const user = await puter.auth.user();
+        updateLoginState(user);
+    } catch (error) {
+        console.error("Failed to get initial user state:", error);
+        updateLoginState(null);
+    }
 });
