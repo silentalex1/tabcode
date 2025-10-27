@@ -6,10 +6,9 @@ body {
     align-items: center;
     min-height: 100vh;
     margin: 0;
-    /* Visual Background Improvement */
     background: radial-gradient(circle at 15% 50%, #1e3a8a 0%, transparent 25%),
                 radial-gradient(circle at 85% 50%, #4c1d95 0%, transparent 25%),
-                #0F172A; /* Base dark color */
+                #0F172A;
     background-blend-mode: screen, difference, normal;
     background-size: cover;
     transition: background-color 0.5s;
@@ -17,26 +16,25 @@ body {
 
 main {
     width: 100%;
-    max-width: 450px; /* Slightly wider card */
+    max-width: 450px;
     padding: 20px;
     text-align: center;
 }
 
-/* Enhanced Card Style */
 .card {
-    background: rgba(30, 41, 59, 0.95); /* Semi-transparent background */
-    backdrop-filter: blur(10px); /* Subtle blur effect */
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(10px);
     padding: 50px;
     border-radius: 20px;
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8);
     transition: opacity 0.5s ease-out;
-    border: 1px solid rgba(51, 65, 85, 0.5); /* Lighter, subtle border */
+    border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 .card-title {
     font-size: 2rem;
     font-weight: 800;
-    color: #3B82F6; /* Use a cool blue accent */
+    color: #3B82F6;
     margin-bottom: 5px;
     letter-spacing: 1px;
 }
@@ -48,7 +46,6 @@ main {
     font-weight: 400;
 }
 
-/* Input Styling */
 #invite-input {
     width: 100%;
     padding: 18px;
@@ -57,7 +54,7 @@ main {
     border: 2px solid #475569;
     background-color: #0F172A;
     color: #F8FAFC;
-    font-size: 1.4rem; /* Larger text for focus */
+    font-size: 1.4rem;
     text-align: center;
     transition: border-color 0.3s, box-shadow 0.3s;
     font-weight: 600;
@@ -69,11 +66,10 @@ main {
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
 }
 
-/* Button Styling */
 #submit-button {
     width: 100%;
     padding: 16px;
-    background-color: #3B82F6; /* Blue button */
+    background-color: #3B82F6;
     color: white;
     border: none;
     border-radius: 10px;
@@ -102,13 +98,12 @@ main {
     display: none !important;
 }
 
-/* Chat Interface Styling */
 #chat-interface {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 700px; /* Slightly wider chat window */
-    height: 90vh;
+    max-width: 800px;
+    height: 95vh;
     background-color: #1E293B;
     border-radius: 16px;
     box-shadow: 0 15px 60px rgba(0, 0, 0, 0.9);
@@ -118,23 +113,64 @@ main {
 
 .chat-header {
     background-color: #334155;
-    color: #3B82F6;
-    padding: 18px 25px;
-    font-size: 1.6rem;
+    color: #E2E8F0;
+    padding: 12px 25px;
+    font-size: 1.4rem;
     font-weight: 800;
     border-bottom: 1px solid #475569;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
-.user-id-display-text {
-    font-size: 0.7rem;
-    font-weight: 400;
-    color: #94A3B8;
-    padding: 5px 10px;
-    background: #1E293B;
-    border-radius: 5px;
+.header-title {
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.model-switcher-container {
+    position: relative;
+}
+
+.model-switcher {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: #475569;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.model-switcher:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+.settings-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.settings-btn:hover {
+    opacity: 1;
 }
 
 #messages-container {
@@ -143,49 +179,75 @@ main {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
 }
 
 .message {
+    display: flex;
+    flex-direction: column;
     max-width: 85%;
-    padding: 14px 20px;
-    border-radius: 15px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .user-message {
     align-self: flex-end;
-    background-color: #3B82F6; 
-    color: white; 
-    border-bottom-right-radius: 4px;
+    align-items: flex-end;
 }
 
 .ai-message {
     align-self: flex-start;
+    align-items: flex-start;
+}
+
+.message-content-wrapper {
+    padding: 14px 20px;
+    border-radius: 18px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.user-message .message-content-wrapper {
+    background-color: #3B82F6; 
+    color: white; 
+    border-bottom-right-radius: 5px;
+}
+
+.ai-message .message-content-wrapper {
     background-color: #334155; 
     color: #E2E8F0;
-    border-bottom-left-radius: 4px;
+    border-bottom-left-radius: 5px;
 }
 
 .message-sender {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
     opacity: 0.9;
-    text-transform: uppercase;
+    padding: 0 5px;
 }
 
-.user-message .message-sender {
-    color: white;
+.ai-reply-line {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    width: 2px;
+    height: 10px;
+    background-color: #475569;
 }
 
-.ai-message .message-sender {
-    color: #3B82F6;
+.ai-reply-info {
+    position: absolute;
+    top: -15px;
+    left: 30px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94A3B8;
 }
 
 .message-content {
     font-size: 1rem;
-    line-height: 1.5;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .input-area {
@@ -193,6 +255,7 @@ main {
     padding: 15px;
     border-top: 1px solid #334155;
     background-color: #1E293B;
+    flex-shrink: 0;
 }
 
 #message-input {
@@ -203,8 +266,9 @@ main {
     background-color: #334155;
     color: white;
     font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
     resize: none;
-    max-height: 100px;
+    max-height: 120px;
     margin-right: 10px;
     transition: box-shadow 0.3s, border-color 0.3s;
 }
