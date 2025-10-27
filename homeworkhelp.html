@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TabCoded your best #1 calculator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="helper.css">
 </head>
 <body>
@@ -22,7 +22,18 @@
     <div id="chat-interface" class="hidden">
         <header class="chat-header">
             <div class="header-title">TabCode</div>
-            <div class="header-controls">
+            <button id="logout-button" class="logout-btn hidden">Logout</button>
+        </header>
+        <div id="messages-container">
+            <div class="message ai-message">
+                <div class="message-sender">TABCODED AI</div>
+                <div class="message-content-wrapper">
+                    <div class="message-content">Welcome to prysmis ai how may i help you?</div>
+                </div>
+            </div>
+        </div>
+        <div class="input-area">
+            <div class="bottom-controls">
                 <div class="model-switcher-container">
                     <select id="model-switcher" class="model-switcher">
                         <option value="grok-4">Grok-4</option>
@@ -34,16 +45,37 @@
                 </div>
                 <button id="settings-button" class="settings-btn">⚙️</button>
             </div>
-        </header>
-        <div id="messages-container">
-            <div class="message ai-message">
-                <div class="message-sender">TabCoded AI</div>
-                <div class="message-content">Welcome to prysmis ai how may i help you?</div>
-            </div>
-        </div>
-        <div class="input-area">
             <textarea id="message-input" placeholder="Ask your question..." rows="1"></textarea>
             <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="settings-overlay hidden">
+        <div class="settings-container">
+            <button id="close-settings-button" class="close-modal-btn">&times;</button>
+            <div class="settings-sidebar">
+                <button class="tab-button active" data-tab="ai-settings">AI Settings</button>
+                <button class="tab-button" data-tab="user-settings">User Settings</button>
+            </div>
+            <div class="settings-main">
+                <div id="ai-settings" class="tab-content active">
+                    <h2>AI Configuration</h2>
+                    <div class="setting-item">
+                        <label for="fast-response-toggle">Enable ai fast response speed.</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="fast-response-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div id="user-settings" class="tab-content">
+                    <h2>User Account</h2>
+                    <div class="setting-item">
+                        <p>Sign in to sync your history across devices.</p>
+                        <button id="login-button" class="login-btn">Login</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
