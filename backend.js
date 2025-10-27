@@ -1,10 +1,5 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-let db, auth;
-let userId = '';
-const MESSAGE_COLLECTION_NAME = 'chatMessages'; 
+let currentModel = 'grok-4';
+let conversationHistory = [];
 
 function getInviteCode() {
     const charCodes = [116, 97, 98, 99, 111, 100, 101, 100, 52, 52, 36, 36];
@@ -15,105 +10,91 @@ function getInviteCode() {
     return code;
 }
 
-async function initFirebase() {
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-    if (!firebaseConfig) {
-        console.error("Firebase configuration is missing.");
-        return;
-    }
-
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    auth = getAuth(app);
-
-    try {
-        if (initialAuthToken) {
-            await signInWithCustomToken(auth, initialAuthToken);
-        } else {
-            await signInAnonymously(auth);
-        }
-        userId = auth.currentUser?.uid || crypto.randomUUID();
-        document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
-        subscribeToMessages(appId);
-    } catch (error) {
-        console.error("Firebase Auth Error:", error);
-    }
-}
-
-function getChatCollectionRef(appId) {
-    return collection(db, `artifacts/${appId}/public/data/${MESSAGE_COLLECTION_NAME}`);
-}
-
-function createMessageElement(message) {
-    const isUser = message.role === 'user';
+function createMessageElement(message, isStreaming = false) {
+    const messagesContainer = document.getElementById('messages-container');
     const messageDiv = document.createElement('div');
+    const isUser = message.role === 'user';
     messageDiv.className = isUser ? 'message user-message' : 'message ai-message';
-    
+
+    const senderDiv = document.createElement('div');
+    senderDiv.className = 'message-sender';
+    senderDiv.textContent = isUser ? 'You' : 'TabCoded AI';
+
+    const wrapperDiv = document.createElement('div');
+    wrapperDiv.className = 'message-content-wrapper';
+
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    contentDiv.textContent = message.text;
+    contentDiv.textContent = message.content;
     
-    const sender = document.createElement('div');
-    sender.className = 'message-sender';
-    sender.textContent = isUser ? 'You' : 'TabCoded AI';
+    if (!isUser && messagesContainer.lastChild) {
+        const lastMessage = messagesContainer.lastChild;
+        const lastSender = lastMessage.querySelector('.message-sender');
+        if(lastSender && lastSender.textContent === 'You') {
+            const replyLine = document.createElement('div');
+            replyLine.className = 'ai-reply-line';
+            wrapperDiv.appendChild(replyLine);
+        }
+    }
 
-    messageDiv.appendChild(sender);
-    messageDiv.appendChild(contentDiv);
+    wrapperDiv.appendChild(contentDiv);
+    messageDiv.appendChild(senderDiv);
+    messageDiv.appendChild(wrapperDiv);
+
+    if (isStreaming) {
+        messageDiv.dataset.streaming = "true";
+    }
+
     return messageDiv;
 }
 
-function subscribeToMessages(appId) {
+function appendMessage(message) {
     const messagesContainer = document.getElementById('messages-container');
-    const q = query(getChatCollectionRef(appId), orderBy('timestamp', 'desc'), limit(50)); 
-
-    onSnapshot(q, (snapshot) => {
-        messagesContainer.innerHTML = ''; 
-        const messages = [];
-        snapshot.forEach(doc => {
-            messages.push({ id: doc.id, ...doc.data() });
-        });
-
-        messages.reverse().forEach(message => {
-            messagesContainer.appendChild(createMessageElement(message));
-        });
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    });
+    const messageElement = createMessageElement(message);
+    messagesContainer.appendChild(messageElement);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 async function sendMessage() {
     const messageInput = document.getElementById('message-input');
     const text = messageInput.value.trim();
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
     if (text === '') return;
 
-    try {
-        await addDoc(getChatCollectionRef(appId), {
-            text: text,
-            role: 'user',
-            userId: userId,
-            timestamp: serverTimestamp()
-        });
-        messageInput.value = '';
+    const userMessage = { role: 'user', content: text };
+    conversationHistory.push(userMessage);
+    appendMessage(userMessage);
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
 
-        setTimeout(async () => {
-            await addDoc(getChatCollectionRef(appId), {
-                text: `Thanks for your question: "${text}". As a safe homework helper, I can give you a hint or explain a concept! How can I assist with your schoolwork today?`,
-                role: 'ai',
-                userId: 'AI',
-                timestamp: serverTimestamp()
-            });
-        }, 1500);
+    const aiMessage = { role: 'assistant', content: '' };
+    const aiMessageElement = createMessageElement(aiMessage, true);
+    document.getElementById('messages-container').appendChild(aiMessageElement);
+    const aiContentDiv = aiMessageElement.querySelector('.message-content');
+    
+    try {
+        const stream = await puter.ai.chat(conversationHistory, {
+            model: currentModel,
+            stream: true,
+        });
+
+        for await (const chunk of stream) {
+            aiMessage.content += chunk;
+            aiContentDiv.textContent = aiMessage.content;
+            document.getElementById('messages-container').scrollTop = document.getElementById('messages-container').scrollHeight;
+        }
+        
+        conversationHistory.push(aiMessage);
 
     } catch (error) {
-        console.error("Error sending message:", error);
+        aiContentDiv.textContent = 'Sorry, an error occurred. Please try again.';
+        console.error("Error with AI chat:", error);
+    } finally {
+        aiMessageElement.removeAttribute('data-streaming');
     }
 }
 
-function handleSubmission(isInitialCodeCheck) {
+function handleSubmission() {
     const inviteInput = document.getElementById('invite-input');
     const inviteContainer = document.getElementById('invite-container');
     const chatInterface = document.getElementById('chat-interface');
@@ -122,14 +103,13 @@ function handleSubmission(isInitialCodeCheck) {
     const userInput = inviteInput.value.trim();
     const correctCode = getInviteCode();
 
-    if (userInput === correctCode || !isInitialCodeCheck) {
+    if (userInput === correctCode) {
         inviteContainer.style.opacity = '0';
         setTimeout(() => {
             inviteContainer.classList.add('hidden');
             chatInterface.classList.remove('hidden');
-            initFirebase();
             document.getElementById('message-input').focus();
-        }, 500); 
+        }, 500);
     } else {
         errorMessage.textContent = 'Incorrect code. Please try again.';
         inviteInput.value = '';
@@ -141,23 +121,32 @@ function handleSubmission(isInitialCodeCheck) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const submitButton = document.getElementById('submit-button');
+    const inviteInput = document.getElementById('invite-input');
+    const sendButton = document.getElementById('send-button');
     const messageInput = document.getElementById('message-input');
-    
-    submitButton.addEventListener('click', () => handleSubmission(true));
+    const modelSwitcher = document.getElementById('model-switcher');
 
-    document.getElementById('invite-input').addEventListener('keypress', (event) => {
+    submitButton.addEventListener('click', handleSubmission);
+    inviteInput.addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
-            handleSubmission(true);
+            handleSubmission();
         }
     });
 
-    if(messageInput) {
-        document.getElementById('send-button').addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-        });
-    }
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    messageInput.addEventListener('input', () => {
+        messageInput.style.height = 'auto';
+        messageInput.style.height = (messageInput.scrollHeight) + 'px';
+    });
+
+    modelSwitcher.addEventListener('change', (event) => {
+        currentModel = event.target.value;
+    });
 });
