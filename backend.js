@@ -40,6 +40,11 @@ function appendMessage(message, isReply = false) {
 }
 
 async function sendMessage() {
+    if (typeof puter === 'undefined') {
+        console.error("Puter.js is not loaded. Cannot send message.");
+        return;
+    }
+
     const messageInput = document.getElementById('message-input');
     const text = messageInput.value.trim();
     if (text === '') return;
@@ -100,6 +105,21 @@ function updateLoginState(user) {
     }
 }
 
+function initializeAuth() {
+    if (typeof puter === 'undefined') {
+        console.error("Puter.js is not loaded. Auth cannot be initialized.");
+        updateLoginState(null);
+        return;
+    }
+    
+    puter.auth.onAuthStateChanged((user) => {
+        updateLoginState(user);
+    }).catch(error => {
+        console.error("Failed to initialize auth state listener:", error);
+        updateLoginState(null);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const submitButton = document.getElementById('submit-button');
     const inviteInput = document.getElementById('invite-input');
@@ -151,6 +171,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     loginButton.addEventListener('click', async () => {
+        if (typeof puter === 'undefined') {
+            console.error("Puter.js is not loaded. Cannot sign in.");
+            return;
+        }
         try {
             const user = await puter.auth.signIn();
             if (user) {
@@ -163,6 +187,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     logoutButton.addEventListener('click', async () => {
+        if (typeof puter === 'undefined') {
+            console.error("Puter.js is not loaded. Cannot sign out.");
+            return;
+        }
         try {
             await puter.auth.signOut();
             updateLoginState(null);
@@ -171,10 +199,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    puter.auth.onAuthStateChanged((user) => {
-        updateLoginState(user);
-    }).catch(error => {
-        console.error("Failed to initialize auth state listener:", error);
-        updateLoginState(null);
-    });
+    initializeAuth();
 });
