@@ -11,23 +11,34 @@
 
     <main id="invite-container">
         <div class="card">
-            <h1 class="card-title">Secured Access Portal</h1>
+            <h1 class="card-title">Password access</h1>
             <p class="card-text">Enter the invite code given to you.</p>
             <input type="password" id="invite-input" placeholder="••••••••••••••••" required>
-            <button id="submit-button">Verify Access</button>
+            <button id="submit-button">Submit code.</button>
             <p id="error-message" class="error"></p>
         </div>
     </main>
 
     <div id="chat-interface" class="hidden">
         <header class="chat-header">
-            TabCoded AI Homework Help 
-            <span id="user-id-display" class="user-id-display-text"></span>
+            <div class="header-title">TabCode</div>
+            <div class="header-controls">
+                <div class="model-switcher-container">
+                    <select id="model-switcher" class="model-switcher">
+                        <option value="grok-4">Grok-4</option>
+                        <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                        <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro</option>
+                        <option value="llama3-70b-8192">LLaMA3 70b</option>
+                    </select>
+                </div>
+                <button id="settings-button" class="settings-btn">⚙️</button>
+            </div>
         </header>
         <div id="messages-container">
             <div class="message ai-message">
                 <div class="message-sender">TabCoded AI</div>
-                <div class="message-content">Hello! Welcome to your secure homework helper. Please ask me any school-related question you need assistance with!</div>
+                <div class="message-content">Welcome to prysmis ai how may i help you?</div>
             </div>
         </div>
         <div class="input-area">
@@ -36,6 +47,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/puter/dist/browser.min.js"></script>
     <script type="module" src="backend.js"></script>
 </body>
 </html>
