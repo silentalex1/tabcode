@@ -38,9 +38,16 @@
                     <select id="model-switcher" class="model-switcher">
                         <option value="grok-4">Grok-4</option>
                         <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                        <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                        <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
                         <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                        <option value="gpt-4o">GPT-4o</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
                         <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro</option>
+                        <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash</option>
                         <option value="llama3-70b-8192">LLaMA3 70b</option>
+                        <option value="llama3-8b-8192">LLaMA3 8b</option>
+                        <option value="mistral-large-latest">Mistral Large</option>
                     </select>
                 </div>
                 <button id="settings-button" class="settings-btn">⚙️</button>
@@ -58,22 +65,27 @@
                 <button class="tab-button" data-tab="user-settings">User Settings</button>
             </div>
             <div class="settings-main">
-                <div id="ai-settings" class="tab-content active">
-                    <h2>AI Configuration</h2>
-                    <div class="setting-item">
-                        <label for="fast-response-toggle">Enable ai fast response speed.</label>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="fast-response-toggle">
-                            <span class="slider"></span>
-                        </label>
+                <div class="settings-content">
+                    <div id="ai-settings" class="tab-content active">
+                        <h2>AI Configuration</h2>
+                        <div class="setting-item">
+                            <label for="fast-response-toggle">Enable ai fast response speed.</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="fast-response-toggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="user-settings" class="tab-content">
+                        <h2>User Account</h2>
+                        <div class="setting-item">
+                            <p>Sign in to sync your history across devices.</p>
+                            <button id="login-button" class="login-btn">Login</button>
+                        </div>
                     </div>
                 </div>
-                <div id="user-settings" class="tab-content">
-                    <h2>User Account</h2>
-                    <div class="setting-item">
-                        <p>Sign in to sync your history across devices.</p>
-                        <button id="login-button" class="login-btn">Login</button>
-                    </div>
+                <div class="settings-footer">
+                    <button id="save-settings-button" class="save-btn">Save Settings</button>
                 </div>
             </div>
         </div>
