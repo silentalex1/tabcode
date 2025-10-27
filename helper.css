@@ -6,7 +6,7 @@ body {
     align-items: center;
     min-height: 100vh;
     margin: 0;
-    background: radial-gradient(circle at 15% 50%, #1e3a8a 0%, transparent 25%), radial-gradient(circle at 85% 50%, #4c1d95 0%, transparent 25%), #0F172A;
+    background: radial-gradient(circle at 15% 50%, #1e3a8a 0%, transparent_25%), radial-gradient(circle at 85% 50%, #4c1d95 0%, transparent_25%), #0F172A;
     background-blend-mode: screen, difference, normal;
     background-size: cover;
     transition: background-color 0.5s;
@@ -140,17 +140,18 @@ main {
 
 #messages-container {
     flex-grow: 1;
-    padding: 10px 25px 25px 25px;
+    padding: 25px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    gap: 5px;
 }
 
 .message {
     display: flex;
     flex-direction: column;
     max-width: 85%;
-    margin-top: 15px;
+    padding: 10px 0;
 }
 
 .user-message {
@@ -162,6 +163,23 @@ main {
     align-self: flex-start;
     align-items: flex-start;
     position: relative;
+}
+
+.ai-message.is-reply {
+    margin-top: 15px;
+    padding-left: 30px;
+}
+
+.ai-message.is-reply::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: -25px;
+    bottom: 50%;
+    width: 20px;
+    border-left: 2px solid #475569;
+    border-bottom: 2px solid #475569;
+    border-bottom-left-radius: 10px;
 }
 
 .message-content-wrapper {
@@ -181,18 +199,6 @@ main {
 .ai-message .message-content-wrapper {
     background-color: #334155;
     border-bottom-left-radius: 5px;
-}
-
-.ai-message.is-reply::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: -15px;
-    width: 14px;
-    height: 10px;
-    border-left: 2px solid #475569;
-    border-bottom: 2px solid #475569;
-    border-bottom-left-radius: 8px;
 }
 
 .message-sender {
@@ -225,7 +231,7 @@ main {
 
 #message-input {
     grid-column: 1 / -1;
-    padding: 14px 20px 14px 20px;
+    padding: 14px 20px;
     border-radius: 12px;
     border: 1px solid #475569;
     background-color: #334155;
@@ -336,7 +342,6 @@ main {
     max-width: 650px;
     min-height: 400px;
     display: flex;
-    flex-direction: row;
     overflow: hidden;
     position: relative;
     border: 1px solid #334155;
@@ -352,7 +357,7 @@ main {
     font-size: 2rem;
     cursor: pointer;
     transition: color 0.2s;
-    z-index: 2;
+    z-index: 1;
 }
 
 .close-modal-btn:hover {
@@ -367,13 +372,12 @@ main {
 }
 
 .tab-button {
-    position: relative;
     display: block;
     width: 100%;
     background: none;
     border: none;
     color: #94A3B8;
-    padding: 12px 20px;
+    padding: 12px 15px;
     margin-bottom: 10px;
     text-align: left;
     font-size: 1rem;
@@ -381,6 +385,7 @@ main {
     border-radius: 8px;
     cursor: pointer;
     transition: color 0.3s;
+    position: relative;
     overflow: hidden;
 }
 
@@ -391,28 +396,22 @@ main {
     top: 50%;
     transform: translateY(-50%);
     width: 4px;
-    height: 0;
+    height: 0%;
     background-color: #3B82F6;
-    border-radius: 2px;
-    transition: height 0.3s ease-in-out, background-color 0.3s;
-}
-
-.tab-button:hover {
-    color: white;
+    border-radius: 4px;
+    transition: height 0.3s ease-in-out;
 }
 
 .tab-button:hover::before {
-    height: 60%;
+    height: 70%;
 }
 
 .tab-button.active {
     color: white;
-    background-color: rgba(59, 130, 246, 0.1);
 }
 
 .tab-button.active::before {
-    height: 80%;
-    background-color: #3B82F6;
+    height: 100%;
 }
 
 .settings-main {
@@ -480,6 +479,30 @@ main {
     background-color: #2563EB;
 }
 
+.settings-footer {
+    padding-top: 20px;
+    margin-top: auto;
+    border-top: 1px solid #334155;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.save-btn {
+    background-color: #22c55e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 25px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.save-btn:hover {
+    background-color: #16a34a;
+}
+
 .toggle-switch {
     position: relative;
     display: inline-block;
@@ -523,27 +546,4 @@ input:checked+.slider {
 
 input:checked+.slider:before {
     transform: translateX(22px);
-}
-
-.settings-footer {
-    margin-top: auto;
-    padding-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.save-btn {
-    background-color: #3B82F6;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 25px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.save-btn:hover {
-    background-color: #2563EB;
 }
