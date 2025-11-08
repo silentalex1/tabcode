@@ -1,33 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const submitButton = document.getElementById('submitButton');
     const inviteCodeInput = document.getElementById('inviteCode');
-    const errorMessage = document.getElementById('errorMessage');
+    const submitButton = document.getElementById('submitButton');
+    const errorMessageElement = document.getElementById('errorMessage');
 
-    const checkCode = () => {
-        submitButton.disabled = true;
+    const TABCODE_STORAGE_KEY = 'tabcode_passcodes';
+
+    const handleLoginAttempt = () => {
         const enteredCode = inviteCodeInput.value;
-        errorMessage.classList.remove('show');
+        const storedCodes = localStorage.getItem(TABCODE_STORAGE_KEY);
+        const validCodes = storedCodes ? JSON.parse(storedCodes) : [];
 
-        const validCodes = JSON.parse(localStorage.getItem('tabcode_passcodes')) || [];
+        const isCodeValid = validCodes.includes(enteredCode);
 
-        setTimeout(() => {
-            if (enteredCode && validCodes.includes(enteredCode)) {
-                window.location.href = '/aichat';
-            } else {
-                errorMessage.textContent = 'Invalid invite code.';
-                errorMessage.classList.add('show');
-                inviteCodeInput.focus();
-                inviteCodeInput.value = '';
-                submitButton.disabled = false;
-            }
-        }, 300);
+        if (isCodeValid) {
+            window.location.href = '/aichat';
+        } else {
+            errorMessageElement.textContent = 'Please enter the correct invite code.';
+            errorMessageElement.classList.add('show');
+            inviteCodeInput.value = '';
+            inviteCodeInput.focus();
+        }
     };
 
-    submitButton.addEventListener('click', checkCode);
+    submitButton.addEventListener('click', handleLoginAttempt);
 
     inviteCodeInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
-            checkCode();
+            event.preventDefault();
+            handleLoginAttempt();
         }
     });
 });
