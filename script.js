@@ -3,22 +3,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitButton = document.getElementById('submitButton');
     const errorMessageElement = document.getElementById('errorMessage');
 
-    const TABCODE_STORAGE_KEY = 'tabcode_passcodes';
+    const SERVER_URL = 'http://localhost:3000';
 
-    const handleLoginAttempt = () => {
+    const handleLoginAttempt = async () => {
         const enteredCode = inviteCodeInput.value;
-        const storedCodes = localStorage.getItem(TABCODE_STORAGE_KEY);
-        const validCodes = storedCodes ? JSON.parse(storedCodes) : [];
+        if (!enteredCode) return;
 
-        const isCodeValid = validCodes.includes(enteredCode);
+        try {
+            const response = await fetch(`${SERVER_URL}/validate-code`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code: enteredCode }),
+            });
 
-        if (isCodeValid) {
-            window.location.href = '/aichat';
-        } else {
-            errorMessageElement.textContent = 'Please enter the correct invite code.';
+            const result = await response.json();
+
+            if (result.success) {
+                window.location.href = '/aichat';
+            } else {
+                errorMessageElement.textContent = 'Please enter the correct invite code.';
+                errorMessageElement.classList.add('show');
+                inviteCodeInput.value = '';
+                inviteCodeInput.focus();
+            }
+        } catch (error) {
+            errorMessageElement.textContent = 'Error connecting to the server.';
             errorMessageElement.classList.add('show');
-            inviteCodeInput.value = '';
-            inviteCodeInput.focus();
         }
     };
 
