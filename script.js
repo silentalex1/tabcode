@@ -4,18 +4,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMessage = document.getElementById('errorMessage');
 
     const checkCode = () => {
+        submitButton.disabled = true;
         const enteredCode = inviteCodeInput.value;
         errorMessage.classList.remove('show');
 
         const validCodes = JSON.parse(localStorage.getItem('tabcode_passcodes')) || [];
 
-        if (validCodes.includes(enteredCode)) {
-            window.location.href = '/aichat';
-        } else {
-            errorMessage.textContent = 'Invalid invite code.';
-            errorMessage.classList.add('show');
-            inviteCodeInput.focus();
-        }
+        setTimeout(() => {
+            if (enteredCode && validCodes.includes(enteredCode)) {
+                window.location.href = '/aichat';
+            } else {
+                errorMessage.textContent = 'Invalid invite code.';
+                errorMessage.classList.add('show');
+                inviteCodeInput.focus();
+                inviteCodeInput.value = '';
+                submitButton.disabled = false;
+            }
+        }, 300);
     };
 
     submitButton.addEventListener('click', checkCode);
