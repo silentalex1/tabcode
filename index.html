@@ -3,160 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TabCoded your best #1 calculator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #111827; 
-        }
-        .calculator-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.5rem;
-        }
-        .btn {
-            font-weight: 600;
-            padding: 0.75rem;
-            min-height: 4rem;
-            transition: transform 0.1s, background-color 0.1s, box-shadow 0.1s;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-        .btn:active {
-            transform: scale(0.95);
-            box-shadow: none;
-        }
-    </style>
+    <title>tabcode</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-
-    <div class="w-full max-w-xs bg-gray-900 p-4 rounded-[1.5rem] shadow-[0_15px_30px_-5px_rgba(0,0,0,0.5)]">
-        
-        <div class="text-white text-right mb-4">
-            <div id="input-buffer" class="text-yellow-400 text-lg font-medium min-h-6 mb-1 opacity-75"></div>
-            <input type="text" id="display" class="w-full bg-gray-900 text-5xl font-extrabold p-2 rounded-xl focus:outline-none placeholder-gray-600 transition-all duration-150 border-4 border-gray-800" value="" placeholder="0" readonly>
+<body>
+    <div class="container">
+        <div class="ui-box">
+            <h1>Welcome to tabcode.</h1>
+            <p>Enter the invite code.</p>
+            <div class="form-control">
+                <input type="value" required="">
+                <label>
+                    <span style="transition-delay:0ms">E</span><span style="transition-delay:50ms">n</span><span style="transition-delay:100ms">t</span><span style="transition-delay:150ms">e</span><span style="transition-delay:200ms">r</span><span style="transition-delay:250ms"> </span><span style="transition-delay:300ms">y</span><span style="transition-delay:350ms">o</span><span style="transition-delay:400ms">u</span><span style="transition-delay:450ms">r</span><span style="transition-delay:500ms"> </span><span style="transition-delay:550ms">c</span><span style="transition-delay:600ms">o</span><span style="transition-delay:650ms">d</span><span style="transition-delay:700ms">e</span><span style="transition-delay:750ms">:</span>
+                </label>
+            </div>
+            <button id="submitButton">
+                <p>Submit code.</p>
+            </button>
         </div>
-
-        <div class="calculator-grid">
-            
-            <button class="btn bg-gray-700 text-yellow-400 rounded-xl text-xl" onclick="clearDisplay()">C</button>
-            <button class="btn bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('(')">(</button>
-            <button class="btn bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput(')')">)</button>
-            <button class="btn bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-xl text-xl" onclick="appendInput('/')">÷</button>
-
-            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('7')">7</button>
-            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('8')">8</button>
-            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('9')">9</button>
-            <button class="btn bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-xl text-xl" onclick="appendInput('*')">×</button>
-
-            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('4')">4</button>
-            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('5')">5</button>
-            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('6')">6</button>
-            <button class="btn bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-xl text-xl" onclick="appendInput('-')">-</button>
-
-            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('1')">1</button>
-            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('2')">2</button>
-            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('3')">3</button>
-            <button class="btn bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-xl text-xl" onclick="appendInput('+')">+</button>
-
-            <button class="btn bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('°')">°</button>
-            <button class="btn bg-gray-700 text-white rounded-xl text-xl" onclick="backspace()">DEL</button>
-            <button class="btn bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('0')">0</button>
-            <button class="btn bg-gray-700 text-white rounded-xl text-xl" onclick="appendInput('.')">.</button>
-            
-        </div>
-        <button class="w-full btn bg-yellow-400 hover:bg-yellow-300 text-gray-900 rounded-xl text-2xl mt-2" onclick="calculate()">=</button>
     </div>
-
-    <script>
-        const display = document.getElementById('display');
-        const buffer = document.getElementById('input-buffer');
-        
-        let currentInput = '';
-        let hasError = false;
-
-        const allowedKeys = '0123456789+-*/.()caAiI'; 
-
-        function appendInput(value) {
-            if (hasError) {
-                clearDisplay();
-            }
-            currentInput += value;
-            display.value = currentInput;
-        }
-
-        function clearDisplay() {
-            currentInput = '';
-            display.value = '';
-            buffer.textContent = '';
-            hasError = false;
-        }
-
-        function backspace() {
-            if (currentInput.length > 0) {
-                currentInput = currentInput.slice(0, -1);
-                display.value = currentInput;
-                hasError = false;
-            }
-        }
-
-        function calculate() {
-            if (currentInput === '') return;
-
-            if (currentInput.toLowerCase().replace(/\s/g, '') === 'a+i') {
-                window.location.href = '/homeworkhelp';
-                return;
-            }
-
-            try {
-                let expression = currentInput.replace(/×/g, '*').replace(/÷/g, '/');
-                
-                if (expression.includes('°')) {
-                    expression = expression.replace(/(\d+(\.\d+)?)\s*°/g, (match, p1) => {
-                        return `(${p1} * (Math.PI / 180))`;
-                    });
-                }
-                
-                const result = eval(expression);
-                
-                buffer.textContent = currentInput;
-
-                if (result === undefined || result === null || isNaN(result) || !isFinite(result)) {
-                    throw new Error("Invalid calculation");
-                }
-                
-                currentInput = String(result);
-                display.value = currentInput;
-                hasError = false;
-
-            } catch (error) {
-                currentInput = '';
-                display.value = 'Error';
-                buffer.textContent = '';
-                hasError = true;
-                
-            }
-        }
-
-        document.addEventListener('keydown', (event) => {
-            const key = event.key;
-            
-            if (allowedKeys.includes(key)) {
-                event.preventDefault(); 
-                if (key.toLowerCase() === 'c') {
-                    clearDisplay();
-                } else {
-                    appendInput(key);
-                }
-            } else if (key === 'Enter' || key === '=') {
-                event.preventDefault();
-                calculate();
-            } else if (key === 'Backspace') {
-                event.preventDefault();
-                backspace();
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
