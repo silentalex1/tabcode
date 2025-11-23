@@ -13,8 +13,8 @@
 
     <div class="glow-bg"></div>
 
-    <aside class="hidden md:flex w-20 h-full z-50 flex-col items-center py-8 border-r border-white/5 bg-black/20 backdrop-blur-xl">
-        <div class="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/20 mb-auto cursor-pointer hover:scale-105 transition duration-300 group relative">
+    <aside class="hidden md:flex w-20 h-full z-50 flex-col items-center py-8 border-r border-white/5 bg-black/40 backdrop-blur-xl">
+        <div class="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/20 mb-auto cursor-pointer hover:scale-105 transition duration-300 group relative pointer-events-auto">
             <i class="fa-solid fa-layer-group text-white text-xl"></i>
             <span class="tooltip-right">Home</span>
         </div>
@@ -29,7 +29,7 @@
         
         <header class="absolute top-0 left-0 w-full p-6 flex flex-col items-center z-40 pointer-events-none">
             
-            <button id="mobile-settings-btn" class="md:hidden pointer-events-auto absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-300 cursor-pointer hover:bg-white/20 transition">
+            <button id="mobile-settings-btn" class="md:hidden pointer-events-auto absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-300 cursor-pointer hover:bg-white/20 transition z-50">
                 <i class="fa-solid fa-gear"></i>
             </button>
 
@@ -37,7 +37,7 @@
                 <h1 class="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-500">
                     Prysmis
                 </h1>
-                <p class="text-gray-500 text-[11px] font-bold tracking-[0.2em] uppercase mt-2">Your Personal AI Learning Partner</p>
+                <p class="text-gray-500 text-[11px] font-bold tracking-[0.2em] uppercase mt-2">Your Personal Learning Assistant Tool</p>
             </div>
             
             <div class="pointer-events-auto mt-6 relative z-50">
@@ -48,7 +48,7 @@
                 
                 <div id="mode-dropdown" class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-50 py-2">
                     <div class="mode-item" data-val="AI Assistant"><i class="fa-solid fa-sparkles text-violet-400 w-6"></i> General</div>
-                    <div class="mode-item" data-val="Rizz tool"><i class="fa-solid fa-fire text-red-500 w-6"></i> Rizz tool</div>
+                    <div class="mode-item" data-val="Rizz tool"><i class="fa-solid fa-heart text-red-500 w-6"></i> Rizz tool</div>
                     <div class="mode-item" data-val="Geometry"><i class="fa-solid fa-shapes text-blue-400 w-6"></i> Geometry</div>
                     <div class="mode-item" data-val="English"><i class="fa-solid fa-feather text-pink-400 w-6"></i> English</div>
                     <div class="mode-item" data-val="Biology"><i class="fa-solid fa-dna text-green-400 w-6"></i> Biology</div>
@@ -72,16 +72,16 @@
                     <button class="suggestion-chip" onclick="setInput('Help me understand Quantum Entanglement')">⚛️ Quantum Physics</button>
                     <button class="suggestion-chip" onclick="setInput('Write an essay outline about Macbeth')">📝 Essay Outline</button>
                     <button class="suggestion-chip" onclick="setInput('Solve for x: 2x^2 + 5x - 3 = 0')">📐 Solve Math</button>
-                    <button class="suggestion-chip" onclick="setInput('Give me a pickup line for a library')">💘 Rizz Helper</button>
+                    <button class="suggestion-chip" onclick="setInput('Give me a smooth pickup line')">💘 Rizz Helper</button>
                 </div>
 
-                <button id="get-started-btn" class="mt-10 px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.2)] cursor-pointer">
+                <button id="get-started-btn" class="mt-10 px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.2)] cursor-pointer z-40">
                     Get Started
                 </button>
             </div>
         </div>
 
-        <div class="absolute bottom-0 left-0 w-full pb-8 flex flex-col items-center bg-gradient-to-t from-black via-black/95 to-transparent pt-32 px-4 z-40">
+        <div class="absolute bottom-0 left-0 w-full pb-6 flex flex-col items-center bg-gradient-to-t from-black via-black/95 to-transparent pt-32 px-4 z-40">
             <div class="relative w-full max-w-3xl" id="input-container">
                 
                 <div id="media-preview" class="absolute bottom-full left-0 mb-3 px-2 flex gap-2"></div>
@@ -111,21 +111,21 @@
 
                 <div id="input-bar" class="flex items-end bg-[#111] border border-white/10 rounded-[24px] p-2 pl-4 shadow-2xl transition-all duration-300 focus-within:border-violet-500/50 focus-within:ring-1 focus-within:ring-violet-500/20 group hover:border-white/20">
                     <input type="file" id="file-input" class="hidden" accept="image/*">
-                    <button onclick="document.getElementById('file-input').click()" class="mb-1 w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition relative group/btn">
+                    <button onclick="document.getElementById('file-input').click()" class="mb-1 w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition relative group/btn cursor-pointer">
                         <i class="fa-solid fa-paperclip text-lg"></i>
                         <span class="tooltip-top">Upload Media</span>
                     </button>
 
                     <textarea id="prompt-input" rows="1" class="flex-1 bg-transparent border-none outline-none text-gray-100 px-4 py-3 resize-none placeholder-gray-600 font-medium text-[15px] leading-relaxed max-h-40" placeholder="Ask Prysmis AI anything or use '/' commands"></textarea>
 
-                    <button id="submit-btn" class="mb-1 w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center shadow-lg transition-all transform hover:scale-105 active:scale-95 relative group/btn">
+                    <button id="submit-btn" class="mb-1 w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center shadow-lg transition-all transform hover:scale-105 active:scale-95 relative group/btn cursor-pointer">
                         <i class="fa-solid fa-arrow-up text-lg"></i>
                         <span class="tooltip-top">Send Message</span>
                     </button>
                 </div>
                 
                 <div class="text-center mt-3">
-                    <p class="text-[10px] text-gray-600 font-medium tracking-wider uppercase opacity-70">Powered by Gemini AI so enjoy.</p>
+                    <p class="text-[10px] text-gray-600 font-medium tracking-wider uppercase opacity-70">Powered by gemini AI so enjoy.</p>
                 </div>
             </div>
         </div>
