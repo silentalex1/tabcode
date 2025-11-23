@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let uploadedFile = { data: null, type: null };
     let isSettingsOpen = false;
     let isDropdownOpen = false;
-    const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent";
+    const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -52,7 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    els.settingsTriggers.forEach(btn => btn.addEventListener('click', () => toggleSettings(true)));
+    els.settingsTriggers.forEach(btn => btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSettings(true);
+    }));
+    
     els.closeSettings.addEventListener('click', () => toggleSettings(false));
 
     els.saveSettings.addEventListener('click', () => {
@@ -171,7 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
         els.input.focus();
     };
 
-    els.getStartedBtn.addEventListener('click', () => {
+    els.getStartedBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         toggleSettings(true);
     });
 
@@ -230,20 +235,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            const res = await req.json();
-            
+
             document.getElementById(loaderId).remove();
 
-            if(res.error) {
-                appendMsg('ai', `Error: ${res.error.message}`);
-            } else {
-                streamResponse(res.candidates[0].content.parts[0].text);
+            if(!req.ok) {
+                const err = await req.json();
+                appendMsg('ai', `Error: ${err.error?.message || req.statusText}`);
+                return;
             }
+
+            const reader = req.body.getReader();
+            const decoder = new TextDecoder();
+            let aiBubble = createAiBubble();
+            let accumulatedText = "";
+
+            while(true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value, {stream: true});
+                const lines = chunk.split('\n');
+                
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const json = JSON.parse(line.substring(6));
+                            if (json.candidates && json.candidates[0].content) {
+                                const txt = json.candidates[0].content.parts[0].text;
+                                accumulatedText += txt;
+                                aiBubble.innerHTML = parseMD(accumulatedText) + "<span class='inline-block w-2 h-4 bg-violet-400 ml-1 animate-pulse align-middle'></span>";
+                                els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
+                            }
+                        } catch(e) {}
+                    }
+                }
+            }
+            aiBubble.innerHTML = parseMD(accumulatedText);
 
         } catch(err) {
             document.getElementById(loaderId)?.remove();
             appendMsg('ai', "Connection failed. Check API key.");
         }
+    }
+
+    function createAiBubble() {
+        const div = document.createElement('div');
+        div.className = `flex w-full justify-start msg-anim mb-6`;
+        const bubble = document.createElement('div');
+        bubble.className = "max-w-[90%] md:max-w-[75%] p-5 rounded-[20px] rounded-bl-none shadow-lg prose ai-msg text-gray-200";
+        div.appendChild(bubble);
+        els.chatFeed.appendChild(div);
+        return bubble;
     }
 
     function appendMsg(role, text, img) {
@@ -257,31 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
         div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ${role === 'user' ? 'user-msg text-white rounded-br-none' : 'ai-msg text-gray-200 rounded-bl-none'}">${content}</div>`;
         els.chatFeed.appendChild(div);
         els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
-    }
-
-    function streamResponse(text) {
-        const div = document.createElement('div');
-        div.className = `flex w-full justify-start msg-anim mb-6`;
-        const bubble = document.createElement('div');
-        bubble.className = "max-w-[90%] md:max-w-[75%] p-5 rounded-[20px] rounded-bl-none shadow-lg prose ai-msg text-gray-200";
-        div.appendChild(bubble);
-        els.chatFeed.appendChild(div);
-
-        const chars = text.split('');
-        let i = 0;
-        let currentText = "";
-
-        const interval = setInterval(() => {
-            if(i >= chars.length) {
-                clearInterval(interval);
-                bubble.innerHTML = parseMD(text);
-                return;
-            }
-            currentText += chars[i];
-            bubble.innerHTML = parseMD(currentText) + "<span class='inline-block w-2 h-4 bg-violet-400 ml-1 animate-pulse align-middle'></span>";
-            els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
-            i++;
-        }, 15);
     }
 
     function parseMD(text) {
