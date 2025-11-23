@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             els.heroSection.style.display = 'flex';
         } else if (cmd === '/features') {
             els.input.value = '';
-            appendMsg('ai', `**Prysmis Capabilities:**\n- **Subject Mastery:** Specialized modes for Geometry, Biology, Coding, etc.\n- **Vision:** Analyze images.\n- **Privacy:** Cloaking features.\n- **Persona:** Roleplay adaptation.`);
+            appendMsg('ai', `**Prysmis Capabilities:**\n- **Subject Mastery:** Specialized modes for Geometry, Biology, Coding, etc.\n- **Rizz tool:** Expert social dating advice.\n- **Vision:** Analyze images.\n- **Privacy:** Cloaking features.\n- **Persona:** Roleplay adaptation.`);
         } else if (cmd === '/invisible tab') {
             document.title = "Google Docs";
             const icon = document.querySelector("link[rel~='icon']");
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     els.getStartedBtn.addEventListener('click', () => {
-        els.input.focus();
+        toggleSettings(true);
     });
 
     els.submitBtn.addEventListener('click', handleSend);
@@ -204,7 +204,13 @@ document.addEventListener('DOMContentLoaded', () => {
         els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
 
         try {
-            const sysPrompt = `You are Prysmis. Mode: ${els.modeTxt.innerText}. Be helpful, concise, and use formatting.`;
+            const mode = els.modeTxt.innerText;
+            let sysPrompt = `You are Prysmis. Mode: ${mode}. Be helpful, concise, and use formatting.`;
+            
+            if(mode === 'Rizz tool') {
+                sysPrompt = "You are the ultimate 'Rizz God'. Your only purpose is to help the user flirt, be charismatic, and smooth with the person they are talking to. Give top-tier pickup lines, responses to texts, and dating advice. Be cool, confident, and slightly edgy.";
+            }
+
             const payload = {
                 contents: [{
                     parts: [
@@ -248,4 +254,41 @@ document.addEventListener('DOMContentLoaded', () => {
         let content = text.replace(/\n/g, '<br>');
         if(img) content = `<img src="${img}" class="max-w-[200px] rounded-lg mb-2 border border-white/20">` + content;
 
-        div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ${role === 'user' ? 'user-msg text-white rounded-
+        div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ${role === 'user' ? 'user-msg text-white rounded-br-none' : 'ai-msg text-gray-200 rounded-bl-none'}">${content}</div>`;
+        els.chatFeed.appendChild(div);
+        els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
+    }
+
+    function streamResponse(text) {
+        const div = document.createElement('div');
+        div.className = `flex w-full justify-start msg-anim mb-6`;
+        const bubble = document.createElement('div');
+        bubble.className = "max-w-[90%] md:max-w-[75%] p-5 rounded-[20px] rounded-bl-none shadow-lg prose ai-msg text-gray-200";
+        div.appendChild(bubble);
+        els.chatFeed.appendChild(div);
+
+        const chars = text.split('');
+        let i = 0;
+        let currentText = "";
+
+        const interval = setInterval(() => {
+            if(i >= chars.length) {
+                clearInterval(interval);
+                bubble.innerHTML = parseMD(text);
+                return;
+            }
+            currentText += chars[i];
+            bubble.innerHTML = parseMD(currentText) + "<span class='inline-block w-2 h-4 bg-violet-400 ml-1 animate-pulse align-middle'></span>";
+            els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
+            i++;
+        }, 15);
+    }
+
+    function parseMD(text) {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
+    }
+});
