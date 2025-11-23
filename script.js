@@ -1,33 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     const els = {
-        settingsTriggers: [document.getElementById('settings-trigger'), document.getElementById('mobile-settings-btn')],
         settingsOverlay: document.getElementById('settings-overlay'),
         settingsBox: document.getElementById('settings-box'),
         closeSettings: document.getElementById('close-settings'),
         saveSettings: document.getElementById('save-settings-btn'),
         apiKey: document.getElementById('api-key-field'),
-        
-        modeBtn: document.getElementById('mode-btn'),
-        modeDrop: document.getElementById('mode-dropdown'),
-        modeTxt: document.getElementById('current-mode-txt'),
-        modeItems: document.querySelectorAll('.mode-item'),
-
         input: document.getElementById('prompt-input'),
-        fileInput: document.getElementById('file-input'),
-        mediaPreview: document.getElementById('media-preview'),
-        cmdPopup: document.getElementById('cmd-popup'),
         submitBtn: document.getElementById('submit-btn'),
-        chatFeed: document.getElementById('chat-feed'),
+        chatFeed: document.getElementById('chat-messages'),
         heroSection: document.getElementById('hero-section'),
         getStartedBtn: document.getElementById('get-started-btn')
     };
 
-    let uploadedFile = { data: null, type: null };
-    let isSettingsOpen = false;
-    let isDropdownOpen = false;
-    
-    const TARGET_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent";
-    const FALLBACK_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
+    const TARGET_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+    const API_KEY = localStorage.getItem('prysmis_key') || '';
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
