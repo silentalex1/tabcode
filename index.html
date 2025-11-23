@@ -81,35 +81,6 @@
             </div>
         </div>
 
-        <div class="absolute bottom-0 left-0 w-full pb-6 flex flex-col items-center bg-gradient-to-t from-black via-black/95 to-transparent pt-32 px-4 z-[40]">
-            <div class="relative w-full max-w-3xl" id="input-container">
-                
-                <div id="media-preview" class="absolute bottom-full left-0 mb-3 px-2 flex gap-2"></div>
-
-                <div id="cmd-popup" class="absolute bottom-full left-0 mb-3 w-full md:w-72 glass-popup rounded-2xl overflow-hidden hidden flex-col z-50">
-                    <div class="cmd-row" onclick="runCmd('/features')">
-                        <span class="text-violet-400 font-bold">/features</span>
-                        <span class="text-gray-500 text-xs uppercase tracking-wider">Show capabilities</span>
-                    </div>
-                    <div class="cmd-row" onclick="runCmd('/roleplay')">
-                        <span class="text-pink-400 font-bold">/roleplay</span>
-                        <span class="text-gray-500 text-xs uppercase tracking-wider">Activate Persona</span>
-                    </div>
-                    <div class="cmd-row" onclick="runCmd('/discord-server')">
-                        <span class="text-indigo-400 font-bold">/discord-server</span>
-                        <span class="text-gray-500 text-xs uppercase tracking-wider">Join Community</span>
-                    </div>
-                    <div class="cmd-row" onclick="runCmd('/invisible tab')">
-                        <span class="text-emerald-400 font-bold">/invisible tab</span>
-                        <span class="text-gray-500 text-xs uppercase tracking-wider">Cloak Mode</span>
-                    </div>
-                    <div class="cmd-row" onclick="runCmd('/clear')">
-                        <span class="text-red-400 font-bold">/clear</span>
-                        <span class="text-gray-500 text-xs uppercase tracking-wider">Reset Chat</span>
-                    </div>
-                </div>
-
-                <div id="input-bar" class="flex items-end bg-[#111] border border-white/10 rounded-[24px] p-2 pl-4 shadow-2xl transition-all duration-300 focus-within:border-violet-500/50 focus-within:ring-1 focus-within:ring-violet-500/20 group hover:border-white/20">
                     <input type="file" id="file-input" class="hidden" accept="image/*">
                     <button onclick="document.getElementById('file-input').click()" class="mb-1 w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition relative group/btn cursor-pointer">
                         <i class="fa-solid fa-paperclip text-lg"></i>
