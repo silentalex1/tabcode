@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prysmis - Your Personal AI Learning Partner</title>
+    <title>Prysmis - Your Personal Learning Assistant Tool</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -13,13 +13,13 @@
 
     <div class="glow-bg"></div>
 
-    <aside class="hidden md:flex w-20 h-full z-40 flex-col items-center py-8 border-r border-white/5 bg-black/20 backdrop-blur-xl">
+    <aside class="hidden md:flex w-20 h-full z-50 flex-col items-center py-8 border-r border-white/5 bg-black/20 backdrop-blur-xl">
         <div class="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/20 mb-auto cursor-pointer hover:scale-105 transition duration-300 group relative">
             <i class="fa-solid fa-layer-group text-white text-xl"></i>
             <span class="tooltip-right">Home</span>
         </div>
         
-        <button id="settings-trigger" class="w-12 h-12 rounded-2xl hover:bg-white/10 flex items-center justify-center transition duration-300 text-gray-400 hover:text-white group relative">
+        <button id="settings-trigger" class="w-12 h-12 rounded-2xl hover:bg-white/10 flex items-center justify-center transition duration-300 text-gray-400 hover:text-white group relative cursor-pointer pointer-events-auto">
             <i class="fa-solid fa-gear text-xl group-hover:rotate-90 transition-transform duration-500"></i>
             <span class="tooltip-right">Settings</span>
         </button>
@@ -27,27 +27,28 @@
 
     <main class="flex-1 flex flex-col relative z-10 h-full">
         
-        <header class="absolute top-0 left-0 w-full p-6 flex flex-col items-center z-30 pointer-events-none">
+        <header class="absolute top-0 left-0 w-full p-6 flex flex-col items-center z-40 pointer-events-none">
             
-            <button id="mobile-settings-btn" class="md:hidden pointer-events-auto absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-300">
+            <button id="mobile-settings-btn" class="md:hidden pointer-events-auto absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-300 cursor-pointer hover:bg-white/20 transition">
                 <i class="fa-solid fa-gear"></i>
             </button>
 
-            <div class="text-center animate-slide-in">
+            <div class="text-center animate-slide-in pointer-events-auto">
                 <h1 class="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-500">
                     Prysmis
                 </h1>
                 <p class="text-gray-500 text-[11px] font-bold tracking-[0.2em] uppercase mt-2">Your Personal AI Learning Partner</p>
             </div>
             
-            <div class="pointer-events-auto mt-6 relative">
-                <button id="mode-btn" class="glass-btn px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-3 text-gray-200 hover:text-white transition-all duration-300 group">
+            <div class="pointer-events-auto mt-6 relative z-50">
+                <button id="mode-btn" class="glass-btn px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-3 text-gray-200 hover:text-white transition-all duration-300 group cursor-pointer shadow-lg hover:shadow-violet-500/20">
                     <span id="current-mode-txt">AI Assistant</span>
                     <i class="fa-solid fa-chevron-down text-[10px] opacity-60 group-hover:translate-y-0.5 transition-transform"></i>
                 </button>
                 
                 <div id="mode-dropdown" class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-50 py-2">
                     <div class="mode-item" data-val="AI Assistant"><i class="fa-solid fa-sparkles text-violet-400 w-6"></i> General</div>
+                    <div class="mode-item" data-val="Rizz tool"><i class="fa-solid fa-fire text-red-500 w-6"></i> Rizz tool</div>
                     <div class="mode-item" data-val="Geometry"><i class="fa-solid fa-shapes text-blue-400 w-6"></i> Geometry</div>
                     <div class="mode-item" data-val="English"><i class="fa-solid fa-feather text-pink-400 w-6"></i> English</div>
                     <div class="mode-item" data-val="Biology"><i class="fa-solid fa-dna text-green-400 w-6"></i> Biology</div>
@@ -71,10 +72,10 @@
                     <button class="suggestion-chip" onclick="setInput('Help me understand Quantum Entanglement')">⚛️ Quantum Physics</button>
                     <button class="suggestion-chip" onclick="setInput('Write an essay outline about Macbeth')">📝 Essay Outline</button>
                     <button class="suggestion-chip" onclick="setInput('Solve for x: 2x^2 + 5x - 3 = 0')">📐 Solve Math</button>
-                    <button class="suggestion-chip" onclick="setInput('Debug this React useEffect code')">💻 Debug Code</button>
+                    <button class="suggestion-chip" onclick="setInput('Give me a pickup line for a library')">💘 Rizz Helper</button>
                 </div>
 
-                <button id="get-started-btn" class="mt-10 px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                <button id="get-started-btn" class="mt-10 px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.2)] cursor-pointer">
                     Get Started
                 </button>
             </div>
@@ -133,7 +134,7 @@
     <div id="settings-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[9999] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
         <div class="bg-[#0f0f10] border border-white/10 w-full max-w-lg rounded-[2rem] shadow-2xl transform scale-95 transition-all duration-300 relative mx-4" id="settings-box">
             
-            <button id="close-settings" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition">
+            <button id="close-settings" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition cursor-pointer">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
@@ -172,7 +173,7 @@
                     </div>
                 </div>
 
-                <button id="save-settings-btn" class="w-full mt-8 bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition shadow-lg active:scale-95">Save Changes</button>
+                <button id="save-settings-btn" class="w-full mt-8 bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition shadow-lg active:scale-95 cursor-pointer">Save Changes</button>
             </div>
         </div>
     </div>
