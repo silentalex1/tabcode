@@ -3,82 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrysmisAI</title>
+    <title>Prysmis - best learning tool.</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-[#030304] text-white h-screen overflow-hidden flex selection:bg-purple-500 selection:text-white font-sans">
+<body class="bg-[#050505] text-white h-screen overflow-hidden flex selection:bg-purple-500 selection:text-white font-sans">
 
     <div class="ambient-glow"></div>
 
-    <aside class="w-20 h-full z-50 flex flex-col items-center py-8 glass-border-r">
-        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 mb-auto hover:scale-105 transition duration-300 cursor-pointer">
+    <aside class="hidden md:flex w-20 h-full z-40 flex-col items-center py-8 glass-border-r">
+        <div class="w-12 h-12 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 mb-auto hover:scale-105 transition duration-300 cursor-pointer">
             <i class="fa-solid fa-bolt text-white text-xl"></i>
         </div>
         
-        <button id="settings-btn" class="w-12 h-12 rounded-2xl hover:bg-white/5 flex items-center justify-center transition duration-300 text-gray-500 hover:text-white group">
+        <button id="settings-btn-desktop" class="w-12 h-12 rounded-2xl hover:bg-white/5 flex items-center justify-center transition duration-300 text-gray-500 hover:text-white group">
             <i class="fa-solid fa-gear text-xl group-hover:rotate-90 transition-transform duration-700"></i>
         </button>
     </aside>
 
-    <main class="flex-1 flex flex-col relative z-10">
+    <main class="flex-1 flex flex-col relative z-10 h-full">
         
-        <header class="absolute top-0 left-0 w-full p-8 flex flex-col items-center z-20 pointer-events-none">
-            <div class="animate-slide-down">
-                <h1 class="text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 drop-shadow-sm">
+        <header class="absolute top-0 left-0 w-full p-6 md:p-8 flex flex-col items-center z-30 pointer-events-none">
+            
+            <button id="settings-btn-mobile" class="md:hidden pointer-events-auto absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+
+            <div class="animate-slide-down text-center">
+                <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 drop-shadow-sm">
                     PrysmisAI
                 </h1>
-                <p class="text-center text-gray-500 text-xs font-medium tracking-[0.2em] uppercase mt-2">Your #1 Learning Tool</p>
+                <p class="text-gray-500 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase mt-2">Your #1 Best Learning Assistant Tool</p>
             </div>
             
-            <div class="pointer-events-auto mt-6 relative group animate-fade-in" style="animation-delay: 0.2s;">
-                <button id="mode-selector" class="glass-pill px-6 py-2 rounded-full text-sm font-medium flex items-center gap-2 text-gray-300 hover:text-white hover:border-purple-500/50 transition-all duration-300">
-                    <span id="current-mode">AI Assistant</span>
-                    <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i>
+            <div class="pointer-events-auto mt-6 relative animate-fade-in" style="animation-delay: 0.2s;">
+                <button id="mode-selector" class="glass-pill px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-3 text-gray-200 hover:text-white hover:border-purple-500/50 transition-all duration-300 shadow-lg shadow-purple-900/20">
+                    <span id="current-mode">AI Assistant (default)</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] opacity-70 transition-transform duration-300" id="dropdown-arrow"></i>
                 </button>
-                <div class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-56 bg-[#0a0a0a]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden group-hover:block transition-all p-1">
-                    <div class="mode-opt" data-mode="AI Assistant"><i class="fa-solid fa-sparkles text-purple-400"></i> General</div>
-                    <div class="mode-opt" data-mode="Geometry"><i class="fa-solid fa-shapes text-blue-400"></i> Geometry</div>
-                    <div class="mode-opt" data-mode="English"><i class="fa-solid fa-book-open text-pink-400"></i> English</div>
-                    <div class="mode-opt" data-mode="Biology"><i class="fa-solid fa-dna text-green-400"></i> Biology</div>
+                
+                <div id="mode-dropdown" class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-64 bg-[#0F0F0F] border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden transform origin-top transition-all duration-200 z-50">
+                    <div class="p-1.5 space-y-1">
+                        <div class="mode-opt" data-mode="AI Assistant (default)"><i class="fa-solid fa-sparkles text-purple-400 w-5"></i> General</div>
+                        <div class="mode-opt" data-mode="Geometry"><i class="fa-solid fa-shapes text-blue-400 w-5"></i> Geometry</div>
+                        <div class="mode-opt" data-mode="English"><i class="fa-solid fa-book-open text-pink-400 w-5"></i> English</div>
+                        <div class="mode-opt" data-mode="Biology"><i class="fa-solid fa-dna text-green-400 w-5"></i> Biology</div>
+                        <div class="mode-opt" data-mode="Physics"><i class="fa-solid fa-atom text-orange-400 w-5"></i> Physics</div>
+                        <div class="mode-opt" data-mode="History"><i class="fa-solid fa-landmark text-yellow-400 w-5"></i> History</div>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <div id="chat-container" class="flex-1 overflow-y-auto px-[15%] pt-40 pb-48 flex flex-col gap-6 scroll-smooth">
+        <div id="chat-container" class="flex-1 overflow-y-auto px-4 md:px-[15%] pt-44 pb-48 flex flex-col gap-6 scroll-smooth">
             <div id="welcome-msg" class="h-full flex flex-col items-center justify-center animate-fade-in">
-                <div class="text-center p-12 glass-panel rounded-[2rem] max-w-lg border border-white/5">
-                    <div class="w-24 h-24 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-purple-500/20 animate-float">
-                        <i class="fa-solid fa-robot text-4xl text-white"></i>
+                <div class="text-center p-8 md:p-12 glass-panel rounded-[2rem] max-w-lg border border-white/5 mx-4">
+                    <div class="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-purple-500/30 animate-float">
+                        <i class="fa-solid fa-robot text-3xl md:text-4xl text-white"></i>
                     </div>
-                    <h2 class="text-3xl font-bold text-white mb-4">Welcome to Prysmis</h2>
-                    <p class="text-gray-400 leading-relaxed">Ready to vibe? <br>Click the <i class="fa-solid fa-gear text-gray-300 mx-1"></i> to set up your key.</p>
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">Welcome to Prysmis AI</h2>
+                    <p class="text-gray-400 leading-relaxed text-sm md:text-base">Please press the <i class="fa-solid fa-gear text-gray-300 mx-1 bg-white/10 p-1 rounded"></i> to continue.</p>
                 </div>
             </div>
         </div>
 
-        <div class="absolute bottom-0 left-0 w-full pb-10 flex justify-center items-end bg-gradient-to-t from-[#030304] via-[#030304]/90 to-transparent pt-32 px-8">
+        <div class="absolute bottom-0 left-0 w-full pb-6 md:pb-10 flex justify-center items-end bg-gradient-to-t from-[#050505] via-[#050505]/95 to-transparent pt-32 px-4 md:px-8 z-40">
             <div class="relative w-full max-w-3xl transition-all duration-300" id="input-wrapper">
                 
                 <div id="image-preview" class="absolute bottom-full left-0 mb-4 px-2"></div>
 
-                <div id="command-menu" class="absolute bottom-full left-0 mb-3 w-64 glass-menu rounded-2xl overflow-hidden hidden transform origin-bottom scale-95 opacity-0 transition-all duration-200">
-                    <div class="cmd-item" onclick="execCmd('/features')"><span>/features</span><small>List features</small></div>
-                    <div class="cmd-item" onclick="execCmd('/invisible tab')"><span>/invisible tab</span><small>Cloak tab</small></div>
-                    <div class="cmd-item" onclick="execCmd('/clear')"><span>/clear</span><small>Reset chat</small></div>
+                <div id="command-menu" class="absolute bottom-full left-0 mb-3 w-full md:w-64 glass-menu rounded-2xl overflow-hidden hidden transform origin-bottom scale-95 opacity-0 transition-all duration-200">
+                    <div class="p-2">
+                        <div class="cmd-item" onclick="execCmd('/features')"><div class="flex items-center gap-3"><i class="fa-solid fa-list text-purple-400"></i> <span>/features</span></div></div>
+                        <div class="cmd-item" onclick="execCmd('/roleplay')"><div class="flex items-center gap-3"><i class="fa-solid fa-masks-theater text-pink-400"></i> <span>/roleplay</span></div></div>
+                        <div class="cmd-item" onclick="execCmd('/discord-server')"><div class="flex items-center gap-3"><i class="fa-brands fa-discord text-blue-400"></i> <span>/discord-server</span></div></div>
+                        <div class="cmd-item" onclick="execCmd('/invisible tab')"><div class="flex items-center gap-3"><i class="fa-solid fa-eye-slash text-emerald-400"></i> <span>/invisible tab</span></div></div>
+                        <div class="cmd-item" onclick="execCmd('/clear')"><div class="flex items-center gap-3"><i class="fa-solid fa-trash text-red-400"></i> <span>/clear</span></div></div>
+                    </div>
                 </div>
 
-                <div id="input-box" class="flex items-end bg-[#0f0f10] border border-white/10 rounded-[2rem] p-2 pl-5 shadow-2xl transition-all duration-300 hover:border-white/20 hover:shadow-purple-900/10 hover:shadow-2xl focus-within:border-purple-500/50 focus-within:ring-1 focus-within:ring-purple-500/20">
+                <div id="input-box" class="flex items-end bg-[#121212] border border-white/10 rounded-[2rem] p-2 pl-4 shadow-2xl transition-all duration-300 hover:border-purple-500/30 focus-within:border-purple-500/50 focus-within:ring-1 focus-within:ring-purple-500/20 focus-within:shadow-[0_0_30px_rgba(168,85,247,0.15)]">
                     <input type="file" id="file-up" class="hidden" accept="image/*">
-                    <button onclick="document.getElementById('file-up').click()" class="mb-1 w-10 h-10 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition duration-200">
-                        <i class="fa-solid fa-plus text-lg"></i>
+                    <button onclick="document.getElementById('file-up').click()" class="mb-1 w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition duration-200">
+                        <img src="https://cdn-icons-png.flaticon.com/512/8377/8377243.png" class="w-6 h-6 invert opacity-60 hover:opacity-100 transition"> 
                     </button>
 
-                    <textarea id="user-in" rows="1" class="flex-1 bg-transparent border-none outline-none text-gray-100 px-4 py-3.5 resize-none placeholder-gray-600 font-medium text-[15px] leading-relaxed max-h-40" placeholder="Ask anything..."></textarea>
+                    <textarea id="user-in" rows="1" class="flex-1 bg-transparent border-none outline-none text-gray-100 px-4 py-3 resize-none placeholder-gray-500 font-medium text-[15px] leading-relaxed max-h-32" placeholder="Ask Prysmis AI anything or '/' commands"></textarea>
 
-                    <button id="send-btn" class="mb-1 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:scale-110 active:scale-95 transition-all duration-300">
+                    <button id="send-btn" class="mb-1 w-10 h-10 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white flex items-center justify-center shadow-lg shadow-purple-900/30 transition-all transform hover:scale-105 active:scale-95">
                         <i class="fa-solid fa-arrow-up"></i>
                     </button>
                 </div>
@@ -86,38 +100,45 @@
         </div>
     </main>
 
-    <div id="settings-ui" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
-        <div class="bg-[#0a0a0a] border border-white/10 w-full max-w-xl rounded-[2rem] shadow-2xl overflow-hidden transform scale-95 transition-all duration-300 relative" id="settings-card">
-            <button id="close-set" class="absolute top-6 right-6 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition">
+    <div id="settings-ui" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-[#0f0f10] border border-white/10 w-full max-w-2xl rounded-[2rem] shadow-[0_0_60px_rgba(0,0,0,0.8)] overflow-hidden transform scale-95 transition-all duration-300 relative mx-4" id="settings-card">
+            
+            <button id="close-set" class="absolute top-6 right-6 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition z-20">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <div class="p-10">
-                <h2 class="text-2xl font-bold mb-1">Configuration</h2>
-                <p class="text-gray-500 text-sm mb-8">Connect Prysmis to the neural network.</p>
-
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Gemini API Key</label>
-                        <input type="password" id="api-key" class="w-full bg-[#151515] border border-white/5 rounded-xl px-5 py-4 text-white focus:border-purple-500/50 focus:outline-none transition-all tracking-widest placeholder-gray-700 text-sm" placeholder="••••••••••••••••••••••••">
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-purple-400 text-xs mt-3 inline-flex items-center gap-1 hover:text-purple-300 hover:underline transition">
-                            Get Key Here <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                        </a>
-                    </div>
-
-                    <div class="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5">
-                        <div>
-                            <div class="text-sm font-semibold text-gray-200">Turbo Mode</div>
-                            <div class="text-xs text-gray-500 mt-1">Faster responses, less creative</div>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500 shadow-inner"></div>
-                        </label>
+            <div class="flex flex-col md:flex-row h-[550px] md:h-[450px]">
+                <div class="w-full md:w-1/3 bg-black/20 border-b md:border-b-0 md:border-r border-white/5 p-6 flex flex-col gap-2">
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4 pl-2">Settings</div>
+                    <div class="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-sm text-purple-200 font-semibold cursor-pointer flex items-center gap-3">
+                        <i class="fa-solid fa-key"></i> General
                     </div>
                 </div>
 
-                <button id="save-set" class="w-full mt-8 bg-white text-black font-bold py-4 rounded-xl shadow-lg hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300">Save Changes</button>
+                <div class="flex-1 p-8 flex flex-col relative">
+                    <h2 class="text-2xl font-bold mb-2 text-white">Configuration</h2>
+                    <p class="text-gray-500 text-sm mb-8">Setup your connection.</p>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Enter your gemini api key:</label>
+                            <input type="password" id="api-key" class="w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500/50 focus:outline-none transition tracking-[0.3em] placeholder-gray-700 text-sm" placeholder="••••••••••••••••">
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-400 text-xs mt-2 inline-block hover:underline hover:text-blue-300 font-medium">Click here directly to generate your api key.</a>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                            <span class="text-sm font-medium text-gray-300">Fast Response Speed</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer">
+                                <div class="w-12 h-7 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600 shadow-inner"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto">
+                        <button id="save-set" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-3 rounded-xl shadow-lg shadow-purple-900/20 transition-all duration-300 transform active:scale-95">Save Settings</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
