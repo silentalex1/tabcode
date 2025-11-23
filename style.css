@@ -10,7 +10,159 @@
   --text-muted: #94a3b8;
   --border: #1e293b;
 }
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
+:root {
+  --primary: #8b5cf6;
+  --primary-dark: #7c3aed;
+  --bg: #050505;
+  --bg-light: #0f172a;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: #1e293b;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 2px;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 transparent;
+}
+
+.glow-bg {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: 
+        radial-gradient(circle at 15% 15%, rgba(124, 58, 237, 0.08), transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(59, 130, 246, 0.08), transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.glass-btn {
+    background: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-popup {
+    background: rgba(15, 15, 15, 0.98);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 -10px 50px rgba(0,0,0,0.7);
+}
+
+.mode-item {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    transition: 0.2s;
+}
+.mode-item:hover { background: rgba(255,255,255,0.08); color: white; }
+
+.cmd-row {
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: 0.2s;
+}
+.cmd-row:hover { background: rgba(139, 92, 246, 0.1); }
+.cmd-row:last-child { border-bottom: none; }
+
+.suggestion-chip {
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 100px;
+    font-size: 0.8rem;
+    color: #d1d5db;
+    transition: 0.3s;
+    cursor: pointer;
+}
+.suggestion-chip:hover { background: rgba(255,255,255,0.1); border-color: rgba(139, 92, 246, 0.4); color: white; transform: translateY(-2px); }
+
+.tooltip-right, .tooltip-top {
+    position: absolute;
+    background: #333;
+    color: white;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: 0.2s;
+    white-space: nowrap;
+    font-weight: 600;
+    z-index: 100;
+}
+.tooltip-right { left: 110%; top: 50%; transform: translateY(-50%); }
+.tooltip-top { bottom: 120%; left: 50%; transform: translateX(-50%); }
+.group:hover .tooltip-right, .group:hover .tooltip-top, .group\/btn:hover .tooltip-top { opacity: 1; }
+
+.user-msg {
+    background: linear-gradient(135deg, #6d28d9 0%, #4f46e5 100%);
+    box-shadow: 0 4px 15px rgba(109, 40, 217, 0.3);
+}
+.ai-msg {
+    background: #18181b;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+.animate-slide-in { animation: slideIn 0.6s ease-out forwards; opacity: 0; transform: translateY(-10px); }
+.msg-anim { animation: msgPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; transform: translateY(10px); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+@keyframes msgPop { to { opacity: 1; transform: translateY(0); } }
+
+.prose p { margin-bottom: 0.6em; line-height: 1.6; color: #e4e4e7; }
+.prose strong { color: #d8b4fe; font-weight: 700; }
+.prose ul { list-style: disc; padding-left: 1.2em; color: #d4d4d8; margin-bottom: 0.5em; }
+.prose pre { background: #09090b; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; border: 1px solid rgba(255,255,255,0.1); }
+.prose code { font-family: 'JetBrains Mono', monospace; color: #e879f9; font-size: 0.9em; }
 * {
   margin: 0;
   padding: 0;
