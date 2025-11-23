@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let uploadedFile = { data: null, type: null };
     let isSettingsOpen = false;
     let isDropdownOpen = false;
-    const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent";
+    const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:streamGenerateContent";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
