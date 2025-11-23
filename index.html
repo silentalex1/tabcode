@@ -13,7 +13,7 @@
 
     <div class="glow-bg"></div>
 
-    <aside class="hidden md:flex w-20 h-full z-50 flex-col items-center py-8 border-r border-white/5 bg-black/40 backdrop-blur-xl">
+    <aside class="hidden md:flex w-20 h-full z-[60] flex-col items-center py-8 border-r border-white/5 bg-black/40 backdrop-blur-xl">
         <div class="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/20 mb-auto cursor-pointer hover:scale-105 transition duration-300 group relative pointer-events-auto">
             <i class="fa-solid fa-layer-group text-white text-xl"></i>
             <span class="tooltip-right">Home</span>
@@ -27,7 +27,7 @@
 
     <main class="flex-1 flex flex-col relative z-10 h-full">
         
-        <header class="absolute top-0 left-0 w-full p-6 flex flex-col items-center z-40 pointer-events-none">
+        <header class="absolute top-0 left-0 w-full p-6 flex flex-col items-center z-50 pointer-events-none">
             
             <button id="mobile-settings-btn" class="md:hidden pointer-events-auto absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-300 cursor-pointer hover:bg-white/20 transition z-50">
                 <i class="fa-solid fa-gear"></i>
@@ -60,7 +60,7 @@
             </div>
         </header>
 
-        <div id="chat-feed" class="flex-1 overflow-y-auto px-4 md:px-[15%] pt-40 pb-48 flex flex-col gap-6 scroll-smooth">
+        <div id="chat-feed" class="flex-1 overflow-y-auto px-4 md:px-[15%] pt-40 pb-48 flex flex-col gap-6 scroll-smooth z-10">
             <div id="hero-section" class="h-full flex flex-col items-center justify-center animate-fade-in pb-20">
                 <div class="w-20 h-20 bg-gradient-to-tr from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-2xl shadow-violet-500/20">
                     <i class="fa-solid fa-wand-magic-sparkles text-3xl text-white"></i>
@@ -75,13 +75,13 @@
                     <button class="suggestion-chip" onclick="setInput('Give me a smooth pickup line')">💘 Rizz Helper</button>
                 </div>
 
-                <button id="get-started-btn" class="mt-10 px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.2)] cursor-pointer z-40">
+                <button id="get-started-btn" class="mt-10 px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.2)] cursor-pointer z-40 relative pointer-events-auto">
                     Get Started
                 </button>
             </div>
         </div>
 
-        <div class="absolute bottom-0 left-0 w-full pb-6 flex flex-col items-center bg-gradient-to-t from-black via-black/95 to-transparent pt-32 px-4 z-40">
+        <div class="absolute bottom-0 left-0 w-full pb-6 flex flex-col items-center bg-gradient-to-t from-black via-black/95 to-transparent pt-32 px-4 z-[40]">
             <div class="relative w-full max-w-3xl" id="input-container">
                 
                 <div id="media-preview" class="absolute bottom-full left-0 mb-3 px-2 flex gap-2"></div>
@@ -131,7 +131,7 @@
         </div>
     </main>
 
-    <div id="settings-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[9999] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <div id="settings-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
         <div class="bg-[#0f0f10] border border-white/10 w-full max-w-lg rounded-[2rem] shadow-2xl transform scale-95 transition-all duration-300 relative mx-4" id="settings-box">
             
             <button id="close-settings" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition cursor-pointer">
