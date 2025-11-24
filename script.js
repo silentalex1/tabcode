@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentLang = 'Lua';
     
     const TARGET_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
-    const BOT_API_URL = "/verify-key"; 
+    const BOT_API_URL = "http://localhost:3000/verify-key";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -90,6 +90,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if(els.homeBtn) els.homeBtn.addEventListener('click', switchToStandard);
 
+    function saveChatToStorage() {
+        localStorage.setItem('prysmis_history', JSON.stringify(chatHistory));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        if(!els.historyList) return;
+        els.historyList.innerHTML = '';
+        const query = els.searchInput ? els.searchInput.value.toLowerCase() : '';
+        const filtered = chatHistory.filter(c => c.title.toLowerCase().includes(query));
+        
+        filtered.forEach(chat => {
+            const div = document.createElement('div');
+            div.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
+            div.innerHTML = `<div class="font-bold text-white text-sm mb-1 truncate">${chat.title}</div><div class="text-[10px] text-gray-500 font-mono">${new Date(chat.id).toLocaleDateString()}</div>`;
+            div.onclick = () => {
+                loadChat(chat.id);
+                toggleHistory(false);
+                if(window.innerWidth < 768) toggleMobileMenu();
+            };
+            els.historyList.appendChild(div);
+        });
+    }
+
     const toggleSettings = (show) => {
         if(show) {
             els.settingsOverlay.classList.remove('hidden');
@@ -119,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleSettings(false);
                 els.saveSettings.textContent = "Save Changes";
                 els.saveSettings.classList.remove('bg-green-500', 'text-white');
+                toggleSettings(false);
             }, 800);
         }
     });
@@ -165,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 els.verifyKeyBtn.textContent = "Verify Key Access";
             }
         } catch(e) {
-            alert("Connection failed.");
+            alert("Connection failed. Run the bot.");
             els.verifyKeyBtn.textContent = "Verify Key Access";
         }
     });
@@ -314,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.runCmd = (cmd) => {
         if(cmd === '/clear') startNewChat();
         else if(cmd === '/roleplay') appendMsg('ai', "Roleplay active. Who should I be?", null, false);
-        else if(cmd === '/features') appendMsg('ai', "**Prysmis Features:**\n- **Roleplay Feature**: Unfiltered character immersion.\n- **Rizz Helper Feature**: Charisma and social dynamics assistant.\n- **Image Analysis Feature**: Vision capabilities for images.\n- **YouTube Analysis Feature**: Paste a link to analyze context.", null, false);
+        else if(cmd === '/features') appendMsg('ai', "**Features:**\n- Smart Modes\n- Code Dumper (Obfuscator)\n- Rizz Tool\n- History System", null, false);
         else if(cmd === '/invisible tab') {
              document.title = "Google";
              const link = document.querySelector("link[rel~='icon']");
