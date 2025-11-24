@@ -119,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleSettings(false);
                 els.saveSettings.textContent = "Save Changes";
                 els.saveSettings.classList.remove('bg-green-500', 'text-white');
-                toggleSettings(false);
             }, 800);
         }
     });
@@ -315,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.runCmd = (cmd) => {
         if(cmd === '/clear') startNewChat();
         else if(cmd === '/roleplay') appendMsg('ai', "Roleplay active. Who should I be?", null, false);
-        else if(cmd === '/features') appendMsg('ai', "**Features:**\n- Smart Modes\n- Code Dumper (Obfuscator)\n- Rizz Tool\n- History System", null, false);
+        else if(cmd === '/features') appendMsg('ai', "**Prysmis Features:**\n- **Roleplay Feature**: Unfiltered character immersion.\n- **Rizz Helper Feature**: Charisma and social dynamics assistant.\n- **Image Analysis Feature**: Vision capabilities for images.\n- **YouTube Analysis Feature**: Paste a link to analyze context.", null, false);
         else if(cmd === '/invisible tab') {
              document.title = "Google";
              const link = document.querySelector("link[rel~='icon']");
@@ -359,6 +358,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if(historyTrigger) historyTrigger.addEventListener('click', () => toggleHistory(true));
     if(closeHistory) closeHistory.addEventListener('click', () => toggleHistory(false));
 
+    const detectYouTube = (url) => {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    };
+
     async function handleSend() {
         const text = els.input.value.trim();
         if(!text && !uploadedFile.data) return;
@@ -395,37 +400,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const mode = els.modeTxt.innerText;
-            let sysPrompt = `You are Prysmis. Mode: ${mode}.`;
+            let sysPrompt = `You are Prysmis. Mode: ${mode}. Use clear, simple words.`;
             
-            if(mode === 'Rizz tool') sysPrompt = "You are the ultimate 'Rizz God'. Help user flirt, be charismatic and cool. Unfiltered persona.";
-            if(mode === 'Geometry') sysPrompt = "You are a Geometry Professor. Solve step-by-step with theorems.";
-            if(mode === 'Biology') sysPrompt = "You are a Biology expert. Explain functions clearly.";
-            if(mode === 'Physics') sysPrompt = "You are a Physicist. Break down formulas.";
-            if(mode === 'English') sysPrompt = "You are an Editor. Fix grammar and analyze tone.";
-            if(mode === 'Coding') sysPrompt = "You are a Senior Developer. Write clean code.";
-            if(mode === 'Debate') sysPrompt = "You are a Master Debater. Provide counter-arguments and logical fallacies.";
-            if(mode === 'Psychology') sysPrompt = "You are a Psychologist. Analyze behavior and theories.";
-            if(mode === 'History') sysPrompt = "You are a Historian. Provide context and dates.";
-            if(mode === 'Chemistry') sysPrompt = "You are a Chemist. Explain reactions and formulas.";
-            if(mode === 'Philosophy') sysPrompt = "You are a Philosopher. Explore ethics and logic.";
+            if(mode === 'Rizz tool') sysPrompt = "You are the ultimate 'Rizz God'. Be charismatic, fun, and unhinged. Use slang. Keep it short.";
+            if(mode === 'Roleplay') sysPrompt = "Act exactly as the character described by the user. Stay in character 100%.";
+            if(mode === 'Geometry') sysPrompt = "You are a Geometry Teacher. Explain theorems clearly.";
+            if(mode === 'Debate') sysPrompt = "You are a Master Debater. Find flaws in logic and counter-argue effectively.";
+
+            const youtubeID = detectYouTube(text);
+            let finalUserText = text;
+            let extraParts = [];
+
+            if(youtubeID) {
+                const thumbUrl = `https://img.youtube.com/vi/${youtubeID}/maxresdefault.jpg`;
+                try {
+                    const thumbResp = await fetch(thumbUrl);
+                    const blob = await thumbResp.blob();
+                    const reader = new FileReader();
+                    await new Promise((resolve) => {
+                        reader.onloadend = () => {
+                            const base64data = reader.result.split(',')[1];
+                            extraParts.push({ inline_data: { mime_type: "image/jpeg", data: base64data } });
+                            finalUserText += "\n[System: The user linked a YouTube video. Use this thumbnail to analyze the context.]";
+                            resolve();
+                        };
+                        reader.readAsDataURL(blob);
+                    });
+                } catch(e) {}
+            }
 
             const previousMsgs = chatHistory[chatIndex].messages.slice(-10).map(m => ({
                 role: m.role === 'ai' ? 'model' : 'user',
                 parts: [{ text: m.text }]
             }));
 
+            const currentParts = [{ text: finalUserText }];
+            if(uploadedFile.data) currentParts.push({ inline_data: { mime_type: uploadedFile.type, data: uploadedFile.data } });
+            if(extraParts.length > 0) currentParts.push(...extraParts);
+
             const payload = { 
                 system_instruction: { parts: [{ text: sysPrompt }] },
                 contents: [
                     ...previousMsgs,
-                    { 
-                        role: 'user',
-                        parts: [{ text: text }] 
-                    }
+                    { role: 'user', parts: currentParts }
                 ] 
             };
-
-            if(uploadedFile.data) payload.contents[payload.contents.length - 1].parts.push({ inline_data: { mime_type: uploadedFile.type, data: uploadedFile.data } });
 
             let response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
                 method: 'POST',
@@ -476,7 +495,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const chars = text.split('');
         let i = 0;
         let currentText = "";
-        
         const interval = setInterval(() => {
             if(i >= chars.length) {
                 clearInterval(interval);
@@ -487,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bubble.innerHTML = parseMD(currentText);
             els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
             i++;
-        }, 1);
+        }, 2);
     }
 
     function parseMD(text) {
@@ -506,4 +524,30 @@ document.addEventListener('DOMContentLoaded', () => {
         html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
         return html;
     }
+    
+    renderHistory();
+    
+    const renderHistoryModal = () => {
+        if(!els.historyList) return;
+        els.historyList.innerHTML = '';
+        const query = els.searchInput ? els.searchInput.value.toLowerCase() : '';
+        const filtered = chatHistory.filter(c => c.title.toLowerCase().includes(query));
+        
+        filtered.forEach(chat => {
+            const div = document.createElement('div');
+            div.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
+            div.innerHTML = `<div class="font-bold text-white text-sm mb-1 truncate">${chat.title}</div><div class="text-[10px] text-gray-500 font-mono">${new Date(chat.id).toLocaleDateString()}</div>`;
+            div.onclick = () => {
+                loadChat(chat.id);
+                toggleHistory(false);
+            };
+            els.historyList.appendChild(div);
+        });
+    };
+
+    if(els.searchInput) els.searchInput.addEventListener('input', renderHistoryModal);
+    if(els.historyTrigger) els.historyTrigger.addEventListener('click', () => {
+        toggleHistory(true);
+        renderHistoryModal();
+    });
 });
