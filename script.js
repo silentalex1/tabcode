@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsTriggers: [document.getElementById('settings-trigger')],
         settingsOverlay: document.getElementById('settings-overlay'),
         settingsBox: document.getElementById('settings-box'),
-        closeSettings: document.getElementById('close-settings'),
+        closeSettings: document.getElementById('close-settings'),AV
         saveSettings: document.getElementById('save-settings-btn'),
         apiKey: document.getElementById('api-key-field'),
         modeBtn: document.getElementById('mode-btn'),
