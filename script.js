@@ -447,4 +447,129 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const payload = { 
                 system_instruction: { parts: [{ text: sysPrompt }] },
-                contents: [...previousMsgs, { role: 'user', parts: cu
+                contents: [...previousMsgs, { role: 'user', parts: currentParts }]
+            };
+
+            let response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: abortController.signal
+            });
+
+            if(response.status === 404 || response.status === 400) {
+                response = await fetch(`${FALLBACK_URL}?key=${localStorage.getItem('prysmis_key')}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: abortController.signal });
+            }
+
+            const data = await response.json();
+            document.getElementById(loaderId).remove();
+            els.flashOverlay.classList.add('opacity-0');
+            els.flashOverlay.classList.remove('bg-flash-green');
+
+            if(data.candidates && data.candidates[0].content) {
+                const aiText = data.candidates[0].content.parts[0].text;
+                chatHistory[chatIndex].messages.push({ role: 'ai', text: aiText, img: null });
+                saveChatToStorage();
+                streamResponse(aiText);
+            } else {
+                appendMsg('ai', "Error generating response.");
+            }
+
+        } catch(err) {
+            if(document.getElementById(loaderId)) document.getElementById(loaderId).remove();
+            if(err.name !== 'AbortError') appendMsg('ai', "Connection failed.");
+        }
+        window.clearMedia();
+    }
+
+    function appendMsg(role, text, img) {
+        const div = document.createElement('div');
+        div.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'} msg-anim mb-6`;
+        let content = parseMD(text);
+        if(img) content = `<div class="relative"><img src="${img}" class="max-w-[200px] rounded-lg mb-2 border border-white/20"></div>` + content;
+        div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ${role === 'user' ? 'user-msg text-white rounded-br-none' : 'ai-msg text-gray-200 rounded-bl-none'}">${content}</div>`;
+        els.chatFeed.appendChild(div);
+        els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
+    }
+
+    function parseMD(text) {
+        if (!text) return "";
+        let html = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/~~(.*?)~~/g, '<del>$1</del>')
+            .replace(/\n/g, '<br>');
+        html = html.replace(/```(\w+)?<br>([\s\S]*?)```/g, (match, lang, code) => {
+            const cleanCode = code.replace(/<br>/g, '\n');
+            return `<div class="code-block"><div class="code-header"><span>${lang || 'code'}</span><button class="copy-btn" onclick="window.copyCode(this)">Copy</button></div><pre><code class="language-${lang}">${cleanCode}</code></pre></div>`;
+        });
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        return html;
+    }
+
+    function streamResponse(text) {
+        if(stopGeneration) return;
+        els.stopAiBtn.classList.remove('opacity-0', 'pointer-events-none');
+        const div = document.createElement('div');
+        div.className = `flex w-full justify-start msg-anim mb-6`;
+        const bubble = document.createElement('div');
+        bubble.className = "max-w-[90%] md:max-w-[75%] p-5 rounded-[20px] rounded-bl-none shadow-lg prose ai-msg text-gray-200";
+        div.appendChild(bubble);
+        els.chatFeed.appendChild(div);
+        const chars = text.split('');
+        let i = 0;
+        let currentText = "";
+        const isFast = els.fastSpeedToggle && els.fastSpeedToggle.checked;
+        const delay = isFast ? 1 : 15;
+        currentInterval = setInterval(() => {
+            if(stopGeneration) {
+                clearInterval(currentInterval);
+                els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
+                stopGeneration = false;
+                return;
+            }
+            if(i >= chars.length) {
+                clearInterval(currentInterval);
+                bubble.innerHTML = parseMD(text);
+                els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
+                return;
+            }
+            currentText += chars[i];
+            bubble.innerHTML = parseMD(currentText);
+            els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
+            i++;
+        }, delay);
+    }
+
+    els.stopAiBtn.addEventListener('click', () => {
+        stopGeneration = true;
+        if(abortController) abortController.abort();
+        els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
+    });
+
+    els.mobileMenuBtn.addEventListener('click', () => {
+        els.sidebar.classList.remove('-translate-x-full');
+        els.mobileOverlay.classList.remove('hidden');
+    });
+    els.mobileOverlay.addEventListener('click', () => {
+        els.sidebar.classList.add('-translate-x-full');
+        els.mobileOverlay.classList.add('hidden');
+    });
+
+    if(els.dumperSkipBtn) els.dumperSkipBtn.addEventListener('click', () => {
+        els.dumperUploadState.classList.add('hidden');
+        els.dumperEditorView.classList.remove('hidden');
+    });
+    
+    if(els.btnObfuscate) els.btnObfuscate.addEventListener('click', () => {
+        els.dumperOutputArea.value = "Processing Obfuscation...";
+        setTimeout(() => els.dumperOutputArea.value = "// Obfuscated Code Result", 2000);
+    });
+    if(els.btnDeobfuscate) els.btnDeobfuscate.addEventListener('click', () => {
+        els.dumperOutputArea.value = "Processing Deobfuscation...";
+        setTimeout(() => els.dumperOutputArea.value = "// Deobfuscated Code Result", 2000);
+    });
+});
