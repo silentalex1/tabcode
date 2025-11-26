@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let stopGeneration = false;
     let abortController = null;
     let currentInterval = null;
+    let dragCounter = 0;
 
     function saveChatToStorage() {
         localStorage.setItem('prysmis_history', JSON.stringify(chatHistory));
@@ -104,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const TARGET_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent";
     const FALLBACK_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
-    const BOT_API_URL = "/verify-key";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -139,7 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
             'Physics': 'fa-atom', 'Chemistry': 'fa-flask', 'Coding': 'fa-code',
             'Debate': 'fa-gavel', 'Psychology': 'fa-brain', 'History': 'fa-landmark'
         };
-        els.modeIcon.innerHTML = `<i class="fa-solid ${iconMap[val] || 'fa-sparkles'} text-violet-400"></i>`;
+        const iconClass = iconMap[val] || 'fa-sparkles';
+        
+        els.modeIcon.innerHTML = `<i class="fa-solid ${iconClass} text-violet-400"></i>`;
         els.modeTxt.innerText = val;
     }
 
@@ -382,10 +384,34 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(file);
     }
 
-    document.addEventListener('dragover', (e) => { e.preventDefault(); els.dropOverlay.classList.remove('hidden'); els.dropOverlay.classList.add('flex'); els.dropOverlay.classList.remove('opacity-0'); });
-    els.dropOverlay.addEventListener('dragleave', (e) => { e.preventDefault(); els.dropOverlay.classList.add('opacity-0'); setTimeout(() => els.dropOverlay.classList.add('hidden'), 300); });
-    els.dropOverlay.addEventListener('drop', (e) => {
+    document.addEventListener('dragenter', (e) => {
         e.preventDefault();
+        dragCounter++;
+        els.dropOverlay.classList.remove('hidden');
+        els.dropOverlay.classList.add('flex');
+        els.dropOverlay.classList.remove('opacity-0');
+    });
+
+    document.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragCounter--;
+        if (dragCounter === 0) {
+            els.dropOverlay.classList.add('opacity-0');
+            setTimeout(() => {
+                if (dragCounter === 0) {
+                    els.dropOverlay.classList.add('hidden');
+                }
+            }, 300);
+        }
+    });
+
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragCounter = 0;
         els.dropOverlay.classList.add('opacity-0');
         setTimeout(() => els.dropOverlay.classList.add('hidden'), 300);
         if(e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]);
