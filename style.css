@@ -22,7 +22,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020204; 
 .suggestion-chip:hover { background: rgba(255,255,255,0.08); border-color: rgba(139, 92, 246, 0.3); color: white; transform: translateY(-2px); }
 .tooltip-right { position: absolute; left: 130%; top: 50%; transform: translateY(-50%) translateX(-10px); background: #111; color: #eee; font-size: 10px; padding: 6px 10px; border-radius: 6px; pointer-events: none; opacity: 0; transition: all 0.3s; white-space: nowrap; font-weight: 600; z-index: 100; border: 1px solid rgba(255,255,255,0.1); }
 .group:hover .tooltip-right { opacity: 1; transform: translateY(-50%) translateX(0); }
-.user-msg { background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%); box-shadow: 0 8px 30px -5px rgba(109, 40, 217, 0.3); }
+.user-msg { background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%); box-shadow: 0 8px 30px -5px rgba(109, 40, 217, 0.3); position: relative; }
 .ai-msg { background: #111; border: 1px solid rgba(255,255,255,0.05); }
 .code-block { background: #050505; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin: 12px 0; }
 .code-header { background: rgba(255,255,255,0.03); padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #666; }
@@ -31,11 +31,27 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020204; 
 .prose pre { margin: 0; padding: 15px; overflow-x: auto; }
 .prose code { font-family: 'JetBrains Mono', monospace; color: #e879f9; font-size: 0.85em; }
 .prose p { margin-bottom: 0.8em; line-height: 1.7; color: #d1d5db; }
-.prose strong { color: #e2e8f0; }
+.prose strong { color: #a78bfa; font-weight: 700; }
+.prose em { color: #e2e8f0; font-style: italic; }
+.prose ul { list-style-type: disc; padding-left: 20px; margin-bottom: 10px; }
+.prose li { margin-bottom: 4px; }
+.prose a { color: #a78bfa; text-decoration: underline; cursor: pointer; }
 .msg-anim { animation: msgPop 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; transform: translateY(20px); }
 .animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes msgPop { to { opacity: 1; transform: translateY(0); } }
-.history-item { padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); border-radius: 16px; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; pointer-events: auto; }
+.history-item { padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); border-radius: 16px; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; pointer-events: auto; display: flex; justify-content: space-between; align-items: center; }
 .history-item:hover { background: rgba(255,255,255,0.05); transform: scale(1.01); }
 .history-item.active { background: linear-gradient(90deg, rgba(124,58,237,0.1), transparent); border-left: 3px solid #8b5cf6; }
+.history-date { color: #a78bfa; font-size: 11px; font-family: 'JetBrains Mono'; opacity: 0.9; margin-top: 4px; font-weight: 600; }
+.delete-history-btn { color: #ef4444; opacity: 0; transition: 0.2s; padding: 8px; pointer-events: auto; }
+.history-item:hover .delete-history-btn { opacity: 1; }
+.visual-line { border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0; }
+.feature-list li { margin-bottom: 4px; color: #d1d5db; }
+.edited-label { font-size: 9px; color: #888; margin-bottom: 4px; display: block; text-align: right; }
+#notification-area { position: fixed; top: 20px; right: 20px; z-index: 100; pointer-events: none; display: flex; flex-direction: column; gap: 10px; }
+.notification { background: rgba(20, 20, 20, 0.95); border: 1px solid rgba(139, 92, 246, 0.3); color: white; padding: 16px 24px; border-radius: 16px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: auto; backdrop-filter: blur(10px); display: flex; items-center; gap: 12px; }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideOutRight { to { opacity: 0; transform: translateX(20px); } }
+.scanning-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #10b981; box-shadow: 0 0 10px #10b981; animation: scanMove 1.5s ease-in-out infinite; }
+@keyframes scanMove { 0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
