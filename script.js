@@ -101,7 +101,6 @@ window.runCmd = function(cmd) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("[Sidebar Script Loaded]");
     
     const settingsBtn = document.getElementById('settings-trigger');
     const historyBtn = document.getElementById('history-trigger');
@@ -354,7 +353,7 @@ async function handleSubmit() {
 
     try {
         abortController = new AbortController();
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`, {
             method: 'POST',
             signal: abortController.signal,
             headers: {'Content-Type': 'application/json'},
