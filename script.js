@@ -1,638 +1,445 @@
-let currentMode = "AI Assistant";
-let historyData = JSON.parse(localStorage.getItem('prysmis_history')) || [];
-let apiKey = localStorage.getItem('prysmis_key') || '';
-let fastSpeed = localStorage.getItem('prysmis_speed') === 'true';
-let conversationContext = [];
-let abortController = null;
-let currentFile = null;
-
-const promptInput = document.getElementById('prompt-input');
-const chatFeed = document.getElementById('chat-feed');
-const submitBtn = document.getElementById('submit-btn');
-const stopBtn = document.getElementById('stop-ai-btn');
-const heroSection = document.getElementById('hero-section');
-const modeBtn = document.getElementById('mode-btn');
-const modeDropdown = document.getElementById('mode-dropdown');
-const cmdPopup = document.getElementById('cmd-popup');
-const fileInput = document.getElementById('file-input');
-const mediaPreview = document.getElementById('media-preview');
-
-window.toggleSettings = function() {
-    const overlay = document.getElementById('settings-overlay');
-    const box = document.getElementById('settings-box');
-    
-    if (overlay.classList.contains('hidden')) {
-        overlay.classList.remove('hidden', 'pointer-events-none');
-        overlay.classList.add('flex');
-        document.getElementById('api-key-field').value = apiKey;
-        document.getElementById('fast-speed-toggle').checked = fastSpeed;
-        setTimeout(() => {
-            overlay.classList.remove('opacity-0');
-            box.classList.remove('scale-95');
-            box.classList.add('scale-100');
-        }, 10);
-    } else {
-        overlay.classList.add('opacity-0');
-        box.classList.remove('scale-100');
-        box.classList.add('scale-95');
-        setTimeout(() => {
-            overlay.classList.add('hidden', 'pointer-events-none');
-            overlay.classList.remove('flex');
-        }, 300);
-    }
-}
-
-window.toggleHistory = function() {
-    const modal = document.getElementById('history-modal');
-    const container = modal.querySelector('div');
-    
-    if (modal.classList.contains('hidden')) {
-        loadHistoryToSidebar();
-        modal.classList.remove('hidden', 'pointer-events-none');
-        modal.classList.add('flex');
-        setTimeout(() => {
-            modal.classList.remove('opacity-0');
-            container.classList.remove('scale-95');
-            container.classList.add('scale-100');
-        }, 10);
-    } else {
-        modal.classList.add('opacity-0');
-        container.classList.remove('scale-100');
-        container.classList.add('scale-95');
-        setTimeout(() => {
-            modal.classList.add('hidden', 'pointer-events-none');
-            modal.classList.remove('flex');
-        }, 300);
-    }
-}
-
-window.setInput = function(text) {
-    promptInput.value = text;
-    promptInput.focus();
-}
-
-window.insertFormat = function(start, end) {
-    const s = promptInput.selectionStart;
-    const e = promptInput.selectionEnd;
-    const val = promptInput.value;
-    promptInput.value = val.substring(0, s) + start + val.substring(s, e) + end + val.substring(e);
-    promptInput.selectionStart = promptInput.selectionEnd = s + start.length;
-    promptInput.focus();
-}
-
-window.runCmd = function(cmd) {
-    if(cmd === '/clear') {
-        chatFeed.innerHTML = '';
-        chatFeed.appendChild(heroSection);
-        heroSection.classList.remove('hidden');
-        conversationContext = [];
-        showNotification('Chat cleared', 'success');
-    } else if (cmd === '/roleplay') {
-        conversationContext.push({role: "user", parts: [{text: "System: Enter roleplay mode. Stay in character."}]});
-        showNotification('Roleplay mode active', 'info');
-    } else if (cmd === '/discord-invite') {
-        window.open('https://discord.gg/', '_blank');
-    } else {
-        promptInput.value = cmd + ' ';
-    }
-    document.getElementById('cmd-popup').classList.add('hidden');
-    document.getElementById('cmd-popup').classList.remove('flex');
-    promptInput.focus();
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    
-    const settingsBtn = document.getElementById('settings-trigger');
-    const historyBtn = document.getElementById('history-trigger');
-    const closeSettings = document.getElementById('close-settings');
-    const saveSettings = document.getElementById('save-settings-btn');
-    const closeHistory = document.getElementById('close-history');
-    const newChatBtn = document.getElementById('new-chat-btn');
-    const quickNewChat = document.getElementById('quick-new-chat-btn');
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const sidebar = document.getElementById('sidebar');
-    const mobileOverlay = document.getElementById('mobile-overlay');
+    let currentMode = "AI Assistant";
+    let geminiKey = localStorage.getItem('geminiKey') || "";
+    let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+    let currentChatId = null;
+    let abortController = null;
+    let isGenerating = false;
+    let uploadedFiles = [];
 
-    if(settingsBtn) settingsBtn.onclick = window.toggleSettings;
-    if(historyBtn) historyBtn.onclick = window.toggleHistory;
-    if(closeSettings) closeSettings.onclick = window.toggleSettings;
-    
-    if(saveSettings) {
-        saveSettings.onclick = () => {
-            apiKey = document.getElementById('api-key-field').value;
-            fastSpeed = document.getElementById('fast-speed-toggle').checked;
-            localStorage.setItem('prysmis_key', apiKey);
-            localStorage.setItem('prysmis_speed', fastSpeed);
-            showNotification('Settings Saved', 'success');
-            window.toggleSettings();
-        };
+    const els = {
+        promptInput: document.getElementById('prompt-input'),
+        submitBtn: document.getElementById('submit-btn'),
+        stopBtn: document.getElementById('stop-ai-btn'),
+        chatFeed: document.getElementById('chat-feed'),
+        heroSection: document.getElementById('hero-section'),
+        fileInput: document.getElementById('file-input'),
+        mediaPreview: document.getElementById('media-preview'),
+        modeBtn: document.getElementById('mode-btn'),
+        modeDropdown: document.getElementById('mode-dropdown'),
+        modeIcon: document.getElementById('mode-icon'),
+        currentModeTxt: document.getElementById('current-mode-txt'),
+        settingsOverlay: document.getElementById('settings-overlay'),
+        apiKeyField: document.getElementById('api-key-field'),
+        historyModal: document.getElementById('history-modal'),
+        historyList: document.getElementById('history-list'),
+        cmdPopup: document.getElementById('cmd-popup'),
+        dropOverlay: document.getElementById('drop-overlay'),
+        standardUi: document.getElementById('standard-ui'),
+        codeDumperUi: document.getElementById('code-dumper-ui'),
+        dumperKeyModal: document.getElementById('code-dumper-key-modal'),
+        verifyKeyBtn: document.getElementById('verify-key-btn'),
+        dumperKeyInput: document.getElementById('dumper-key-input')
+    };
+
+    if (geminiKey) els.apiKeyField.value = geminiKey;
+
+    window.toggleSettings = () => {
+        const isHidden = els.settingsOverlay.classList.contains('hidden');
+        if (isHidden) {
+            els.settingsOverlay.classList.remove('hidden');
+            setTimeout(() => {
+                els.settingsOverlay.classList.remove('opacity-0');
+                document.getElementById('settings-box').classList.remove('scale-95');
+            }, 10);
+        } else {
+            els.settingsOverlay.classList.add('opacity-0');
+            document.getElementById('settings-box').classList.add('scale-95');
+            setTimeout(() => els.settingsOverlay.classList.add('hidden'), 300);
+        }
+    };
+
+    window.toggleHistory = () => {
+        const isHidden = els.historyModal.classList.contains('hidden');
+        if (isHidden) {
+            renderHistory();
+            els.historyModal.classList.remove('hidden');
+            setTimeout(() => {
+                els.historyModal.classList.remove('opacity-0');
+                els.historyModal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        } else {
+            els.historyModal.classList.add('opacity-0');
+            els.historyModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => els.historyModal.classList.add('hidden'), 300);
+        }
+    };
+
+    window.setInput = (text) => {
+        els.promptInput.value = text;
+        els.promptInput.focus();
+    };
+
+    window.insertFormat = (start, end) => {
+        const startPos = els.promptInput.selectionStart;
+        const endPos = els.promptInput.selectionEnd;
+        const val = els.promptInput.value;
+        els.promptInput.value = val.substring(0, startPos) + start + val.substring(startPos, endPos) + end + val.substring(endPos);
+        els.promptInput.focus();
+    };
+
+    window.runCmd = (cmd) => {
+        els.promptInput.value = cmd;
+        els.cmdPopup.classList.add('hidden');
+        els.promptInput.focus();
+    };
+
+    document.getElementById('settings-trigger').addEventListener('click', window.toggleSettings);
+    document.getElementById('close-settings').addEventListener('click', window.toggleSettings);
+    document.getElementById('save-settings-btn').addEventListener('click', () => {
+        geminiKey = els.apiKeyField.value.trim();
+        localStorage.setItem('geminiKey', geminiKey);
+        showNotification('Settings Saved', 'success');
+        window.toggleSettings();
+    });
+
+    document.getElementById('history-trigger').addEventListener('click', window.toggleHistory);
+    document.getElementById('close-history').addEventListener('click', window.toggleHistory);
+    document.getElementById('new-chat-btn').addEventListener('click', () => {
+        startNewChat();
+        window.toggleHistory();
+    });
+    document.getElementById('quick-new-chat-btn').addEventListener('click', startNewChat);
+
+    function startNewChat() {
+        currentChatId = null;
+        uploadedFiles = [];
+        els.mediaPreview.innerHTML = '';
+        els.heroSection.classList.remove('hidden');
+        els.chatFeed.innerHTML = '';
+        els.chatFeed.appendChild(els.heroSection);
+        showNotification('New Chat Started', 'info');
     }
 
-    if(closeHistory) closeHistory.onclick = window.toggleHistory;
-    
-    if(newChatBtn) {
-        newChatBtn.onclick = () => {
-            window.toggleHistory();
-            startNewChat();
-        };
-    }
-    
-    if(quickNewChat) quickNewChat.onclick = startNewChat;
-
-    mobileMenuBtn.onclick = () => {
-        sidebar.classList.toggle('-translate-x-full');
-        mobileOverlay.classList.toggle('hidden');
-    };
-
-    mobileOverlay.onclick = () => {
-        sidebar.classList.add('-translate-x-full');
-        mobileOverlay.classList.add('hidden');
-    };
-
-    modeBtn.onclick = (e) => {
-        e.stopPropagation();
-        modeDropdown.classList.toggle('hidden');
-        modeDropdown.classList.toggle('flex');
-    };
+    els.modeBtn.addEventListener('click', () => {
+        els.modeDropdown.classList.toggle('hidden');
+        els.modeDropdown.classList.toggle('flex');
+    });
 
     document.querySelectorAll('.mode-item').forEach(item => {
-        item.onclick = () => {
+        item.addEventListener('click', () => {
             const val = item.getAttribute('data-val');
-            document.getElementById('current-mode-txt').innerText = val;
             currentMode = val;
-            modeDropdown.classList.add('hidden');
-            modeDropdown.classList.remove('flex');
+            els.currentModeTxt.innerText = val;
+            els.modeIcon.innerHTML = item.querySelector('i').outerHTML;
+            els.modeDropdown.classList.add('hidden');
+            els.modeDropdown.classList.remove('flex');
             
-            if(val === 'Code Dumper') {
-                document.getElementById('code-dumper-key-modal').classList.remove('hidden');
-                document.getElementById('code-dumper-key-modal').classList.add('flex');
-                setTimeout(() => {
-                    document.getElementById('code-dumper-key-modal').classList.remove('opacity-0');
-                    document.getElementById('code-dumper-key-modal').querySelector('div').classList.remove('scale-95');
-                    document.getElementById('code-dumper-key-modal').querySelector('div').classList.add('scale-100');
-                }, 10);
+            if (val === 'Code Dumper') {
+                els.codeDumperUi.classList.remove('hidden');
+                els.codeDumperUi.classList.add('flex');
+                els.standardUi.classList.add('hidden');
+                verifyCodeDumperAccess();
             } else {
-                document.getElementById('standard-ui').classList.remove('hidden');
-                document.getElementById('code-dumper-ui').classList.add('hidden');
+                els.codeDumperUi.classList.add('hidden');
+                els.standardUi.classList.remove('hidden');
+                els.standardUi.classList.add('flex');
             }
-        };
+        });
     });
 
-    document.addEventListener('click', (e) => {
-        if (!modeBtn.contains(e.target) && !modeDropdown.contains(e.target)) {
-            modeDropdown.classList.add('hidden');
-            modeDropdown.classList.remove('flex');
+    function verifyCodeDumperAccess() {
+        const hasAccess = sessionStorage.getItem('dumperAccess');
+        if (!hasAccess) {
+            els.dumperKeyModal.classList.remove('hidden');
+            setTimeout(() => els.dumperKeyModal.classList.remove('opacity-0'), 10);
+        }
+    }
+
+    els.verifyKeyBtn.addEventListener('click', async () => {
+        const key = els.dumperKeyInput.value.trim();
+        if (!key) return;
+        
+        try {
+            const res = await fetch('/verify-key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key })
+            });
+            const data = await res.json();
+            if (data.valid) {
+                sessionStorage.setItem('dumperAccess', 'true');
+                els.dumperKeyModal.classList.add('opacity-0');
+                setTimeout(() => els.dumperKeyModal.classList.add('hidden'), 300);
+                showNotification('Access Granted', 'success');
+            } else {
+                showNotification(data.reason || 'Invalid Key', 'error');
+            }
+        } catch (e) {
+            showNotification('Connection Error', 'error');
         }
     });
 
-    promptInput.addEventListener('input', function() {
+    document.getElementById('close-dumper-key').addEventListener('click', () => {
+        els.dumperKeyModal.classList.add('opacity-0');
+        setTimeout(() => els.dumperKeyModal.classList.add('hidden'), 300);
+        els.currentModeTxt.innerText = 'AI Assistant';
+        els.codeDumperUi.classList.add('hidden');
+        els.standardUi.classList.remove('hidden');
+    });
+
+    els.fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    window.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        els.dropOverlay.classList.remove('hidden');
+        els.dropOverlay.classList.remove('opacity-0');
+        els.dropOverlay.classList.add('flex');
+    });
+
+    els.dropOverlay.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        els.dropOverlay.classList.add('opacity-0');
+        setTimeout(() => els.dropOverlay.classList.add('hidden'), 300);
+    });
+
+    els.dropOverlay.addEventListener('drop', (e) => {
+        e.preventDefault();
+        els.dropOverlay.classList.add('opacity-0');
+        setTimeout(() => els.dropOverlay.classList.add('hidden'), 300);
+        handleFiles(e.dataTransfer.files);
+    });
+
+    function handleFiles(files) {
+        if (!files.length) return;
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target.result.split(',')[1];
+                const mimeType = file.type;
+                uploadedFiles.push({ inlineData: { data: base64, mimeType } });
+                
+                const previewItem = document.createElement('div');
+                previewItem.className = 'relative w-16 h-16 rounded-lg overflow-hidden border border-white/20 group';
+                
+                if (mimeType.startsWith('image/')) {
+                    previewItem.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                } else {
+                    previewItem.innerHTML = `<div class="w-full h-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-file text-white"></i></div>`;
+                }
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'absolute top-0 right-0 bg-red-500 text-white w-4 h-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition cursor-pointer';
+                removeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                removeBtn.onclick = () => {
+                    uploadedFiles = uploadedFiles.filter(f => f.inlineData.data !== base64);
+                    previewItem.remove();
+                };
+                
+                previewItem.appendChild(removeBtn);
+                els.mediaPreview.appendChild(previewItem);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    els.promptInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
-        
         if (this.value.startsWith('/')) {
-            cmdPopup.classList.remove('hidden');
-            cmdPopup.classList.add('flex');
+            els.cmdPopup.classList.remove('hidden');
+            els.cmdPopup.classList.add('flex');
         } else {
-            cmdPopup.classList.add('hidden');
-            cmdPopup.classList.remove('flex');
+            els.cmdPopup.classList.add('hidden');
+            els.cmdPopup.classList.remove('flex');
         }
     });
 
-    promptInput.addEventListener('keydown', (e) => {
+    els.promptInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleSubmit();
+            sendMessage();
         }
     });
 
-    submitBtn.onclick = handleSubmit;
-    
-    stopBtn.onclick = () => {
+    els.submitBtn.addEventListener('click', sendMessage);
+
+    els.stopBtn.addEventListener('click', () => {
         if (abortController) {
             abortController.abort();
             abortController = null;
-            stopBtn.classList.add('opacity-0', 'pointer-events-none');
-            showNotification('Generation Stopped', 'error');
-        }
-    };
-
-    fileInput.addEventListener('change', handleFileSelect);
-    
-    document.body.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        document.getElementById('drop-overlay').classList.remove('hidden');
-        setTimeout(() => document.getElementById('drop-overlay').classList.remove('opacity-0'), 10);
-    });
-
-    document.body.addEventListener('dragleave', (e) => {
-        if(e.clientX === 0 && e.clientY === 0) {
-            document.getElementById('drop-overlay').classList.add('opacity-0');
-            setTimeout(() => document.getElementById('drop-overlay').classList.add('hidden'), 300);
+            isGenerating = false;
+            endGenerationState();
+            showNotification('Generation Stopped', 'info');
         }
     });
 
-    document.body.addEventListener('drop', (e) => {
-        e.preventDefault();
-        document.getElementById('drop-overlay').classList.add('opacity-0');
-        setTimeout(() => document.getElementById('drop-overlay').classList.add('hidden'), 300);
-        
-        if (e.dataTransfer.files.length > 0) {
-            handleFiles(e.dataTransfer.files);
-        }
-    });
-
-    setupDumperLogic();
-});
-
-function handleFileSelect(e) {
-    handleFiles(e.target.files);
-}
-
-function handleFiles(files) {
-    const file = files[0];
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-        showNotification('File too large (Max 10MB)', 'error');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        currentFile = {
-            data: e.target.result.split(',')[1],
-            mime: file.type
-        };
-
-        mediaPreview.innerHTML = '';
-        const previewItem = document.createElement('div');
-        previewItem.className = 'relative group';
-        
-        let content = '';
-        if (file.type.startsWith('image/')) {
-            content = `<img src="${e.target.result}" class="h-20 w-20 object-cover rounded-xl border border-white/20">`;
-        } else if (file.type.startsWith('video/')) {
-            content = `<video src="${e.target.result}" class="h-20 w-20 object-cover rounded-xl border border-white/20"></video>`;
-        } else {
-            content = `<div class="h-20 w-20 flex items-center justify-center bg-white/10 rounded-xl border border-white/20"><i class="fa-solid fa-file text-2xl"></i></div>`;
-        }
-
-        previewItem.innerHTML = `
-            ${content}
-            <button onclick="clearFile()" class="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] cursor-pointer hover:scale-110 transition"><i class="fa-solid fa-xmark"></i></button>
-        `;
-        mediaPreview.appendChild(previewItem);
-    };
-    reader.readAsDataURL(file);
-}
-
-window.clearFile = function() {
-    currentFile = null;
-    mediaPreview.innerHTML = '';
-    fileInput.value = '';
-}
-
-function startNewChat() {
-    chatFeed.innerHTML = '';
-    chatFeed.appendChild(heroSection);
-    heroSection.classList.remove('hidden');
-    conversationContext = [];
-    currentFile = null;
-    mediaPreview.innerHTML = '';
-    promptInput.style.height = 'auto';
-    promptInput.focus();
-}
-
-async function handleSubmit() {
-    const text = promptInput.value.trim();
-    if ((!text && !currentFile) || !apiKey) {
-        if (!apiKey) {
-            showNotification('Please set API Key in Settings', 'error');
+    async function sendMessage() {
+        const text = els.promptInput.value.trim();
+        if ((!text && uploadedFiles.length === 0) || isGenerating) return;
+        if (!geminiKey) {
             window.toggleSettings();
+            showNotification('Please set your API Key', 'error');
+            return;
         }
-        return;
-    }
 
-    promptInput.value = '';
-    promptInput.style.height = 'auto';
-    heroSection.classList.add('hidden');
-    stopBtn.classList.remove('opacity-0', 'pointer-events-none');
-    
-    appendUserMessage(text, currentFile);
-    
-    const parts = [];
-    if (text) parts.push({text: text});
-    if (currentFile) {
-        parts.push({
-            inline_data: {
-                mime_type: currentFile.mime,
-                data: currentFile.data
-            }
-        });
-        clearFile();
-    }
+        if (text.startsWith('/')) {
+            handleCommand(text);
+            els.promptInput.value = '';
+            return;
+        }
 
-    conversationContext.push({
-        role: "user",
-        parts: parts
-    });
-
-    const aiMsgDiv = document.createElement('div');
-    aiMsgDiv.className = 'flex gap-4 max-w-4xl mx-auto w-full msg-anim ai-msg p-6 rounded-2xl relative';
-    aiMsgDiv.innerHTML = `
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg mt-1">
-            <i class="fa-solid fa-sparkles text-[10px] text-white"></i>
-        </div>
-        <div class="flex-1 min-w-0">
-            <div class="text-[11px] font-bold text-violet-400 mb-1 tracking-widest uppercase">Prysmis AI</div>
-            <div class="prose text-[15px] leading-relaxed text-gray-300 content-area"><span class="animate-pulse">Thinking...</span></div>
-        </div>
-    `;
-    chatFeed.appendChild(aiMsgDiv);
-    chatFeed.scrollTop = chatFeed.scrollHeight;
-
-    try {
-        abortController = new AbortController();
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            signal: abortController.signal,
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                contents: conversationContext,
-                generationConfig: {
-                    temperature: 0.9,
-                    topK: 40,
-                    topP: 0.95,
-                    maxOutputTokens: 8192,
-                },
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                ]
-            })
-        });
-
-        if (!response.ok) throw new Error('API Error');
-
-        const data = await response.json();
-        const aiText = data.candidates[0].content.parts[0].text;
+        els.heroSection.classList.add('hidden');
+        appendMessage('user', text);
+        els.promptInput.value = '';
+        els.promptInput.style.height = 'auto';
+        els.mediaPreview.innerHTML = '';
         
-        conversationContext.push({
-            role: "model",
-            parts: [{text: aiText}]
-        });
+        startGenerationState();
 
-        const contentArea = aiMsgDiv.querySelector('.content-area');
-        contentArea.innerHTML = parseMarkdown(aiText);
-        
-        saveToHistory(text || "Media Upload", aiText);
-
-    } catch (error) {
-        if (error.name !== 'AbortError') {
-            aiMsgDiv.querySelector('.content-area').innerHTML = `<span class="text-red-400">Error: ${error.message}</span>`;
-        }
-    } finally {
-        stopBtn.classList.add('opacity-0', 'pointer-events-none');
-        abortController = null;
-        chatFeed.scrollTop = chatFeed.scrollHeight;
-    }
-}
-
-function appendUserMessage(text, file) {
-    const div = document.createElement('div');
-    div.className = 'flex gap-4 max-w-4xl mx-auto w-full msg-anim justify-end';
-    
-    let mediaHtml = '';
-    if(file) {
-        if(file.mime.startsWith('image')) {
-            mediaHtml = `<img src="data:${file.mime};base64,${file.data}" class="max-w-[200px] rounded-lg mb-2 block border border-white/20">`;
-        } else {
-             mediaHtml = `<div class="bg-white/10 p-2 rounded mb-2 text-xs"><i class="fa-solid fa-file"></i> Attached File</div>`;
-        }
-    }
-
-    div.innerHTML = `
-        <div class="flex-1 min-w-0 text-right">
-            <div class="inline-block text-left max-w-[85%] user-msg rounded-2xl rounded-tr-sm p-4 text-white">
-                ${mediaHtml}
-                <p class="whitespace-pre-wrap text-[15px]">${escapeHtml(text)}</p>
-            </div>
-        </div>
-        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center shrink-0 mt-1">
-            <i class="fa-solid fa-user text-[10px]"></i>
-        </div>
-    `;
-    chatFeed.appendChild(div);
-}
-
-function parseMarkdown(text) {
-    let html = text
-        .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-white mt-4 mb-2">$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold text-white mt-5 mb-3">$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-white mt-6 mb-4">$1</h1>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/~~( নম.*?)~~/g, '<del>$1</del>')
-        .replace(/`([^`]+)`/g, '<code class="bg-white/10 px-1 rounded text-purple-300">$1</code>')
-        .replace(/\n/g, '<br>');
-
-    html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-        return `<div class="code-block">
-            <div class="code-header">
-                <span>${lang || 'text'}</span>
-                <button class="copy-btn" onclick="copyCode(this)"><i class="fa-regular fa-copy"></i> Copy</button>
-            </div>
-            <pre class="custom-scrollbar"><code class="language-${lang}">${code}</code></pre>
-        </div>`;
-    });
-
-    return html;
-}
-
-window.copyCode = function(btn) {
-    const code = btn.parentElement.nextElementSibling.innerText;
-    navigator.clipboard.writeText(code);
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
-    setTimeout(() => btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy', 2000);
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-function showNotification(msg, type) {
-    const div = document.createElement('div');
-    div.className = 'notification';
-    const icon = type === 'success' ? 'fa-check-circle text-green-400' : 
-                 type === 'error' ? 'fa-circle-exclamation text-red-400' : 'fa-info-circle text-blue-400';
-    div.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${msg}</span>`;
-    document.getElementById('notification-area').appendChild(div);
-    setTimeout(() => {
-        div.style.animation = 'slideOutRight 0.4s forwards';
-        setTimeout(() => div.remove(), 400);
-    }, 3000);
-}
-
-function saveToHistory(title, response) {
-    const id = Date.now();
-    const date = new Date().toLocaleDateString();
-    historyData.unshift({id, title: title.substring(0, 30) + '...', date, context: [...conversationContext]});
-    if (historyData.length > 50) historyData.pop();
-    localStorage.setItem('prysmis_history', JSON.stringify(historyData));
-}
-
-function loadHistoryToSidebar() {
-    const list = document.getElementById('history-list');
-    list.innerHTML = '';
-    
-    const term = document.getElementById('search-input').value.toLowerCase();
-    
-    historyData.forEach(item => {
-        if(term && !item.title.toLowerCase().includes(term)) return;
-        
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.innerHTML = `
-            <div>
-                <div class="font-bold text-gray-300 text-sm">${item.title}</div>
-                <div class="history-date">${item.date}</div>
-            </div>
-            <button class="delete-history-btn" onclick="deleteHistory(${item.id}, event)"><i class="fa-solid fa-trash"></i></button>
-        `;
-        div.onclick = (e) => {
-            if(!e.target.closest('.delete-history-btn')) loadChat(item.id);
-        };
-        list.appendChild(div);
-    });
-}
-
-window.deleteHistory = function(id, e) {
-    e.stopPropagation();
-    historyData = historyData.filter(x => x.id !== id);
-    localStorage.setItem('prysmis_history', JSON.stringify(historyData));
-    loadHistoryToSidebar();
-}
-
-function loadChat(id) {
-    const item = historyData.find(x => x.id === id);
-    if (!item) return;
-    conversationContext = [...item.context];
-    window.toggleHistory();
-    chatFeed.innerHTML = '';
-    heroSection.classList.add('hidden');
-    
-    conversationContext.forEach(msg => {
-        if(msg.role === 'user') {
-            const txt = msg.parts.find(p => p.text)?.text || 'Media';
-            appendUserMessage(txt, null);
-        } else {
-            const aiMsgDiv = document.createElement('div');
-            aiMsgDiv.className = 'flex gap-4 max-w-4xl mx-auto w-full msg-anim ai-msg p-6 rounded-2xl relative mb-6';
-            aiMsgDiv.innerHTML = `
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg mt-1">
-                    <i class="fa-solid fa-sparkles text-[10px] text-white"></i>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="text-[11px] font-bold text-violet-400 mb-1 tracking-widest uppercase">Prysmis AI</div>
-                    <div class="prose text-[15px] leading-relaxed text-gray-300 content-area">${parseMarkdown(msg.parts[0].text)}</div>
-                </div>
-            `;
-            chatFeed.appendChild(aiMsgDiv);
-        }
-    });
-    chatFeed.scrollTop = chatFeed.scrollHeight;
-}
-
-document.getElementById('search-input').addEventListener('input', loadHistoryToSidebar);
-
-function setupDumperLogic() {
-    const modal = document.getElementById('code-dumper-key-modal');
-    const input = document.getElementById('dumper-key-input');
-    const btn = document.getElementById('verify-key-btn');
-    const closeKey = document.getElementById('close-dumper-key');
-
-    closeKey.onclick = () => {
-        modal.classList.add('hidden');
-        document.getElementById('standard-ui').classList.remove('hidden');
-        document.getElementById('code-dumper-ui').classList.add('hidden');
-        document.getElementById('current-mode-txt').innerText = "AI Assistant";
-        currentMode = "AI Assistant";
-    };
-
-    btn.onclick = async () => {
-        const key = input.value.trim();
-        if(!key) return;
+        const model = "gemini-2.5-pro"; 
+        const parts = [];
+        if (text) parts.push({ text: `Mode: ${currentMode}. ${text}` });
+        uploadedFiles.forEach(f => parts.push(f));
+        uploadedFiles = [];
 
         try {
-            const req = await fetch('/verify-key', {
+            abortController = new AbortController();
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({key})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts }],
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    ]
+                }),
+                signal: abortController.signal
             });
-            const res = await req.json();
+
+            if (!response.ok) throw new Error('API Error');
+
+            const data = await response.json();
+            const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+            appendMessage('ai', aiText);
             
-            if(res.valid) {
-                showNotification('Key Verified', 'success');
-                modal.classList.add('hidden');
-                document.getElementById('standard-ui').classList.add('hidden');
-                document.getElementById('code-dumper-ui').classList.remove('hidden');
-                document.getElementById('code-dumper-ui').classList.add('flex');
-            } else {
-                showNotification(res.reason || 'Invalid Key', 'error');
-                input.classList.add('border-red-500');
-                setTimeout(() => input.classList.remove('border-red-500'), 1000);
+            saveToHistory(text, aiText);
+
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                appendMessage('ai', "**Error:** Failed to generate response. check API Key.");
             }
-        } catch (e) {
-            console.error(e);
-            showNotification('Server Connection Failed', 'error');
+        } finally {
+            endGenerationState();
+            abortController = null;
         }
-    };
+    }
 
-    const dropZone = document.getElementById('dumper-upload-zone');
-    const dumperInput = document.getElementById('dumper-file-input');
-    
-    dropZone.onclick = () => dumperInput.click();
-    dumperInput.onchange = (e) => {
-        const f = e.target.files[0];
-        if(f) {
-            const r = new FileReader();
-            r.onload = (ev) => {
-                document.getElementById('dumper-upload-state').classList.add('hidden');
-                document.getElementById('dumper-editor-view').classList.remove('hidden');
-                document.getElementById('dumper-editor-view').classList.add('flex');
-                document.getElementById('dumper-input-area').value = ev.target.result;
-            };
-            r.readAsText(f);
+    function handleCommand(cmd) {
+        const c = cmd.split(' ')[0];
+        if (c === '/clear') startNewChat();
+        else if (c === '/features') showNotification('Features: AI Chat, File Analysis, Code Dumper, Modes', 'info');
+        else if (c === '/discord-invite') window.open('https://discord.gg/yourinvite', '_blank');
+        else showNotification('Unknown Command', 'error');
+    }
+
+    function appendMessage(role, text) {
+        const div = document.createElement('div');
+        div.className = `w-full max-w-3xl mx-auto p-6 rounded-3xl mb-6 msg-anim ${role === 'user' ? 'user-msg text-white self-end ml-auto' : 'ai-msg text-gray-200'}`;
+        
+        if (role === 'ai') {
+            const html = marked.parse(text);
+            div.innerHTML = `<div class="prose prose-invert max-w-none">${html}</div>`;
+            
+            div.querySelectorAll('pre code').forEach((block) => {
+                const parent = block.parentElement;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'code-block';
+                
+                const header = document.createElement('div');
+                header.className = 'code-header';
+                header.innerHTML = `<span>Code</span><button class="copy-btn"><i class="fa-regular fa-copy"></i> Copy</button>`;
+                
+                header.querySelector('button').addEventListener('click', () => {
+                    navigator.clipboard.writeText(block.innerText);
+                    showNotification('Copied to clipboard', 'success');
+                });
+                
+                parent.parentNode.insertBefore(wrapper, parent);
+                wrapper.appendChild(header);
+                wrapper.appendChild(parent);
+            });
+        } else {
+            div.innerText = text;
         }
-    };
+        
+        els.chatFeed.appendChild(div);
+        els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
+    }
 
-    document.getElementById('dumper-skip-btn').onclick = () => {
-        document.getElementById('dumper-upload-state').classList.add('hidden');
-        document.getElementById('dumper-editor-view').classList.remove('hidden');
-        document.getElementById('dumper-editor-view').classList.add('flex');
-    };
-    
-    document.querySelectorAll('.lang-chip').forEach(c => {
-        c.onclick = () => {
-            document.querySelectorAll('.lang-chip').forEach(b => b.classList.remove('active', 'bg-emerald-500/20', 'text-emerald-400'));
-            c.classList.add('active', 'bg-emerald-500/20', 'text-emerald-400');
-        };
-    });
+    function startGenerationState() {
+        isGenerating = true;
+        els.stopBtn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+        els.submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    }
 
-    document.getElementById('btn-obfuscate').onclick = () => {
-        const code = document.getElementById('dumper-input-area').value;
-        document.getElementById('dumper-output-area').value = "-- Obfuscated by Prysmis \n" + btoa(code).split('').reverse().join('');
-        document.getElementById('terminal-log').innerText = "Obfuscation complete.";
-    };
-    
-    document.getElementById('btn-deobfuscate').onclick = () => {
-        showNotification('Deobfuscation AI not connected', 'info');
-    };
-}
+    function endGenerationState() {
+        isGenerating = false;
+        els.stopBtn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+        els.submitBtn.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
+    }
+
+    function saveToHistory(user, ai) {
+        if (!currentChatId) {
+            currentChatId = Date.now();
+            chatHistory.unshift({ id: currentChatId, title: user.substring(0, 30) + "...", date: new Date().toLocaleDateString(), messages: [] });
+        }
+        const chat = chatHistory.find(c => c.id === currentChatId);
+        if (chat) {
+            chat.messages.push({ role: 'user', content: user });
+            chat.messages.push({ role: 'ai', content: ai });
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        }
+    }
+
+    function renderHistory() {
+        els.historyList.innerHTML = '';
+        chatHistory.forEach(chat => {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            if (chat.id === currentChatId) item.classList.add('active');
+            item.innerHTML = `
+                <div>
+                    <div class="font-bold text-gray-200 text-sm truncate w-48">${chat.title}</div>
+                    <div class="history-date">${chat.date}</div>
+                </div>
+                <button class="delete-history-btn"><i class="fa-solid fa-trash"></i></button>
+            `;
+            item.querySelector('.delete-history-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                chatHistory = chatHistory.filter(c => c.id !== chat.id);
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                renderHistory();
+                if (chat.id === currentChatId) startNewChat();
+            });
+            item.addEventListener('click', () => {
+                loadChat(chat);
+                window.toggleHistory();
+            });
+            els.historyList.appendChild(item);
+        });
+    }
+
+    function loadChat(chat) {
+        currentChatId = chat.id;
+        els.heroSection.classList.add('hidden');
+        els.chatFeed.innerHTML = '';
+        chat.messages.forEach(msg => appendMessage(msg.role, msg.content));
+    }
+
+    function showNotification(msg, type) {
+        const notif = document.createElement('div');
+        notif.className = 'notification';
+        const color = type === 'success' ? 'text-emerald-400' : type === 'error' ? 'text-red-400' : 'text-blue-400';
+        const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle';
+        notif.innerHTML = `<i class="fa-solid ${icon} ${color} text-lg"></i> <span>${msg}</span>`;
+        document.getElementById('notification-area').appendChild(notif);
+        setTimeout(() => {
+            notif.style.animation = 'slideOutRight 0.4s forwards';
+            setTimeout(() => notif.remove(), 400);
+        }, 3000);
+    }
+});
