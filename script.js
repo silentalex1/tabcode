@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if(cmd === '/roleplay') {
             isRoleplayActive = !isRoleplayActive;
             const status = isRoleplayActive ? "Activated" : "Deactivated";
-            const boldText = `<strong style="color: #a78bfa;">Roleplay mode ${status}.</strong>`;
+            const boldText = "**Roleplay mode " + status + ".**";
             appendMsg('ai', `${boldText} ${isRoleplayActive ? "What do you want me to be?" : "Back to normal."}`, null);
             els.heroSection.style.display = 'none';
         } else if(cmd === '/discord-invite') {
@@ -354,6 +354,22 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleDumperKey(false);
         activateDumper();
         els.dumperKeyInput.value = "";
+    });
+
+    els.mobileMenuBtn.addEventListener('click', () => {
+        const isHidden = els.sidebar.classList.contains('-translate-x-full');
+        if(isHidden) {
+            els.sidebar.classList.remove('-translate-x-full');
+            els.mobileOverlay.classList.remove('hidden');
+        } else {
+            els.sidebar.classList.add('-translate-x-full');
+            els.mobileOverlay.classList.add('hidden');
+        }
+    });
+
+    els.mobileOverlay.addEventListener('click', () => {
+        els.sidebar.classList.add('-translate-x-full');
+        els.mobileOverlay.classList.add('hidden');
     });
 
     els.input.addEventListener('input', () => {
