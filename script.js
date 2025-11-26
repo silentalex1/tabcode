@@ -31,6 +31,23 @@ window.setMode = function(mode) {
     document.dispatchEvent(event);
 };
 
+function saveChatToStorage(chatHistory) {
+    try {
+        const historyToSave = chatHistory.map(chat => ({
+            id: chat.id,
+            title: chat.title,
+            messages: chat.messages.map(msg => ({
+                role: msg.role,
+                text: msg.text,
+                img: msg.img && msg.img.length > 5000 ? null : msg.img 
+            }))
+        }));
+        localStorage.setItem('prysmis_history', JSON.stringify(historyToSave));
+    } catch (e) {
+        console.warn("Local storage full or error saving chat.", e);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const els = {
         input: document.getElementById('prompt-input'),
@@ -99,12 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    function saveChatToStorage() {
-        localStorage.setItem('prysmis_history', JSON.stringify(chatHistory));
-    }
-
-    const TARGET_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent";
-    const FALLBACK_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
+    const TARGET_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
+    const FALLBACK_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -205,7 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const txt = els.input.value;
         els.input.value = txt.substring(0, start) + s + txt.substring(start, end) + e + txt.substring(end);
         els.input.focus();
-        els.textToolbar.classList.add('hidden');
     }
 
     function clearMediaInternal() {
@@ -281,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(confirm("Delete?")) {
                     chatHistory = chatHistory.filter(c => c.id !== chat.id);
                     if(currentChatId === chat.id) startNewChat();
-                    saveChatToStorage();
+                    saveChatToStorage(chatHistory);
                 }
             };
             els.historyList.appendChild(div);
@@ -428,8 +440,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('selectionchange', () => {
         if (document.activeElement === els.input && els.input.selectionStart !== els.input.selectionEnd) {
             els.textToolbar.classList.remove('hidden');
-            const rect = els.input.getBoundingClientRect();
-            els.textToolbar.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
         } else {
             els.textToolbar.classList.add('hidden');
         }
@@ -459,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const chatIndex = chatHistory.findIndex(c => c.id === currentChatId);
         chatHistory[chatIndex].messages.push({ role: 'user', text: text, img: uploadedFile.data ? `data:${uploadedFile.type};base64,${uploadedFile.data}` : null });
-        saveChatToStorage();
+        saveChatToStorage(chatHistory);
 
         els.heroSection.style.display = 'none';
         appendMsg('user', text, uploadedFile.data ? `data:${uploadedFile.type};base64,${uploadedFile.data}` : null);
@@ -535,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(data.candidates && data.candidates[0].content) {
                 const aiText = data.candidates[0].content.parts[0].text;
                 chatHistory[chatIndex].messages.push({ role: 'ai', text: aiText, img: null });
-                saveChatToStorage();
+                saveChatToStorage(chatHistory);
                 streamResponse(aiText);
             } else {
                 appendMsg('ai', "Error generating response.");
