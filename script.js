@@ -1,10 +1,3 @@
-// --- GLOBAL SCOPE FUNCTIONS FOR HTML ONCLICK ACCESS ---
-window.runCmd = null;
-window.insertFormat = null;
-window.copyCode = null;
-window.clearMedia = null;
-window.setInput = null;
-
 document.addEventListener('DOMContentLoaded', () => {
     const els = {
         settingsTriggers: [document.getElementById('settings-trigger')],
@@ -76,57 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const FALLBACK_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
     const BOT_API_URL = "http://localhost:3000/verify-key";
 
-    // --- EXPOSE FUNCTIONS TO WINDOW ---
-    window.setInput = (txt) => { els.input.value = txt; els.input.focus(); };
-    
-    window.runCmd = (cmd) => {
-        if(cmd === '/clear') { startNewChat(); }
-        else if(cmd === '/features') {
-            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: #a78bfa;">PrysmisAI features -- still in beta</div><hr class="visual-line"><ul class="feature-list list-disc pl-5"><li>Scan Analysis: Say "Analysis or scan this file and ___"</li><li>YouTube analysis</li><li>Domain external viewer</li><li>Modes</li><li>Roleplay</li><li>Invisible tab</li></ul>`;
-            const div = document.createElement('div');
-            div.className = `flex w-full justify-start msg-anim mb-6`;
-            div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ai-msg text-gray-200 rounded-bl-none">${featureHTML}</div>`;
-            els.chatFeed.appendChild(div);
-            els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
-            els.heroSection.style.display = 'none';
-        } else if(cmd === '/roleplay') {
-            isRoleplayActive = !isRoleplayActive;
-            const status = isRoleplayActive ? "Activated" : "Deactivated";
-            appendMsg('ai', `**Roleplay Mode ${status}.** ${isRoleplayActive ? "Unfiltered persona enabled." : "Back to normal."}`, null);
-            els.heroSection.style.display = 'none';
-        } else if(cmd === '/discord-invite') {
-            navigator.clipboard.writeText("https://discord.gg/eKC5CgEZbT");
-            showNotification("Discord server link copied onto your clipboard!");
-        }
-        els.cmdPopup.classList.add('hidden');
-        els.cmdPopup.classList.remove('flex');
-        els.input.value = '';
-        els.input.focus();
-    };
-
-    window.insertFormat = (s, e) => {
-        const start = els.input.selectionStart;
-        const end = els.input.selectionEnd;
-        const txt = els.input.value;
-        els.input.value = txt.substring(0, start) + s + txt.substring(start, end) + e + txt.substring(end);
-        els.input.focus();
-        els.textToolbar.classList.add('hidden');
-    };
-
-    window.copyCode = (btn) => {
-        navigator.clipboard.writeText(btn.parentElement.nextElementSibling.innerText);
-        btn.innerText = "Copied!";
-        setTimeout(() => btn.innerText = "Copy", 2000);
-    };
-
-    window.clearMedia = () => {
-        uploadedFile = { data: null, type: null, name: null };
-        els.mediaPreview.innerHTML = '';
-        els.fileInput.value = '';
-    };
-
-    // --- INTERNAL LOGIC ---
-    
     function loadKey() {
         const key = localStorage.getItem('prysmis_key');
         if(key && els.apiKey) els.apiKey.value = key;
@@ -329,57 +271,77 @@ document.addEventListener('DOMContentLoaded', () => {
         els.modeTxt.innerText = val;
     }
 
-    function toggleSettings(show) {
-        if(show) {
-            els.settingsOverlay.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                els.settingsOverlay.classList.remove('opacity-0');
-                els.settingsBox.classList.remove('scale-95');
-                els.settingsBox.classList.add('scale-100');
-            });
-        } else {
-            els.settingsOverlay.classList.add('opacity-0');
-            els.settingsBox.classList.remove('scale-100');
-            els.settingsBox.classList.add('scale-95');
-            setTimeout(() => els.settingsOverlay.classList.add('hidden'), 300);
-        }
-    }
+    loadKey();
+    renderHistory();
 
-    function toggleHistory(show) {
-        if(show) {
-            els.historyModal.classList.remove('hidden');
-            requestAnimationFrame(() => els.historyModal.classList.remove('opacity-0'));
-            renderHistory();
-        } else {
-            els.historyModal.classList.add('opacity-0');
-            setTimeout(() => els.historyModal.classList.add('hidden'), 300);
-        }
-    }
+    window.setInput = (txt) => { els.input.value = txt; els.input.focus(); };
 
-    function toggleDumperKey(show) {
-        if(show) {
-            els.dumperKeyModal.classList.remove('hidden');
-            requestAnimationFrame(() => els.dumperKeyModal.classList.remove('opacity-0'));
-        } else {
-            els.dumperKeyModal.classList.add('opacity-0');
-            setTimeout(() => els.dumperKeyModal.classList.add('hidden'), 300);
+    window.runCmd = (cmd) => {
+        if(cmd === '/clear') {
+            currentChatId = null;
+            els.chatFeed.innerHTML = '';
+            els.chatFeed.appendChild(els.heroSection);
+            els.heroSection.style.display = 'flex';
+        } else if(cmd === '/features') {
+            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: #a78bfa;">PrysmisAI features -- still in beta</div><hr class="visual-line"><ul class="feature-list list-disc pl-5"><li>Scan Analysis: Say "Analysis or scan this file and ___"</li><li>YouTube analysis</li><li>Domain external viewer</li><li>Modes</li><li>Roleplay</li><li>Invisible tab</li></ul>`;
+            const div = document.createElement('div');
+            div.className = `flex w-full justify-start msg-anim mb-6`;
+            div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ai-msg text-gray-200 rounded-bl-none">${featureHTML}</div>`;
+            els.chatFeed.appendChild(div);
+            els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
+            els.heroSection.style.display = 'none';
+        } else if(cmd === '/roleplay') {
+            isRoleplayActive = !isRoleplayActive;
+            const status = isRoleplayActive ? "Activated" : "Deactivated";
+            appendMsg('ai', `**Roleplay Mode ${status}.** ${isRoleplayActive ? "Unfiltered persona enabled." : "Back to normal."}`, null);
+            els.heroSection.style.display = 'none';
+        } else if(cmd === '/discord-invite') {
+            navigator.clipboard.writeText("https://discord.gg/eKC5CgEZbT");
+            showNotification("Discord server link copied onto your clipboard!");
         }
-    }
+        els.cmdPopup.classList.add('hidden');
+        els.cmdPopup.classList.remove('flex');
+        els.input.value = '';
+        els.input.focus();
+    };
 
-    function toggleMobileMenu() {
-        if(els.sidebar.classList.contains('-translate-x-full')) {
-            els.sidebar.classList.remove('-translate-x-full');
-            els.mobileOverlay.classList.remove('hidden');
-        } else {
-            els.sidebar.classList.add('-translate-x-full');
-            els.mobileOverlay.classList.add('hidden');
+    window.insertFormat = (s, e) => {
+        const start = els.input.selectionStart;
+        const end = els.input.selectionEnd;
+        const txt = els.input.value;
+        els.input.value = txt.substring(0, start) + s + txt.substring(start, end) + e + txt.substring(end);
+        els.input.focus();
+        els.textToolbar.classList.add('hidden');
+    };
+
+    window.copyCode = (btn) => {
+        navigator.clipboard.writeText(btn.parentElement.nextElementSibling.innerText);
+        btn.innerText = "Copied!";
+        setTimeout(() => btn.innerText = "Copy", 2000);
+    };
+
+    window.clearMedia = () => {
+        uploadedFile = { data: null, type: null, name: null };
+        els.mediaPreview.innerHTML = '';
+        els.fileInput.value = '';
+    };
+
+    document.addEventListener('dragover', (e) => { e.preventDefault(); els.dropOverlay.classList.remove('hidden'); els.dropOverlay.classList.add('flex'); els.dropOverlay.classList.remove('opacity-0'); });
+    els.dropOverlay.addEventListener('dragleave', (e) => { e.preventDefault(); els.dropOverlay.classList.add('opacity-0'); setTimeout(() => els.dropOverlay.classList.add('hidden'), 300); });
+    els.dropOverlay.addEventListener('drop', (e) => {
+        e.preventDefault();
+        els.dropOverlay.classList.add('opacity-0');
+        setTimeout(() => els.dropOverlay.classList.add('hidden'), 300);
+        if(e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]);
+    });
+
+    els.input.addEventListener('paste', (e) => {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let index in items) {
+            const item = items[index];
+            if (item.kind === 'file') handleFileSelect(item.getAsFile());
         }
-    }
-
-    function switchToStandard() {
-        els.standardUI.classList.remove('hidden');
-        els.codeDumperUI.classList.add('hidden');
-    }
+    });
 
     function handleFileSelect(file) {
         const reader = new FileReader();
@@ -394,31 +356,11 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(file);
     }
 
-    let dragCounter = 0;
-    document.addEventListener('dragenter', (e) => { e.preventDefault(); dragCounter++; els.dropOverlay.classList.remove('hidden'); els.dropOverlay.classList.add('flex'); els.dropOverlay.classList.remove('opacity-0'); });
-    document.addEventListener('dragleave', (e) => { e.preventDefault(); dragCounter--; if(dragCounter === 0) { els.dropOverlay.classList.add('opacity-0'); setTimeout(() => els.dropOverlay.classList.add('hidden'), 300); } });
-    document.addEventListener('drop', (e) => {
-        e.preventDefault(); dragCounter = 0;
-        els.dropOverlay.classList.add('opacity-0'); setTimeout(() => els.dropOverlay.classList.add('hidden'), 300);
-        if(e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]);
-    });
-
-    els.input.addEventListener('paste', (e) => {
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (let index in items) {
-            const item = items[index];
-            if (item.kind === 'file') handleFileSelect(item.getAsFile());
-        }
-    });
-
     els.fileInput.addEventListener('change', (e) => { if(e.target.files[0]) handleFileSelect(e.target.files[0]); });
 
     document.addEventListener('selectionchange', () => {
         if (document.activeElement === els.input && els.input.selectionStart !== els.input.selectionEnd) {
             els.textToolbar.classList.remove('hidden');
-            const rect = els.input.getBoundingClientRect();
-            // Simple positioning logic - usually requires complex math for textarea caret, keeping simple for now
-            els.textToolbar.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
         } else {
             els.textToolbar.classList.add('hidden');
         }
@@ -438,8 +380,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    els.submitBtn.addEventListener('click', (e) => { e.preventDefault(); handleSend(); });
+    
     if(els.quickNewChatBtn) els.quickNewChatBtn.addEventListener('click', startNewChat);
-    els.newChatBtn.addEventListener('click', startNewChat);
 
     els.mobileMenuBtn.addEventListener('click', toggleMobileMenu);
     els.mobileOverlay.addEventListener('click', toggleMobileMenu);
@@ -450,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     els.settingsTriggers.forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); toggleSettings(true); }));
     els.closeSettings.addEventListener('click', () => toggleSettings(false));
     els.getStartedBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSettings(true); });
-
+    
     if(els.saveSettings) els.saveSettings.addEventListener('click', () => {
         if(els.apiKey.value.trim()) localStorage.setItem('prysmis_key', els.apiKey.value.trim());
         if(els.fastSpeedToggle) localStorage.setItem('prysmis_fast_speed', els.fastSpeedToggle.checked);
@@ -557,13 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const payload = { 
                 system_instruction: { parts: [{ text: sysPrompt }] },
-                contents: [...previousMsgs, { role: 'user', parts: currentParts }],
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                ]
+                contents: [...previousMsgs, { role: 'user', parts: currentParts }] 
             };
 
             let response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
