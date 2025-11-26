@@ -98,6 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let abortController = null;
     let currentInterval = null;
 
+    function saveChatToStorage() {
+        localStorage.setItem('prysmis_history', JSON.stringify(chatHistory));
+    }
+
     const TARGET_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent";
     const FALLBACK_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
     const BOT_API_URL = "/verify-key";
@@ -166,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
             els.heroSection.style.display = 'flex';
         }
         else if(cmd === '/features') {
-            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: #a78bfa;">PrysmisAI features -- still in beta</div><hr class="visual-line"><ul class="feature-list list-disc pl-5"><li>Scan Analysis: Say "Analysis or scan this file and ___"</li><li>YouTube analysis</li><li>Domain external viewer</li><li>Modes</li><li>Roleplay</li><li>Invisible tab</li></ul>`;
+            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: #a78bfa;">PrysmisAI features</div><hr class="visual-line"><ul class="feature-list list-disc pl-5"><li>Scan Analysis: Say "Analysis or scan this file and ___"</li><li>YouTube analysis</li><li>Domain external viewer</li><li>Modes</li><li>Roleplay</li><li>Invisible tab</li></ul>`;
             const div = document.createElement('div');
             div.className = `flex w-full justify-start msg-anim mb-6`;
             div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ai-msg text-gray-200 rounded-bl-none">${featureHTML}</div>`;
@@ -319,8 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
         els.modeTxt.innerText = "Code Dumper";
         els.standardUI.classList.add('hidden');
         els.codeDumperUI.classList.remove('hidden');
-        
-        // Mock Unlock for frontend demo as requested
         isCodeDumperUnlocked = true;
     }
 
@@ -331,11 +333,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     els.closeDumperKey.addEventListener('click', () => toggleDumperKey(false));
     
-    // MOCK VERIFICATION for Frontend Demo
     if(els.verifyKeyBtn) els.verifyKeyBtn.addEventListener('click', () => {
         const key = els.dumperKeyInput.value.trim();
         if(!key) return;
-        // Directly unlock for demo purposes since user asked to ignore bot connect
         isCodeDumperUnlocked = true;
         toggleDumperKey(false);
         activateDumper();
@@ -445,7 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
         els.flashOverlay.classList.remove('opacity-0');
         els.flashOverlay.classList.add('bg-flash-green');
         
-        // Scan Animation
         if(text.toLowerCase().includes('analyze') || text.toLowerCase().includes('scan')) {
              const scanDiv = document.createElement('div');
              scanDiv.className = "border border-violet-500/50 rounded-xl p-4 my-4 bg-violet-500/5 relative overflow-hidden";
@@ -500,7 +499,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 signal: abortController.signal
             });
             
-            // Fallback logic
             if(response.status === 404) response = await fetch(`${FALLBACK_URL}?key=${localStorage.getItem('prysmis_key')}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: abortController.signal });
 
             const data = await response.json();
