@@ -61,8 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dumperKeyModal: document.getElementById('code-dumper-key-modal'),
         dumperKeyInput: document.getElementById('dumper-key-input'),
         verifyKeyBtn: document.getElementById('verify-key-btn'),
-        codeDumperUI: document.getElementById('code-dumper-ui'),
-        codingWorkspaceUI: document.getElementById('coding-workspace-ui'),
+        codingWorkspace: document.getElementById('coding-workspace-ui'),
         standardUI: document.getElementById('standard-ui'),
         modeTxt: document.getElementById('current-mode-txt'),
         modeBtn: document.getElementById('mode-btn'),
@@ -84,6 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebar: document.getElementById('sidebar'),
         dropOverlay: document.getElementById('drop-overlay'),
         
+        wsEditor: document.getElementById('ws-editor'),
+        wsIframe: document.getElementById('ws-iframe'),
+        wsRawOutput: document.getElementById('ws-raw-output'),
+        wsPlaceholder: document.getElementById('ws-placeholder'),
+        wsTerminal: document.getElementById('ws-terminal'),
+        wsRunBtn: document.getElementById('ws-run-btn'),
+        wsObfBtn: document.getElementById('ws-obf-btn'),
+        wsDeobfBtn: document.getElementById('ws-deobf-btn'),
+        
         settingsTriggers: [document.getElementById('settings-trigger')],
         closeSettings: document.getElementById('close-settings'),
         historyTrigger: document.getElementById('history-trigger'),
@@ -92,23 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         quickNewChatBtn: document.getElementById('quick-new-chat-btn'),
         closeDumperKey: document.getElementById('close-dumper-key'),
         getStartedBtn: document.getElementById('get-started-btn'),
-        homeBtn: document.getElementById('home-btn'),
-        
-        // Dumper Elements
-        dumperUploadZone: document.getElementById('dumper-upload-zone'),
-        dumperFileInput: document.getElementById('dumper-file-input'),
-        dumperSkipBtn: document.getElementById('dumper-skip-btn'),
-        dumperInputArea: document.getElementById('dumper-input-area'),
-        dumperOutputArea: document.getElementById('dumper-output-area'),
-        dumperEditorView: document.getElementById('dumper-editor-view'),
-        
-        // Coding Workspace Elements
-        codingEditor: document.getElementById('coding-editor'),
-        codingOutput: document.getElementById('coding-output'),
-        codingTerminal: document.getElementById('coding-terminal'),
-        btnRunCode: document.getElementById('btn-run-code'),
-        btnObfuscate: document.getElementById('btn-obfuscate'),
-        btnDeobfuscate: document.getElementById('btn-deobfuscate')
+        homeBtn: document.getElementById('home-btn')
     };
 
     let chatHistory = JSON.parse(localStorage.getItem('prysmis_history')) || [];
@@ -140,11 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('setModeGlobal', (e) => changeMode(e.detail));
 
     function changeMode(val) {
-        if(val === 'Code Dumper') {
-            if(!isCodeDumperUnlocked) toggleDumperKey(true);
-            else activateDumper();
-        } else if(val === 'Coding') {
-            updateDropdownUI(val);
+        if(val === 'Coding') {
             activateCodingWorkspace();
         } else {
             updateDropdownUI(val);
@@ -155,9 +143,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateDropdownUI(val) {
         const iconMap = {
-            'AI Assistant': 'fa-sparkles', 'Code Dumper': 'fa-terminal', 'Rizz tool': 'fa-heart',
+            'AI Assistant': 'fa-sparkles', 'Coding': 'fa-code', 'Rizz tool': 'fa-heart',
             'Geometry': 'fa-shapes', 'English': 'fa-feather', 'Biology': 'fa-dna',
-            'Physics': 'fa-atom', 'Chemistry': 'fa-flask', 'Coding': 'fa-code',
+            'Physics': 'fa-atom', 'Chemistry': 'fa-flask', 'Code Dumper': 'fa-terminal',
             'Debate': 'fa-gavel', 'Psychology': 'fa-brain', 'History': 'fa-landmark'
         };
         const iconClass = iconMap[val] || 'fa-sparkles';
@@ -341,24 +329,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function activateDumper() {
-        els.modeTxt.innerText = "Code Dumper";
-        els.standardUI.classList.add('hidden');
-        els.codingWorkspaceUI.classList.add('hidden');
-        els.codeDumperUI.classList.remove('hidden');
-        isCodeDumperUnlocked = true;
-    }
-
     function activateCodingWorkspace() {
+        updateDropdownUI("Coding");
         els.standardUI.classList.add('hidden');
-        els.codeDumperUI.classList.add('hidden');
-        els.codingWorkspaceUI.classList.remove('hidden');
+        els.codingWorkspace.classList.remove('hidden');
     }
 
     function switchToStandard() {
         els.standardUI.classList.remove('hidden');
-        els.codeDumperUI.classList.add('hidden');
-        els.codingWorkspaceUI.classList.add('hidden');
+        els.codingWorkspace.classList.add('hidden');
     }
 
     els.closeDumperKey.addEventListener('click', () => toggleDumperKey(false));
@@ -368,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!key) return;
         isCodeDumperUnlocked = true;
         toggleDumperKey(false);
-        activateDumper();
+        activateCodingWorkspace();
         els.dumperKeyInput.value = "";
     });
 
@@ -388,17 +367,17 @@ document.addEventListener('DOMContentLoaded', () => {
         els.mobileOverlay.classList.add('hidden');
     });
 
-    els.input.addEventListener('input', () => {
-        const val = els.input.value.toLowerCase();
-        
-        if (els.modeTxt.innerText !== 'Coding') {
-            if (val.includes('code') || val.includes('deobfuscate') || val.includes('obfuscate')) {
-                 changeMode('Coding');
-            }
-        }
-
+    els.input.addEventListener('input', (e) => {
         els.input.style.height = 'auto';
         els.input.style.height = els.input.scrollHeight + 'px';
+        
+        const val = e.target.value.toLowerCase();
+        if(val.includes('deobfuscate') || val.includes('code') || val.includes('obfuscate') || val.includes('script')) {
+            if(els.modeTxt.innerText !== 'Coding') {
+                activateCodingWorkspace();
+            }
+        }
+        
         if(els.input.value.trim().startsWith('/')) {
             els.cmdPopup.classList.remove('hidden');
             els.cmdPopup.classList.add('flex');
@@ -598,45 +577,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.clearMedia();
     }
 
-    async function executeCodingAction(action) {
-        if(!localStorage.getItem('prysmis_key')) return toggleSettings(true);
-        const code = els.codingEditor.value;
-        if(!code) return;
-
-        els.codingOutput.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500 animate-pulse">Processing...</div>';
-        els.codingTerminal.innerHTML += `<br><span class="text-white">user@prysmis:~$</span> ${action.toLowerCase()} script.tmp`;
-        
-        try {
-            let prompt = "";
-            if(action === 'RUN') prompt = "You are a code execution engine. Simulate the execution of this code exactly. Provide the output in a clean format. If there are errors, show them like a compiler would. Code:\n" + code;
-            else if(action === 'OBFUSCATE') prompt = "You are a code obfuscator. Obfuscate the following code to make it unreadable but functional. Provide ONLY the code in a code block. Code:\n" + code;
-            else if(action === 'DEOBFUSCATE') prompt = "You are a code deobfuscator. Reverse engineer this code to make it readable and clean. Provide ONLY the code in a code block. Code:\n" + code;
-
-            const response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ role: 'user', parts: [{ text: prompt }] }]
-                })
-            });
-            
-            const data = await response.json();
-            if(data.candidates && data.candidates[0].content) {
-                const res = data.candidates[0].content.parts[0].text;
-                els.codingOutput.innerHTML = parseMD(res);
-                els.codingTerminal.innerHTML += `<br><span class="text-green-500">Success</span> (exit code 0)`;
-                els.codingTerminal.scrollTop = els.codingTerminal.scrollHeight;
-            }
-        } catch(e) {
-            els.codingOutput.innerHTML = `<span class="text-red-500">Error: Connection failed.</span>`;
-            els.codingTerminal.innerHTML += `<br><span class="text-red-500">Error</span> (exit code 1)`;
-        }
-    }
-
-    if(els.btnRunCode) els.btnRunCode.addEventListener('click', () => executeCodingAction('RUN'));
-    if(els.btnObfuscate) els.btnObfuscate.addEventListener('click', () => executeCodingAction('OBFUSCATE'));
-    if(els.btnDeobfuscate) els.btnDeobfuscate.addEventListener('click', () => executeCodingAction('DEOBFUSCATE'));
-
     function appendMsg(role, text, img) {
         const div = document.createElement('div');
         div.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'} msg-anim mb-6`;
@@ -692,4 +632,95 @@ document.addEventListener('DOMContentLoaded', () => {
             i++;
         }, delay);
     }
+    
+    function logToTerminal(msg, type='info') {
+        const line = document.createElement('div');
+        const arrow = type === 'error' ? '<span class="text-red-500">➜</span>' : '<span class="text-green-500">➜</span>';
+        const color = type === 'error' ? 'text-red-400' : 'text-gray-400';
+        line.innerHTML = `${arrow} <span class="text-cyan-400">~</span> <span class="${color}">${msg}</span>`;
+        els.wsTerminal.appendChild(line);
+        els.wsTerminal.scrollTop = els.wsTerminal.scrollHeight;
+    }
+
+    els.wsRunBtn.addEventListener('click', async () => {
+        const code = els.wsEditor.value;
+        if(!code.trim()) return;
+        
+        logToTerminal("Running code...");
+        els.wsPlaceholder.classList.add('hidden');
+        
+        if(code.trim().startsWith('<html') || code.includes('document.') || code.includes('window.')) {
+            els.wsIframe.classList.remove('hidden');
+            els.wsRawOutput.classList.add('hidden');
+            const blob = new Blob([code], {type: 'text/html'});
+            els.wsIframe.src = URL.createObjectURL(blob);
+            logToTerminal("Executed web view.");
+        } else {
+            els.wsIframe.classList.add('hidden');
+            els.wsRawOutput.classList.remove('hidden');
+            els.wsRawOutput.innerText = "Simulating execution environment...\n";
+            
+            try {
+                const response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Act as a code runner/compiler terminal. Execute this code and show ONLY the output or errors. No explanations. Code:\n" + code }] }]
+                    })
+                });
+                const data = await response.json();
+                if(data.candidates && data.candidates[0].content) {
+                     const out = data.candidates[0].content.parts[0].text;
+                     els.wsRawOutput.innerText = out;
+                     logToTerminal("Execution complete.");
+                }
+            } catch(e) {
+                logToTerminal("Execution failed: " + e.message, 'error');
+            }
+        }
+    });
+
+    els.wsObfBtn.addEventListener('click', async () => {
+        const code = els.wsEditor.value;
+        if(!code.trim()) return;
+        logToTerminal("Obfuscating...");
+        try {
+            const response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: "Obfuscate this code heavily. Return ONLY the code, no markdown. Code:\n" + code }] }]
+                })
+            });
+            const data = await response.json();
+            if(data.candidates && data.candidates[0].content) {
+                 els.wsEditor.value = data.candidates[0].content.parts[0].text;
+                 logToTerminal("Obfuscation complete.");
+            }
+        } catch(e) {
+            logToTerminal("Obfuscation failed.", 'error');
+        }
+    });
+
+    els.wsDeobfBtn.addEventListener('click', async () => {
+        const code = els.wsEditor.value;
+        if(!code.trim()) return;
+        logToTerminal("Deobfuscating...");
+        try {
+             const response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: "Deobfuscate this code. Reverse engineer logic, rename variables to readable names. Return ONLY the code. Code:\n" + code }] }]
+                })
+            });
+            const data = await response.json();
+            if(data.candidates && data.candidates[0].content) {
+                 els.wsEditor.value = data.candidates[0].content.parts[0].text;
+                 logToTerminal("Deobfuscation complete.");
+            }
+        } catch(e) {
+            logToTerminal("Deobfuscation failed.", 'error');
+        }
+    });
 });
