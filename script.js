@@ -271,18 +271,80 @@ document.addEventListener('DOMContentLoaded', () => {
         els.modeTxt.innerText = val;
     }
 
+    function toggleSettings(show) {
+        if(show) {
+            els.settingsOverlay.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                els.settingsOverlay.classList.remove('opacity-0');
+                els.settingsBox.classList.remove('scale-95');
+                els.settingsBox.classList.add('scale-100');
+            });
+        } else {
+            els.settingsOverlay.classList.add('opacity-0');
+            els.settingsBox.classList.remove('scale-100');
+            els.settingsBox.classList.add('scale-95');
+            setTimeout(() => els.settingsOverlay.classList.add('hidden'), 300);
+        }
+    }
+
+    function toggleHistory(show) {
+        if(show) {
+            els.historyModal.classList.remove('hidden');
+            requestAnimationFrame(() => els.historyModal.classList.remove('opacity-0'));
+            renderHistory();
+        } else {
+            els.historyModal.classList.add('opacity-0');
+            setTimeout(() => els.historyModal.classList.add('hidden'), 300);
+        }
+    }
+
+    function toggleDumperKey(show) {
+        if(show) {
+            els.dumperKeyModal.classList.remove('hidden');
+            requestAnimationFrame(() => els.dumperKeyModal.classList.remove('opacity-0'));
+        } else {
+            els.dumperKeyModal.classList.add('opacity-0');
+            setTimeout(() => els.dumperKeyModal.classList.add('hidden'), 300);
+        }
+    }
+
+    function toggleMobileMenu() {
+        if(els.sidebar.classList.contains('-translate-x-full')) {
+            els.sidebar.classList.remove('-translate-x-full');
+            els.mobileOverlay.classList.remove('hidden');
+        } else {
+            els.sidebar.classList.add('-translate-x-full');
+            els.mobileOverlay.classList.add('hidden');
+        }
+    }
+
+    function switchToStandard() {
+        els.standardUI.classList.remove('hidden');
+        els.codeDumperUI.classList.add('hidden');
+        updateDropdownUI("AI Assistant");
+    }
+
+    function handleFileSelect(file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            uploadedFile = { data: ev.target.result.split(',')[1], type: file.type, name: file.name };
+            let previewContent = file.type.startsWith('image') 
+                ? `<img src="${ev.target.result}" class="w-full h-full object-cover">`
+                : `<div class="flex items-center justify-center h-full bg-white/10 text-xs p-2 text-center">${file.name}</div>`;
+                
+            els.mediaPreview.innerHTML = `<div class="relative w-14 h-14 rounded-lg overflow-hidden border border-violet-500 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
+        };
+        reader.readAsDataURL(file);
+    }
+
     loadKey();
     renderHistory();
 
     window.setInput = (txt) => { els.input.value = txt; els.input.focus(); };
 
     window.runCmd = (cmd) => {
-        if(cmd === '/clear') {
-            currentChatId = null;
-            els.chatFeed.innerHTML = '';
-            els.chatFeed.appendChild(els.heroSection);
-            els.heroSection.style.display = 'flex';
-        } else if(cmd === '/features') {
+        if(cmd === '/clear') { startNewChat(); }
+        else if(cmd === '/features') {
             const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: #a78bfa;">PrysmisAI features -- still in beta</div><hr class="visual-line"><ul class="feature-list list-disc pl-5"><li>Scan Analysis: Say "Analysis or scan this file and ___"</li><li>YouTube analysis</li><li>Domain external viewer</li><li>Modes</li><li>Roleplay</li><li>Invisible tab</li></ul>`;
             const div = document.createElement('div');
             div.className = `flex w-full justify-start msg-anim mb-6`;
@@ -293,7 +355,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if(cmd === '/roleplay') {
             isRoleplayActive = !isRoleplayActive;
             const status = isRoleplayActive ? "Activated" : "Deactivated";
-            appendMsg('ai', `**Roleplay mode active.** What do you want me to be?`, null);
+            const boldText = `<strong style="color: #a78bfa;">Roleplay mode ${status}.</strong>`;
+            appendMsg('ai', `${boldText} ${isRoleplayActive ? "What do you want me to be?" : "Back to normal."}`, null);
             els.heroSection.style.display = 'none';
         } else if(cmd === '/discord-invite') {
             navigator.clipboard.writeText("https://discord.gg/eKC5CgEZbT");
@@ -343,19 +406,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function handleFileSelect(file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            uploadedFile = { data: ev.target.result.split(',')[1], type: file.type, name: file.name };
-            let previewContent = file.type.startsWith('image') 
-                ? `<img src="${ev.target.result}" class="w-full h-full object-cover">`
-                : `<div class="flex items-center justify-center h-full bg-white/10 text-xs p-2 text-center">${file.name}</div>`;
-                
-            els.mediaPreview.innerHTML = `<div class="relative w-14 h-14 rounded-lg overflow-hidden border border-violet-500 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
-        };
-        reader.readAsDataURL(file);
-    }
-
     els.fileInput.addEventListener('change', (e) => { if(e.target.files[0]) handleFileSelect(e.target.files[0]); });
 
     document.addEventListener('selectionchange', () => {
@@ -369,7 +419,6 @@ document.addEventListener('DOMContentLoaded', () => {
     els.input.addEventListener('input', () => {
         els.input.style.height = 'auto';
         els.input.style.height = els.input.scrollHeight + 'px';
-        detectMode(els.input.value);
         if(els.input.value.trim().startsWith('/')) { els.cmdPopup.classList.remove('hidden'); els.cmdPopup.classList.add('flex'); } 
         else { els.cmdPopup.classList.add('hidden'); els.cmdPopup.classList.remove('flex'); }
     });
@@ -439,16 +488,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(e) { alert("Connection failed."); els.verifyKeyBtn.textContent = "Verify Key Access"; }
     });
     els.closeDumperKey.addEventListener('click', () => toggleDumperKey(false));
-    
-    function detectMode(text) {
-        const lower = text.toLowerCase();
-        let detectedMode = null;
-        if(lower.includes('code') || lower.includes('function')) detectedMode = 'Coding';
-        else if(lower.includes('solve') || lower.includes('calc')) detectedMode = 'Geometry';
-        else if(lower.includes('physics') || lower.includes('gravity')) detectedMode = 'Physics';
-        else if(lower.includes('date') || lower.includes('flirt')) detectedMode = 'Rizz tool';
-        if(detectedMode) updateDropdownUI(detectedMode);
-    }
 
     async function handleSend(isEdit = false) {
         const text = els.input.value.trim();
@@ -512,13 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const payload = { 
                 system_instruction: { parts: [{ text: sysPrompt }] },
-                contents: [...previousMsgs, { role: 'user', parts: currentParts }],
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                ]
+                contents: [...previousMsgs, { role: 'user', parts: currentParts }] 
             };
 
             let response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
