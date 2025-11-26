@@ -277,12 +277,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.setInput = (txt) => { els.input.value = txt; els.input.focus(); };
 
     window.runCmd = (cmd) => {
-        if(cmd === '/clear') {
-            currentChatId = null;
-            els.chatFeed.innerHTML = '';
-            els.chatFeed.appendChild(els.heroSection);
-            els.heroSection.style.display = 'flex';
-        } else if(cmd === '/features') {
+        if(cmd === '/clear') { startNewChat(); }
+        else if(cmd === '/features') {
             const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: #a78bfa;">PrysmisAI features -- still in beta</div><hr class="visual-line"><ul class="feature-list list-disc pl-5"><li>Scan Analysis: Say "Analysis or scan this file and ___"</li><li>YouTube analysis</li><li>Domain external viewer</li><li>Modes</li><li>Roleplay</li><li>Invisible tab</li></ul>`;
             const div = document.createElement('div');
             div.className = `flex w-full justify-start msg-anim mb-6`;
@@ -369,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     els.input.addEventListener('input', () => {
         els.input.style.height = 'auto';
         els.input.style.height = els.input.scrollHeight + 'px';
+        detectMode(els.input.value);
         if(els.input.value.trim().startsWith('/')) { els.cmdPopup.classList.remove('hidden'); els.cmdPopup.classList.add('flex'); } 
         else { els.cmdPopup.classList.add('hidden'); els.cmdPopup.classList.remove('flex'); }
     });
@@ -393,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
     els.settingsTriggers.forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); toggleSettings(true); }));
     els.closeSettings.addEventListener('click', () => toggleSettings(false));
     els.getStartedBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSettings(true); });
-    
+
     if(els.saveSettings) els.saveSettings.addEventListener('click', () => {
         if(els.apiKey.value.trim()) localStorage.setItem('prysmis_key', els.apiKey.value.trim());
         if(els.fastSpeedToggle) localStorage.setItem('prysmis_fast_speed', els.fastSpeedToggle.checked);
@@ -437,6 +434,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(e) { alert("Connection failed."); els.verifyKeyBtn.textContent = "Verify Key Access"; }
     });
     els.closeDumperKey.addEventListener('click', () => toggleDumperKey(false));
+    
+    function detectMode(text) {
+        const lower = text.toLowerCase();
+        let detectedMode = null;
+        if(lower.includes('code') || lower.includes('function')) detectedMode = 'Coding';
+        else if(lower.includes('solve') || lower.includes('calc')) detectedMode = 'Geometry';
+        else if(lower.includes('physics') || lower.includes('gravity')) detectedMode = 'Physics';
+        else if(lower.includes('date') || lower.includes('flirt')) detectedMode = 'Rizz tool';
+        if(detectedMode) updateDropdownUI(detectedMode);
+    }
 
     async function handleSend(isEdit = false) {
         const text = els.input.value.trim();
