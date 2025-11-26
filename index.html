@@ -78,7 +78,6 @@
                     <div class="mode-item" data-val="Biology"><i class="fa-solid fa-dna text-green-400 w-5"></i> Biology</div>
                     <div class="mode-item" data-val="Physics"><i class="fa-solid fa-atom text-orange-400 w-5"></i> Physics</div>
                     <div class="mode-item" data-val="Chemistry"><i class="fa-solid fa-flask text-yellow-400 w-5"></i> Chemistry</div>
-                    <div class="mode-item" data-val="Code Dumper"><i class="fa-solid fa-terminal text-emerald-500 w-5"></i> Code Dumper</div>
                     <div class="mode-item" data-val="Debate"><i class="fa-solid fa-gavel text-red-400 w-5"></i> Debate</div>
                     <div class="mode-item" data-val="Psychology"><i class="fa-solid fa-brain text-purple-400 w-5"></i> Psychology</div>
                     <div class="mode-item" data-val="History"><i class="fa-solid fa-landmark text-yellow-600 w-5"></i> History</div>
@@ -96,7 +95,7 @@
                     <div class="flex flex-wrap gap-3 justify-center max-w-xl mt-4">
                         <button class="suggestion-chip" onclick="window.setInput('Explain Quantum Entanglement')">⚛️ Physics</button>
                         <button class="suggestion-chip" onclick="window.setInput('Solve: 2x^2 + 5x - 3 = 0')">📐 Math</button>
-                        <button class="suggestion-chip" onclick="window.setInput('Give me a smooth pickup line')">💘 Rizz</button>
+                        <button class="suggestion-chip" onclick="window.setInput('Deobfuscate this code snippet')">🛡️ Code Security</button>
                     </div>
                     <button id="get-started-btn" class="mt-10 px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition-transform shadow-lg cursor-pointer z-[102] pointer-events-auto text-sm tracking-wide" aria-label="Get Started with Settings">Get Started</button>
                 </div>
@@ -145,56 +144,45 @@
             </div>
         </div>
 
-        <div id="coding-workspace-ui" class="hidden flex-1 flex-col h-full relative bg-[#020204] z-[60] p-4 pt-24">
-             <div class="max-w-[1800px] mx-auto w-full h-full flex flex-col md:flex-row gap-4">
-                <div class="flex-1 flex flex-col gap-2">
-                    <div class="flex items-center justify-between px-2">
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-code text-cyan-400 mr-2"></i>Editor</span>
-                        <div class="flex gap-2">
-                             <button id="btn-obfuscate" class="px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-400 text-[10px] font-bold border border-purple-500/20 hover:bg-purple-500/20 transition">OBFUSCATE</button>
-                             <button id="btn-deobfuscate" class="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 hover:bg-emerald-500/20 transition">DEOBFUSCATE</button>
-                             <button id="btn-run-code" class="px-4 py-1.5 rounded-lg bg-white text-black text-[10px] font-bold hover:scale-105 transition shadow-lg"><i class="fa-solid fa-play mr-1"></i> RUN</button>
-                        </div>
-                    </div>
-                    <textarea id="coding-editor" class="flex-1 bg-[#0a0a0a] border border-white/10 p-4 text-xs font-mono text-gray-200 rounded-xl resize-none focus:outline-none focus:border-cyan-500/50 transition leading-relaxed custom-scrollbar" placeholder="// Write your code here (Python, Lua, C++, JS, etc)..."></textarea>
+        <div id="coding-workspace-ui" class="hidden flex-1 flex-col h-full relative bg-[#0d0d0d] z-[60] overflow-hidden">
+             <div class="h-12 bg-[#18181b] border-b border-white/5 flex items-center justify-between px-4 z-[70]">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-code text-cyan-400"></i>
+                    <span class="text-xs font-bold text-gray-300">WORKSPACE.env</span>
                 </div>
-                
-                <div class="flex-1 flex flex-col gap-4">
-                     <div class="flex-1 flex flex-col gap-2 h-1/2">
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-desktop text-violet-400 mr-2"></i>Output / Preview</span>
-                        <div id="coding-output" class="flex-1 bg-[#0f0f11] border border-white/5 rounded-xl p-4 overflow-y-auto custom-scrollbar prose prose-invert max-w-none text-sm">
-                            <div class="flex items-center justify-center h-full text-gray-600 text-xs italic">Run code to see output...</div>
-                        </div>
-                     </div>
-                     <div class="h-1/3 md:h-64 bg-[#050505] border border-white/10 rounded-xl flex flex-col overflow-hidden">
-                        <div class="bg-[#111] px-4 py-2 border-b border-white/5 flex items-center gap-2">
-                             <i class="fa-solid fa-terminal text-gray-500 text-xs"></i>
-                             <span class="text-[10px] font-mono text-gray-400">TERMINAL</span>
-                        </div>
-                        <div id="coding-terminal" class="flex-1 p-3 font-mono text-[11px] text-green-400 overflow-y-auto custom-scrollbar">
-                            <span class="opacity-50">user@prysmis:~/workspace$</span> initialized...<br>
-                        </div>
-                     </div>
+                <div class="flex gap-2">
+                    <button id="ws-run-btn" class="bg-green-600/20 text-green-400 hover:bg-green-600/30 px-4 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-2"><i class="fa-solid fa-play"></i> RUN</button>
+                    <button id="ws-obf-btn" class="bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 px-4 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-2"><i class="fa-solid fa-lock"></i> OBFUSCATE</button>
+                    <button id="ws-deobf-btn" class="bg-pink-600/20 text-pink-400 hover:bg-pink-600/30 px-4 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-2"><i class="fa-solid fa-unlock"></i> DEOBFUSCATE</button>
                 </div>
              </div>
-        </div>
 
-        <div id="code-dumper-ui" class="hidden flex-1 flex-col h-full relative bg-[#020204] z-[60]">
-            <div class="absolute inset-0 flex flex-col items-center justify-center z-20 p-6" id="dumper-upload-state">
-                <div class="border border-dashed border-white/10 rounded-[2rem] p-8 text-center cursor-pointer w-full max-w-lg" id="dumper-upload-zone">
-                    <i class="fa-solid fa-code text-3xl text-emerald-500 mb-4 block"></i>
-                    <h3 class="text-xl font-bold text-white">Upload Script</h3>
-                    <input type="file" id="dumper-file-input" class="hidden">
-                </div>
-                <button id="dumper-skip-btn" class="mt-4 text-gray-500 underline z-[202]">Skip to Editor</button>
-            </div>
-             <div id="dumper-editor-view" class="hidden flex-1 flex-col p-4 pt-24 gap-4 h-full max-w-[1600px] mx-auto w-full z-[202]">
-                <div class="flex flex-col md:flex-row gap-4 flex-1">
-                    <textarea id="dumper-input-area" class="flex-1 bg-[#0a0a0a] border border-white/10 p-4 text-xs font-mono text-gray-300 rounded-xl z-[202]" placeholder="// Input" aria-label="Dumper Input"></textarea>
-                    <textarea id="dumper-output-area" class="flex-1 bg-[#0a0a0a] border border-white/10 p-4 text-xs font-mono text-emerald-400 rounded-xl z-[202]" readonly placeholder="// Output" aria-label="Dumper Output"></textarea>
-                </div>
-                <div class="text-xs font-mono text-emerald-500 mt-2" id="terminal-log">Obliterator initialized.</div>
-            </div>
+             <div class="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
+                 <div class="flex-1 flex flex-col border-r border-white/5 h-1/2 md:h-full">
+                     <textarea id="ws-editor" class="flex-1 bg-[#0a0a0a] text-gray-300 font-mono text-xs p-4 outline-none resize-none custom-scrollbar leading-relaxed" spellcheck="false" placeholder="// Write or paste code here..."></textarea>
+                 </div>
+                 
+                 <div class="flex-1 flex flex-col h-1/2 md:h-full bg-[#050505] relative">
+                     <div class="flex-1 p-4 overflow-auto custom-scrollbar relative" id="ws-preview-container">
+                         <div id="ws-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-700 text-xs font-mono select-none">
+                             WAITING FOR INPUT...
+                         </div>
+                         <iframe id="ws-iframe" class="w-full h-full border-none hidden bg-white"></iframe>
+                         <div id="ws-raw-output" class="w-full h-full font-mono text-xs text-gray-300 whitespace-pre-wrap hidden"></div>
+                     </div>
+                     
+                     <div class="h-40 bg-[#000] border-t border-white/10 flex flex-col">
+                         <div class="px-3 py-1 bg-[#111] border-b border-white/5 flex items-center gap-2">
+                             <i class="fa-solid fa-terminal text-[10px] text-gray-500"></i>
+                             <span class="text-[10px] font-bold text-gray-500">TERMINAL</span>
+                         </div>
+                         <div id="ws-terminal" class="flex-1 p-3 font-mono text-[10px] overflow-y-auto custom-scrollbar text-gray-400">
+                             <span class="text-green-500">➜</span> <span class="text-cyan-400">~</span> Initializing environment...<br>
+                             <span class="text-green-500">➜</span> <span class="text-cyan-400">~</span> Ready.
+                         </div>
+                     </div>
+                 </div>
+             </div>
         </div>
     </main>
 
