@@ -71,14 +71,14 @@
                 
                 <div id="mode-dropdown" class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[103] py-1 max-h-64 overflow-y-auto custom-scrollbar">
                     <div class="mode-item" data-val="AI Assistant"><i class="fa-solid fa-sparkles text-violet-400 w-5"></i> AI Assistant</div>
-                    <div class="mode-item" data-val="Code Dumper"><i class="fa-solid fa-terminal text-emerald-500 w-5"></i> Code Dumper</div>
+                    <div class="mode-item" data-val="Coding"><i class="fa-solid fa-code text-cyan-400 w-5"></i> Coding</div>
                     <div class="mode-item" data-val="Rizz tool"><i class="fa-solid fa-heart text-rose-500 w-5"></i> Rizz tool</div>
                     <div class="mode-item" data-val="Geometry"><i class="fa-solid fa-shapes text-blue-400 w-5"></i> Geometry</div>
                     <div class="mode-item" data-val="English"><i class="fa-solid fa-feather text-pink-400 w-5"></i> English</div>
                     <div class="mode-item" data-val="Biology"><i class="fa-solid fa-dna text-green-400 w-5"></i> Biology</div>
                     <div class="mode-item" data-val="Physics"><i class="fa-solid fa-atom text-orange-400 w-5"></i> Physics</div>
                     <div class="mode-item" data-val="Chemistry"><i class="fa-solid fa-flask text-yellow-400 w-5"></i> Chemistry</div>
-                    <div class="mode-item" data-val="Coding"><i class="fa-solid fa-code text-cyan-400 w-5"></i> Coding</div>
+                    <div class="mode-item" data-val="Code Dumper"><i class="fa-solid fa-terminal text-emerald-500 w-5"></i> Code Dumper</div>
                     <div class="mode-item" data-val="Debate"><i class="fa-solid fa-gavel text-red-400 w-5"></i> Debate</div>
                     <div class="mode-item" data-val="Psychology"><i class="fa-solid fa-brain text-purple-400 w-5"></i> Psychology</div>
                     <div class="mode-item" data-val="History"><i class="fa-solid fa-landmark text-yellow-600 w-5"></i> History</div>
@@ -145,6 +145,40 @@
             </div>
         </div>
 
+        <div id="coding-workspace-ui" class="hidden flex-1 flex-col h-full relative bg-[#020204] z-[60] p-4 pt-24">
+             <div class="max-w-[1800px] mx-auto w-full h-full flex flex-col md:flex-row gap-4">
+                <div class="flex-1 flex flex-col gap-2">
+                    <div class="flex items-center justify-between px-2">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-code text-cyan-400 mr-2"></i>Editor</span>
+                        <div class="flex gap-2">
+                             <button id="btn-obfuscate" class="px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-400 text-[10px] font-bold border border-purple-500/20 hover:bg-purple-500/20 transition">OBFUSCATE</button>
+                             <button id="btn-deobfuscate" class="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 hover:bg-emerald-500/20 transition">DEOBFUSCATE</button>
+                             <button id="btn-run-code" class="px-4 py-1.5 rounded-lg bg-white text-black text-[10px] font-bold hover:scale-105 transition shadow-lg"><i class="fa-solid fa-play mr-1"></i> RUN</button>
+                        </div>
+                    </div>
+                    <textarea id="coding-editor" class="flex-1 bg-[#0a0a0a] border border-white/10 p-4 text-xs font-mono text-gray-200 rounded-xl resize-none focus:outline-none focus:border-cyan-500/50 transition leading-relaxed custom-scrollbar" placeholder="// Write your code here (Python, Lua, C++, JS, etc)..."></textarea>
+                </div>
+                
+                <div class="flex-1 flex flex-col gap-4">
+                     <div class="flex-1 flex flex-col gap-2 h-1/2">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest"><i class="fa-solid fa-desktop text-violet-400 mr-2"></i>Output / Preview</span>
+                        <div id="coding-output" class="flex-1 bg-[#0f0f11] border border-white/5 rounded-xl p-4 overflow-y-auto custom-scrollbar prose prose-invert max-w-none text-sm">
+                            <div class="flex items-center justify-center h-full text-gray-600 text-xs italic">Run code to see output...</div>
+                        </div>
+                     </div>
+                     <div class="h-1/3 md:h-64 bg-[#050505] border border-white/10 rounded-xl flex flex-col overflow-hidden">
+                        <div class="bg-[#111] px-4 py-2 border-b border-white/5 flex items-center gap-2">
+                             <i class="fa-solid fa-terminal text-gray-500 text-xs"></i>
+                             <span class="text-[10px] font-mono text-gray-400">TERMINAL</span>
+                        </div>
+                        <div id="coding-terminal" class="flex-1 p-3 font-mono text-[11px] text-green-400 overflow-y-auto custom-scrollbar">
+                            <span class="opacity-50">user@prysmis:~/workspace$</span> initialized...<br>
+                        </div>
+                     </div>
+                </div>
+             </div>
+        </div>
+
         <div id="code-dumper-ui" class="hidden flex-1 flex-col h-full relative bg-[#020204] z-[60]">
             <div class="absolute inset-0 flex flex-col items-center justify-center z-20 p-6" id="dumper-upload-state">
                 <div class="border border-dashed border-white/10 rounded-[2rem] p-8 text-center cursor-pointer w-full max-w-lg" id="dumper-upload-zone">
@@ -156,12 +190,8 @@
             </div>
              <div id="dumper-editor-view" class="hidden flex-1 flex-col p-4 pt-24 gap-4 h-full max-w-[1600px] mx-auto w-full z-[202]">
                 <div class="flex flex-col md:flex-row gap-4 flex-1">
-                    <textarea id="dumper-input-area" class="flex-1 bg-[#0a0a0a] border border-white/10 p-4 text-xs font-mono text-gray-300 rounded-xl z-[202]" placeholder="// Input" aria-label="Code Input"></textarea>
-                    <textarea id="dumper-output-area" class="flex-1 bg-[#0a0a0a] border border-white/10 p-4 text-xs font-mono text-emerald-400 rounded-xl z-[202]" readonly placeholder="// Output" aria-label="Code Output"></textarea>
-                </div>
-                 <div class="flex gap-2 mt-2">
-                    <button id="btn-obfuscate" class="bg-purple-600/20 text-purple-400 px-4 py-2 rounded-lg text-xs font-bold z-[202]">OBFUSCATE</button>
-                    <button id="btn-deobfuscate" class="bg-emerald-600/20 text-emerald-400 px-4 py-2 rounded-lg text-xs font-bold z-[202]">DEOBFUSCATE</button>
+                    <textarea id="dumper-input-area" class="flex-1 bg-[#0a0a0a] border border-white/10 p-4 text-xs font-mono text-gray-300 rounded-xl z-[202]" placeholder="// Input" aria-label="Dumper Input"></textarea>
+                    <textarea id="dumper-output-area" class="flex-1 bg-[#0a0a0a] border border-white/10 p-4 text-xs font-mono text-emerald-400 rounded-xl z-[202]" readonly placeholder="// Output" aria-label="Dumper Output"></textarea>
                 </div>
                 <div class="text-xs font-mono text-emerald-500 mt-2" id="terminal-log">Obliterator initialized.</div>
             </div>
