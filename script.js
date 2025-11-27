@@ -116,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const TARGET_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
     const FALLBACK_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    const SAFETY_FALLBACK_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -578,7 +579,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 signal: abortController.signal
             });
             
-            if(response.status === 404) response = await fetch(`${FALLBACK_URL}?key=${localStorage.getItem('prysmis_key')}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: abortController.signal });
+            if(response.status === 404) {
+                response = await fetch(`${FALLBACK_URL}?key=${localStorage.getItem('prysmis_key')}`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload), 
+                    signal: abortController.signal 
+                });
+            }
+            
+            if(response.status === 404) {
+                response = await fetch(`${SAFETY_FALLBACK_URL}?key=${localStorage.getItem('prysmis_key')}`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload), 
+                    signal: abortController.signal 
+                });
+            }
 
             const data = await response.json();
             document.getElementById(loaderId).remove();
