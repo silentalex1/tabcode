@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-violet-500 selection:text-white theme-midnight">
+<body class="bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white theme-midnight">
 
     <div class="glow-bg"></div>
     <div id="flash-overlay" class="pointer-events-none fixed inset-0 z-0 opacity-0 transition-opacity duration-500 mix-blend-screen"></div>
@@ -96,8 +96,8 @@
                     <h2 class="text-3xl font-bold text-white mb-3 text-center">Ready to Learn?</h2>
                     <div class="flex flex-wrap gap-3 justify-center max-w-xl mt-4">
                         <button class="suggestion-chip" onclick="window.chipAction('Physics', 'Explain Quantum Entanglement')"><i class="fa-solid fa-atom text-orange-400 mr-1"></i> Physics</button>
+                        <button class="suggestion-chip" onclick="window.chipAction('Geometry', 'Solve: 2x^2 + 5x - 3 = 0')"><i class="fa-solid fa-shapes text-blue-400 mr-1"></i> Math</button>
                         <button class="suggestion-chip" onclick="window.chipAction('Coding', 'Deobfuscate this code snippet')"><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> Code Security</button>
-                        <button class="suggestion-chip" onclick="window.chipAction('Image Generation', 'Cyberpunk anime girl city lights')"><i class="fa-solid fa-image text-purple-400 mr-1"></i> Generate Anime</button>
                     </div>
                     <button id="get-started-btn" class="mt-10 px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition-transform shadow-lg cursor-pointer z-[102] pointer-events-auto text-sm tracking-wide" aria-label="Get Started with Settings">Get Started</button>
                 </div>
@@ -151,7 +151,8 @@
         </div>
 
         <div id="coding-workspace-ui" class="hidden flex-1 flex-col h-full relative bg-main z-[10] overflow-hidden">
-             <div class="sticky top-0 h-14 bg-panel border-b border-white/5 flex items-center justify-between px-4 z-[9000] shrink-0 w-full">
+             <!-- Z-Index High to stay on top of code content -->
+             <div class="sticky top-0 h-14 bg-panel/95 backdrop-blur border-b border-white/5 flex items-center justify-between px-4 z-[9000] shrink-0 w-full shadow-lg">
                 <div class="flex items-center gap-3">
                     <div class="w-2 h-2 rounded-full bg-red-500/80"></div>
                     <div class="w-2 h-2 rounded-full bg-yellow-500/80"></div>
@@ -167,12 +168,12 @@
 
              <div class="flex-1 flex flex-col md:flex-row h-full overflow-hidden relative">
                  <div class="flex-1 flex flex-col border-r border-white/5 h-1/2 md:h-full relative">
-                     <textarea id="ws-editor" class="flex-1 bg-main text-[#d4d4d4] font-mono text-[13px] p-6 outline-none resize-none custom-scrollbar leading-7 z-10" spellcheck="false" placeholder="// Write or paste code here..."></textarea>
+                     <textarea id="ws-editor" class="flex-1 bg-main text-[#d4d4d4] font-mono text-[13px] p-6 outline-none resize-none custom-scrollbar leading-7 z-10 w-full h-full" spellcheck="false" placeholder="// Write or paste code here..."></textarea>
                  </div>
                  
                  <div class="flex-1 flex flex-col h-1/2 md:h-full bg-main relative" id="ws-right-panel">
                      <div class="flex-1 p-0 overflow-hidden relative" id="ws-preview-container">
-                         <div id="ws-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-800 text-xs font-mono select-none pointer-events-none">
+                         <div id="ws-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-700 text-xs font-mono select-none pointer-events-none">
                              WAITING FOR INPUT...
                          </div>
                          <iframe id="ws-iframe" class="w-full h-full border-none hidden bg-white"></iframe>
@@ -196,8 +197,8 @@
         </div>
 
         <div id="image-gen-ui" class="hidden flex-1 flex-col h-full relative bg-main z-[10] overflow-hidden items-center justify-center p-4">
-            <div class="w-full max-w-2xl flex flex-col gap-6">
-                <div class="border border-white/10 rounded-2xl p-2 bg-panel shadow-2xl relative aspect-square flex items-center justify-center overflow-hidden group">
+            <div class="w-full max-w-2xl flex flex-col gap-6 animate-fade-in">
+                <div class="border border-white/10 rounded-2xl p-2 bg-panel shadow-2xl relative aspect-square flex items-center justify-center overflow-hidden group transition-all">
                     <img id="generated-image" class="w-full h-full object-contain rounded-xl hidden" alt="Generated Image">
                     <div id="image-placeholder" class="text-center">
                         <i class="fa-solid fa-image text-4xl text-white/20 mb-4 block"></i>
@@ -228,14 +229,14 @@
                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Theme</label>
                     <select id="theme-selector" class="w-full bg-[#111] border border-white/10 rounded-xl px-5 py-4 text-white text-xs font-sans outline-none cursor-pointer">
                         <option value="theme-midnight">Midnight (Default)</option>
+                        <option value="theme-sunset">Sunset</option>
+                        <option value="theme-forest">Forest</option>
+                        <option value="theme-ocean">Ocean</option>
+                        <option value="theme-matrix">Matrix</option>
                         <option value="theme-christmas">Christmas</option>
                         <option value="theme-halloween">Halloween</option>
                         <option value="theme-thanksgiving">Thanksgiving</option>
                         <option value="theme-cyberpunk">Cyberpunk</option>
-                        <option value="theme-matrix">Matrix</option>
-                        <option value="theme-sunset">Sunset</option>
-                        <option value="theme-ocean">Ocean</option>
-                        <option value="theme-cherry">Cherry Blossom</option>
                     </select>
                 </div>
 
