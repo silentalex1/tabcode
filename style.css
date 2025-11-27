@@ -14,6 +14,10 @@
 .theme-halloween { --bg-main: #0f0700; --panel-bg: #1a0f05; --accent: #f97316; --accent-dark: #9a3412; --glow-color: rgba(168, 85, 247, 0.15); }
 .theme-thanksgiving { --bg-main: #1c1004; --panel-bg: #291807; --accent: #d97706; --accent-dark: #92400e; --glow-color: rgba(234, 179, 8, 0.15); }
 .theme-cyberpunk { --bg-main: #000000; --panel-bg: #050505; --accent: #f43f5e; --accent-dark: #881337; --glow-color: rgba(6, 182, 212, 0.2); }
+.theme-matrix { --bg-main: #000000; --panel-bg: #020a02; --accent: #22c55e; --accent-dark: #14532d; --glow-color: rgba(34, 197, 94, 0.15); }
+.theme-sunset { --bg-main: #0f0508; --panel-bg: #1a080c; --accent: #e879f9; --accent-dark: #a21caf; --glow-color: rgba(249, 115, 22, 0.15); }
+.theme-ocean { --bg-main: #02040f; --panel-bg: #050a1a; --accent: #0ea5e9; --accent-dark: #0369a1; --glow-color: rgba(14, 165, 233, 0.15); }
+.theme-cherry { --bg-main: #0f0508; --panel-bg: #1a0a0e; --accent: #f472b6; --accent-dark: #be185d; --glow-color: rgba(244, 114, 182, 0.15); }
 
 body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-main); transition: background-color 0.5s ease; }
 .bg-main { background-color: var(--bg-main); }
