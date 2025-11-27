@@ -50,7 +50,6 @@
 
     <main class="flex-1 flex flex-col relative z-10 h-full min-w-0">
         
-        <!-- Header Z-Index increased to 200 to stay above coding UI -->
         <header class="w-full p-4 flex flex-col items-center z-[200] relative shrink-0 pointer-events-none">
             <button id="mobile-menu-btn" class="md:hidden pointer-events-auto absolute top-5 left-5 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-300 cursor-pointer hover:bg-white/20 transition z-[102] active:scale-95" aria-label="Toggle Menu">
                 <i class="fa-solid fa-bars pointer-events-none"></i>
@@ -70,7 +69,6 @@
                     <i class="fa-solid fa-chevron-down text-[10px] opacity-50 pointer-events-none ml-auto"></i>
                 </button>
                 
-                <!-- Dropdown Z-Index massive to ensure top visibility -->
                 <div id="mode-dropdown" class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[9999] py-1 max-h-64 overflow-y-auto custom-scrollbar">
                     <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-violet-400 w-5"></i> AI Assistant</div>
                     <div class="mode-item" data-val="Coding" data-icon="fa-code"><i class="fa-solid fa-code text-cyan-400 w-5"></i> Coding</div>
@@ -152,8 +150,8 @@
         </div>
 
         <div id="coding-workspace-ui" class="hidden flex-1 flex-col h-full relative bg-[#050505] z-[10] overflow-hidden">
-             <!-- Increased header z-index to stay above content -->
-             <div class="h-14 bg-[#0a0a0a] border-b border-white/5 flex items-center justify-between px-4 z-[50] shrink-0">
+             <!-- Sticky Header, Z-Index High to stay on top of code content -->
+             <div class="sticky top-0 h-14 bg-[#0a0a0a]/95 backdrop-blur border-b border-white/5 flex items-center justify-between px-4 z-[9000] shrink-0 w-full">
                 <div class="flex items-center gap-3">
                     <div class="w-2 h-2 rounded-full bg-red-500/80"></div>
                     <div class="w-2 h-2 rounded-full bg-yellow-500/80"></div>
@@ -168,8 +166,8 @@
              </div>
 
              <div class="flex-1 flex flex-col md:flex-row h-full overflow-hidden relative">
-                 <div class="flex-1 flex flex-col border-r border-white/5 h-1/2 md:h-full">
-                     <textarea id="ws-editor" class="flex-1 bg-[#050505] text-gray-300 font-mono text-[13px] p-6 outline-none resize-none custom-scrollbar leading-7" spellcheck="false" placeholder="// Write or paste code here..."></textarea>
+                 <div class="flex-1 flex flex-col border-r border-white/5 h-1/2 md:h-full relative">
+                     <textarea id="ws-editor" class="flex-1 bg-[#050505] text-[#d4d4d4] font-mono text-[13px] p-6 outline-none resize-none custom-scrollbar leading-7 z-10" spellcheck="false" placeholder="// Write or paste code here..."></textarea>
                  </div>
                  
                  <div class="flex-1 flex flex-col h-1/2 md:h-full bg-[#030303] relative" id="ws-right-panel">
