@@ -31,6 +31,11 @@ window.setMode = function(mode) {
     document.dispatchEvent(event);
 };
 
+window.chipAction = function(mode, text) {
+    window.setMode(mode);
+    window.setInput(text);
+};
+
 function saveChatToStorage(chatHistory) {
     try {
         const historyToSave = chatHistory.map(chat => ({
@@ -92,6 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
         wsRunBtn: document.getElementById('ws-run-btn'),
         wsObfBtn: document.getElementById('ws-obf-btn'),
         wsDeobfBtn: document.getElementById('ws-deobf-btn'),
+        wsResizer: document.getElementById('ws-resizer'),
+        wsTerminalContainer: document.getElementById('ws-terminal-container'),
         
         settingsTriggers: [document.getElementById('settings-trigger')],
         closeSettings: document.getElementById('close-settings'),
@@ -365,6 +372,29 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleDumperKey(false);
         activateDumper();
         els.dumperKeyInput.value = "";
+    });
+
+    let isResizing = false;
+    els.wsResizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.body.style.cursor = 'row-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        const containerRect = document.getElementById('ws-right-panel').getBoundingClientRect();
+        const newHeight = containerRect.bottom - e.clientY;
+        if (newHeight > 50 && newHeight < containerRect.height - 50) {
+            els.wsTerminalContainer.style.height = `${newHeight}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = '';
+        }
     });
 
     els.mobileMenuBtn.addEventListener('click', () => {
@@ -707,7 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const color = type === 'error' ? 'text-red-400' : 'text-gray-400';
         line.innerHTML = `${arrow} <span class="text-cyan-400">~</span> <span class="${color}">${msg}</span>`;
         els.wsTerminal.appendChild(line);
-        els.wsTerminal.scrollTop = els.wsTerminal.scrollHeight;
+        els.wsTerminalContainer.scrollTop = els.wsTerminalContainer.scrollHeight;
     }
 
     els.wsRunBtn.addEventListener('click', async () => {
@@ -757,12 +787,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Obfuscate this code heavily. Return ONLY the code, no markdown. Code:\n" + code }] }]
+                    contents: [{ parts: [{ text: "You are an expert Security Engineer. Obfuscate this code heavily (Control Flow Flattening, string encryption, variable renaming). Return ONLY the code, no markdown block. Code:\n" + code }] }]
                 })
             });
             const data = await response.json();
             if(data.candidates && data.candidates[0].content) {
-                 els.wsEditor.value = data.candidates[0].content.parts[0].text;
+                 let resCode = data.candidates[0].content.parts[0].text;
+                 resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
+                 els.wsEditor.value = resCode;
                  logToTerminal("Obfuscation complete.");
             }
         } catch(e) {
@@ -779,12 +811,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Deobfuscate this code. Reverse engineer logic, rename variables to readable names. Return ONLY the code. Code:\n" + code }] }]
+                    contents: [{ parts: [{ text: "You are an expert Reverse Engineer. Deobfuscate this code (Lua, JS, or Python). Rename variables to readable English, fix indentation, remove junk code. Return ONLY the clean code, no markdown block. Code:\n" + code }] }]
                 })
             });
             const data = await response.json();
             if(data.candidates && data.candidates[0].content) {
-                 els.wsEditor.value = data.candidates[0].content.parts[0].text;
+                 let resCode = data.candidates[0].content.parts[0].text;
+                 resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
+                 els.wsEditor.value = resCode;
                  logToTerminal("Deobfuscation complete.");
             }
         } catch(e) {
