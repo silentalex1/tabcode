@@ -1,3 +1,4 @@
+// Define Global Functions First
 window.setInput = function(txt) {
     const input = document.getElementById('prompt-input');
     if(input) { input.value = txt; input.focus(); }
@@ -35,31 +36,30 @@ window.chipAction = function(mode, text) {
     window.setMode(mode);
     setTimeout(() => {
         window.setInput(text);
-    }, 100);
+    }, 50);
 };
 
+// Local Deobfuscator Engine
 function deob(code, isLua = false) {
     let out = code;
     try {
         for (let i = 0; i < 99; i++) {
+            let old = out;
             out = out.replace(/\\x([0-9a-f]{2})/gi, (m, h) => String.fromCharCode(parseInt(h, 16)))
             out = out.replace(/\\u([0-9a-f]{4})/gi, (m, h) => String.fromCharCode(parseInt(h, 16)))
             out = out.replace(/0x([a-f0-9]+)/gi, (m, h) => parseInt(h, 16).toString())
             out = out.replace(/!0/g, "true").replace(/!1/g, "false").replace(/!!\[\]/g, "true")
-            out = out.replace(/\b_0x[a-f0-9]{4,8}\b/g, (m) => { let v = window[m]; return typeof v == "string" ? '"' + v + '"' : typeof v == "number" ? v : m })
             
             if (!isLua) {
+                out = out.replace(/\b_0x[a-f0-9]{4,8}\b/g, (m) => { try { return typeof window[m] !== 'undefined' ? window[m] : m } catch(e){return m} })
                 out = out.replace(/eval\s*\(\s*function\s*\([^\)]*\)\s*\{([^}]*)\}\s*\(\s*['"][^'"]*['"]\s*(?:,\s*\d+\s*){3}/s, (m, body) => "/*eval*/(" + body.replace(/^return/, "") + ")")
                 out = out.replace(/\bfunction\s*\([^)]*\)\s*\{\s*return\s*[^}]*\}\s*\(\s*\)\s*;?/g, "")
                 out = out.replace(/;\s*;+/g, ";").replace(/,\s*,+/g, ",")
-                out = out.replace(/if\s*\(\s*true\s*\)\s*\{([^}]+)\}\s*else\s*\{[^}]*\}/g, "$1")
-                out = out.replace(/if\s*\(\s*false\s*\)\s*\{[^}]*\}\s*else\s*\{([^}]+)\}/g, "$1")
-            } else if (isLua) {
+            } else {
                 out = out.replace(/loadstring\s*\(\s*game\s*:\s*HttpGet\s*\([^)]+\)\s*\)\s*\(\s*\)/g, "")
                 out = out.replace(/--\[\[[\s\S]*?--\]\]/g, "")
             }
-            if (out === code) break;
-            code = out;
+            if (out === old) break;
         }
     } catch(e) {
         return code; 
@@ -153,9 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragCounter = 0;
 
     const ENDPOINTS = [
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent",
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent"
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     ];
 
     const loadKey = () => {
@@ -484,13 +483,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleFileSelect(file) {
         const reader = new FileReader();
         reader.onload = (ev) => {
-            uploadedFile = { data: ev.target.result.split(',')[1], type: file.type, name: file.name };
-            let previewContent = file.type.startsWith('image') 
-                ? `<img src="${ev.target.result}" class="w-full h-full object-cover">`
-                : `<div class="flex items-center justify-center h-full bg-white/10 text-xs p-2 text-center">${file.name}</div>`;
-            els.mediaPreview.innerHTML = `<div class="relative w-14 h-14 rounded-lg overflow-hidden border border-violet-500 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
+            const content = ev.target.result;
+            
+            if (els.modeTxt.innerText === 'Coding') {
+                els.wsEditor.value = content;
+                logToTerminal(`Loaded file: ${file.name}`);
+            } else {
+                uploadedFile = { data: content.split(',')[1], type: file.type, name: file.name };
+                let previewContent = file.type.startsWith('image') 
+                    ? `<img src="${content}" class="w-full h-full object-cover">`
+                    : `<div class="flex items-center justify-center h-full bg-white/10 text-xs p-2 text-center">${file.name}</div>`;
+                els.mediaPreview.innerHTML = `<div class="relative w-14 h-14 rounded-lg overflow-hidden border border-violet-500 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
+            }
         };
-        reader.readAsDataURL(file);
+        if(els.modeTxt.innerText === 'Coding' || file.type.includes('text') || file.name.endsWith('.js') || file.name.endsWith('.lua') || file.name.endsWith('.py')) {
+            reader.readAsText(file);
+        } else {
+            reader.readAsDataURL(file);
+        }
     }
 
     document.addEventListener('dragenter', (e) => {
@@ -789,22 +799,33 @@ document.addEventListener('DOMContentLoaded', () => {
             els.wsRawOutput.classList.remove('hidden');
             els.wsRawOutput.innerText = "Simulating execution environment...\n";
             
-            try {
-                const response = await fetch(`${ENDPOINTS[0]}?key=${localStorage.getItem('prysmis_key')}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Act as a code runner/compiler terminal. Execute this code strictly. Return ONLY the output or errors. No explanations. Code:\n" + code }] }]
-                    })
-                });
-                const data = await response.json();
-                if(data.candidates && data.candidates[0].content) {
-                     const out = data.candidates[0].content.parts[0].text;
-                     els.wsRawOutput.innerText = out;
-                     logToTerminal("Execution complete.");
-                }
-            } catch(e) {
-                logToTerminal("Execution failed: " + e.message, 'error');
+            let data = null;
+            let success = false;
+
+            for(let url of ENDPOINTS) {
+                try {
+                    const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: "Act as a code runner/compiler terminal. Execute this code strictly. Return ONLY the output or errors. No explanations. Code:\n" + code }] }]
+                        })
+                    });
+                    
+                    if(response.ok) {
+                        data = await response.json();
+                        success = true;
+                        break;
+                    }
+                } catch(e) { continue; }
+            }
+
+            if(success && data && data.candidates && data.candidates[0].content) {
+                 const out = data.candidates[0].content.parts[0].text;
+                 els.wsRawOutput.innerText = out;
+                 logToTerminal("Execution complete.");
+            } else {
+                logToTerminal("Execution failed.", 'error');
             }
         }
     });
@@ -813,20 +834,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const code = els.wsEditor.value;
         if(!code.trim()) return;
         logToTerminal("Obfuscating...");
-        try {
-            const response = await fetch(`${ENDPOINTS[0]}?key=${localStorage.getItem('prysmis_key')}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Obfuscate this code heavily. Return ONLY the code, no markdown. Code:\n" + code }] }]
-                })
-            });
-            const data = await response.json();
-            if(data.candidates && data.candidates[0].content) {
-                 els.wsEditor.value = data.candidates[0].content.parts[0].text;
-                 logToTerminal("Obfuscation complete.");
-            }
-        } catch(e) {
+        
+        let data = null;
+        let success = false;
+
+        for(let url of ENDPOINTS) {
+            try {
+                const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Obfuscate this code heavily. Return ONLY the code, no markdown. Code:\n" + code }] }]
+                    })
+                });
+                if(response.ok) {
+                    data = await response.json();
+                    success = true;
+                    break;
+                }
+            } catch(e) { continue; }
+        }
+
+        if(success && data.candidates && data.candidates[0].content) {
+             els.wsEditor.value = data.candidates[0].content.parts[0].text;
+             logToTerminal("Obfuscation complete.");
+        } else {
             logToTerminal("Obfuscation failed.", 'error');
         }
     });
@@ -835,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const code = els.wsEditor.value;
         if(!code.trim()) return;
         
-        logToTerminal("Deobfuscating (Local Engine)...");
+        logToTerminal("Deobfuscating (Local)...");
         
         const isLua = code.includes('local ') || code.includes('function') || code.includes('end');
         const localResult = deob(code, isLua);
@@ -848,22 +880,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
         logToTerminal("Local engine insufficient. Using AI Analysis...");
         
-        try {
-             const response = await fetch(`${ENDPOINTS[0]}?key=${localStorage.getItem('prysmis_key')}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: "You are an expert Reverse Engineer. Deobfuscate this code. Rename variables to readable English, fix indentation, remove junk code. Return ONLY the clean code, no markdown block. Code:\n" + code }] }]
-                })
-            });
-            const data = await response.json();
-            if(data.candidates && data.candidates[0].content) {
-                 let resCode = data.candidates[0].content.parts[0].text;
-                 resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
-                 els.wsEditor.value = resCode;
-                 logToTerminal("Deobfuscation complete (AI).");
-            }
-        } catch(e) {
+        let data = null;
+        let success = false;
+
+        for(let url of ENDPOINTS) {
+            try {
+                const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "You are an expert Reverse Engineer. Deobfuscate this code. Rename variables to readable English, fix indentation, remove junk code. Return ONLY the clean code, no markdown block. Code:\n" + code }] }]
+                    })
+                });
+                if(response.ok) {
+                    data = await response.json();
+                    success = true;
+                    break;
+                }
+            } catch(e) { continue; }
+        }
+
+        if(success && data.candidates && data.candidates[0].content) {
+             let resCode = data.candidates[0].content.parts[0].text;
+             resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
+             els.wsEditor.value = resCode;
+             logToTerminal("Deobfuscation complete (AI).");
+        } else {
             logToTerminal("Deobfuscation failed.", 'error');
         }
     });
