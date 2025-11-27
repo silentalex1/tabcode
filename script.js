@@ -53,8 +53,6 @@ function deob(code, isLua = false) {
                 out = out.replace(/eval\s*\(\s*function\s*\([^\)]*\)\s*\{([^}]*)\}\s*\(\s*['"][^'"]*['"]\s*(?:,\s*\d+\s*){3}/s, (m, body) => "/*eval*/(" + body.replace(/^return/, "") + ")")
                 out = out.replace(/\bfunction\s*\([^)]*\)\s*\{\s*return\s*[^}]*\}\s*\(\s*\)\s*;?/g, "")
                 out = out.replace(/;\s*;+/g, ";").replace(/,\s*,+/g, ",")
-                out = out.replace(/if\s*\(\s*true\s*\)\s*\{([^}]+)\}\s*else\s*\{[^}]*\}/g, "$1")
-                out = out.replace(/if\s*\(\s*false\s*\)\s*\{[^}]*\}\s*else\s*\{([^}]+)\}/g, "$1")
             } else {
                 out = out.replace(/loadstring\s*\(\s*game\s*:\s*HttpGet\s*\([^)]+\)\s*\)\s*\(\s*\)/g, "")
                 out = out.replace(/--\[\[[\s\S]*?--\]\]/g, "")
@@ -99,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dumperKeyInput: document.getElementById('dumper-key-input'),
         verifyKeyBtn: document.getElementById('verify-key-btn'),
         codingWorkspace: document.getElementById('coding-workspace-ui'),
+        imageGenUI: document.getElementById('image-gen-ui'),
         standardUI: document.getElementById('standard-ui'),
         modeTxt: document.getElementById('current-mode-txt'),
         modeBtn: document.getElementById('mode-btn'),
@@ -120,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileOverlay: document.getElementById('mobile-overlay'),
         sidebar: document.getElementById('sidebar'),
         dropOverlay: document.getElementById('drop-overlay'),
+        themeSelector: document.getElementById('theme-selector'),
         
         wsEditor: document.getElementById('ws-editor'),
         wsIframe: document.getElementById('ws-iframe'),
@@ -131,6 +131,12 @@ document.addEventListener('DOMContentLoaded', () => {
         wsDeobfBtn: document.getElementById('ws-deobf-btn'),
         wsResizer: document.getElementById('ws-resizer'),
         wsTerminalContainer: document.getElementById('ws-terminal-container'),
+        
+        imgPrompt: document.getElementById('image-prompt'),
+        imgGenBtn: document.getElementById('generate-img-btn'),
+        generatedImage: document.getElementById('generated-image'),
+        imagePlaceholder: document.getElementById('image-placeholder'),
+        downloadBtn: document.getElementById('download-btn'),
         
         settingsTriggers: [document.getElementById('settings-trigger')],
         closeSettings: document.getElementById('close-settings'),
@@ -154,7 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragCounter = 0;
 
     const ENDPOINTS = [
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-exp-0827:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-0827:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent",
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
     ];
 
@@ -163,6 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if(key && els.apiKey) els.apiKey.value = key;
         const fastSpeed = localStorage.getItem('prysmis_fast_speed');
         if(fastSpeed === 'true' && els.fastSpeedToggle) els.fastSpeedToggle.checked = true;
+        const theme = localStorage.getItem('prysmis_theme') || 'theme-midnight';
+        document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-violet-500 selection:text-white ${theme}`;
+        if(els.themeSelector) els.themeSelector.value = theme;
     };
     loadKey();
 
@@ -174,13 +184,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('setModeGlobal', (e) => changeMode(e.detail));
 
     function changeMode(val) {
+        updateDropdownUI(val);
+        
         if(val === 'Coding') {
             activateCodingWorkspace();
         } else if(val === 'Code Dumper') {
             if(!isCodeDumperUnlocked) toggleDumperKey(true);
             else activateDumper();
+        } else if (val === 'Image Generation') {
+            activateImageGen();
         } else {
-            updateDropdownUI(val);
             switchToStandard();
         }
         toggleDropdown(false);
@@ -294,6 +307,10 @@ document.addEventListener('DOMContentLoaded', () => {
     els.saveSettings.addEventListener('click', () => {
         if(els.apiKey.value.trim()) localStorage.setItem('prysmis_key', els.apiKey.value.trim());
         if(els.fastSpeedToggle) localStorage.setItem('prysmis_fast_speed', els.fastSpeedToggle.checked);
+        if(els.themeSelector) {
+            localStorage.setItem('prysmis_theme', els.themeSelector.value);
+            document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-violet-500 selection:text-white ${els.themeSelector.value}`;
+        }
         els.saveSettings.textContent = "Saved";
         els.saveSettings.classList.add('bg-green-500', 'text-white');
         setTimeout(() => {
@@ -379,9 +396,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function activateCodingWorkspace() {
-        updateDropdownUI("Coding");
         els.standardUI.classList.add('hidden');
+        els.imageGenUI.classList.add('hidden');
         els.codingWorkspace.classList.remove('hidden');
+    }
+
+    function activateImageGen() {
+        els.standardUI.classList.add('hidden');
+        els.codingWorkspace.classList.add('hidden');
+        els.imageGenUI.classList.remove('hidden');
+        els.imageGenUI.classList.add('flex');
     }
 
     function activateDumper() {
@@ -392,6 +416,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function switchToStandard() {
         els.standardUI.classList.remove('hidden');
         els.codingWorkspace.classList.add('hidden');
+        els.imageGenUI.classList.add('hidden');
+        els.imageGenUI.classList.remove('flex');
     }
 
     els.closeDumperKey.addEventListener('click', () => toggleDumperKey(false));
@@ -452,6 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(val.includes('deobfuscate') || val.includes('code') || val.includes('obfuscate') || val.includes('script')) {
             if(els.modeTxt.innerText !== 'Coding') {
                 activateCodingWorkspace();
+                updateDropdownUI("Coding");
             }
         }
         
@@ -497,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 els.mediaPreview.innerHTML = `<div class="relative w-14 h-14 rounded-lg overflow-hidden border border-violet-500 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
             }
         };
-        if(els.modeTxt.innerText === 'Coding' || file.type.includes('text') || file.name.endsWith('.js') || file.name.endsWith('.lua') || file.name.endsWith('.py')) {
+        if(els.modeTxt.innerText === 'Coding' || file.type.includes('text') || file.name.endsWith('.js') || file.name.endsWith('.lua') || file.name.endsWith('.py') || file.name.endsWith('.txt')) {
             reader.readAsText(file);
         } else {
             reader.readAsDataURL(file);
@@ -857,8 +884,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if(success && data.candidates && data.candidates[0].content) {
-             els.wsEditor.value = data.candidates[0].content.parts[0].text;
+             let res = data.candidates[0].content.parts[0].text.replace(/```\w*/g, '').replace(/```/g, '').trim();
+             els.wsEditor.value = res;
              logToTerminal("Obfuscation complete.");
+             showNotification("Code Obfuscated!");
         } else {
             logToTerminal("Obfuscation failed.", 'error');
         }
@@ -876,6 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (localResult && localResult !== code && localResult.length < code.length) {
              els.wsEditor.value = localResult;
              logToTerminal("Deobfuscation complete (Local).");
+             showNotification("Code Deobfuscated!");
              return;
         }
 
@@ -906,8 +936,30 @@ document.addEventListener('DOMContentLoaded', () => {
              resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.wsEditor.value = resCode;
              logToTerminal("Deobfuscation complete (AI).");
+             showNotification("Code Deobfuscated!");
         } else {
             logToTerminal("Deobfuscation failed.", 'error');
         }
+    });
+
+    els.imgGenBtn.addEventListener('click', () => {
+        const prompt = els.imgPrompt.value.trim();
+        if(!prompt) return;
+        
+        els.generatedImage.classList.add('hidden');
+        els.imagePlaceholder.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-4xl text-accent mb-4 block"></i><span class="text-xs font-mono">GENERATING...</span>';
+        
+        const encodedPrompt = encodeURIComponent(prompt);
+        const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?nologo=true&private=true&enhance=true`;
+        
+        const img = new Image();
+        img.onload = () => {
+            els.generatedImage.src = url;
+            els.generatedImage.classList.remove('hidden');
+            els.imagePlaceholder.classList.add('hidden');
+            els.downloadBtn.href = url;
+            els.downloadBtn.classList.remove('hidden');
+        };
+        img.src = url;
     });
 });
