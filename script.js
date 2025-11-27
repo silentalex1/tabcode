@@ -38,7 +38,6 @@ window.chipAction = function(mode, text) {
     }, 50);
 };
 
-// Local Deobfuscator Engine
 function deob(code, isLua = false) {
     let out = code;
     try {
@@ -54,9 +53,12 @@ function deob(code, isLua = false) {
                 out = out.replace(/eval\s*\(\s*function\s*\([^\)]*\)\s*\{([^}]*)\}\s*\(\s*['"][^'"]*['"]\s*(?:,\s*\d+\s*){3}/s, (m, body) => "/*eval*/(" + body.replace(/^return/, "") + ")")
                 out = out.replace(/\bfunction\s*\([^)]*\)\s*\{\s*return\s*[^}]*\}\s*\(\s*\)\s*;?/g, "")
                 out = out.replace(/;\s*;+/g, ";").replace(/,\s*,+/g, ",")
+                out = out.replace(/if\s*\(\s*true\s*\)\s*\{([^}]+)\}\s*else\s*\{[^}]*\}/g, "$1")
+                out = out.replace(/if\s*\(\s*false\s*\)\s*\{[^}]*\}\s*else\s*\{([^}]+)\}/g, "$1")
             } else {
                 out = out.replace(/loadstring\s*\(\s*game\s*:\s*HttpGet\s*\([^)]+\)\s*\)\s*\(\s*\)/g, "")
                 out = out.replace(/--\[\[[\s\S]*?--\]\]/g, "")
+                out = out.replace(/load%s*%(%s*"\s*\\(\d+%s*\\%d+%s*)*"\s*%)%/g,(m,s)=>{let bytes=s.match(/\d+/g);return new Function('return "'+bytes.map(b=>String.fromCharCode(b)).join("")+'"')()})
             }
             if (out === old) break;
         }
@@ -152,8 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragCounter = 0;
 
     const ENDPOINTS = [
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent",
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-exp-0827:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
     ];
 
     const loadKey = () => {
