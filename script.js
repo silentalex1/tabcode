@@ -33,8 +33,39 @@ window.setMode = function(mode) {
 
 window.chipAction = function(mode, text) {
     window.setMode(mode);
-    window.setInput(text);
+    setTimeout(() => {
+        window.setInput(text);
+    }, 100);
 };
+
+function deob(code, isLua = false) {
+    let out = code;
+    try {
+        for (let i = 0; i < 99; i++) {
+            out = out.replace(/\\x([0-9a-f]{2})/gi, (m, h) => String.fromCharCode(parseInt(h, 16)))
+            out = out.replace(/\\u([0-9a-f]{4})/gi, (m, h) => String.fromCharCode(parseInt(h, 16)))
+            out = out.replace(/0x([a-f0-9]+)/gi, (m, h) => parseInt(h, 16).toString())
+            out = out.replace(/!0/g, "true").replace(/!1/g, "false").replace(/!!\[\]/g, "true")
+            out = out.replace(/\b_0x[a-f0-9]{4,8}\b/g, (m) => { let v = window[m]; return typeof v == "string" ? '"' + v + '"' : typeof v == "number" ? v : m })
+            
+            if (!isLua) {
+                out = out.replace(/eval\s*\(\s*function\s*\([^\)]*\)\s*\{([^}]*)\}\s*\(\s*['"][^'"]*['"]\s*(?:,\s*\d+\s*){3}/s, (m, body) => "/*eval*/(" + body.replace(/^return/, "") + ")")
+                out = out.replace(/\bfunction\s*\([^)]*\)\s*\{\s*return\s*[^}]*\}\s*\(\s*\)\s*;?/g, "")
+                out = out.replace(/;\s*;+/g, ";").replace(/,\s*,+/g, ",")
+                out = out.replace(/if\s*\(\s*true\s*\)\s*\{([^}]+)\}\s*else\s*\{[^}]*\}/g, "$1")
+                out = out.replace(/if\s*\(\s*false\s*\)\s*\{[^}]*\}\s*else\s*\{([^}]+)\}/g, "$1")
+            } else if (isLua) {
+                out = out.replace(/loadstring\s*\(\s*game\s*:\s*HttpGet\s*\([^)]+\)\s*\)\s*\(\s*\)/g, "")
+                out = out.replace(/--\[\[[\s\S]*?--\]\]/g, "")
+            }
+            if (out === code) break;
+            code = out;
+        }
+    } catch(e) {
+        return code; 
+    }
+    return out.replace(/;\s*;/g, ";").replace(/,\s*,/g, ",").replace(/\s+/g, " ").trim();
+}
 
 function saveChatToStorage(chatHistory) {
     try {
@@ -763,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Act as a code runner/compiler terminal. Execute this code and show ONLY the output or errors. No explanations. Code:\n" + code }] }]
+                        contents: [{ parts: [{ text: "Act as a code runner/compiler terminal. Execute this code strictly. Return ONLY the output or errors. No explanations. Code:\n" + code }] }]
                     })
                 });
                 const data = await response.json();
@@ -787,14 +818,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: "You are an expert Security Engineer. Obfuscate this code heavily (Control Flow Flattening, string encryption, variable renaming). Return ONLY the code, no markdown block. Code:\n" + code }] }]
+                    contents: [{ parts: [{ text: "Obfuscate this code heavily. Return ONLY the code, no markdown. Code:\n" + code }] }]
                 })
             });
             const data = await response.json();
             if(data.candidates && data.candidates[0].content) {
-                 let resCode = data.candidates[0].content.parts[0].text;
-                 resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
-                 els.wsEditor.value = resCode;
+                 els.wsEditor.value = data.candidates[0].content.parts[0].text;
                  logToTerminal("Obfuscation complete.");
             }
         } catch(e) {
@@ -805,13 +834,26 @@ document.addEventListener('DOMContentLoaded', () => {
     els.wsDeobfBtn.addEventListener('click', async () => {
         const code = els.wsEditor.value;
         if(!code.trim()) return;
-        logToTerminal("Deobfuscating...");
+        
+        logToTerminal("Deobfuscating (Local Engine)...");
+        
+        const isLua = code.includes('local ') || code.includes('function') || code.includes('end');
+        const localResult = deob(code, isLua);
+        
+        if (localResult && localResult !== code && localResult.length < code.length) {
+             els.wsEditor.value = localResult;
+             logToTerminal("Deobfuscation complete (Local).");
+             return;
+        }
+
+        logToTerminal("Local engine insufficient. Using AI Analysis...");
+        
         try {
              const response = await fetch(`${ENDPOINTS[0]}?key=${localStorage.getItem('prysmis_key')}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: "You are an expert Reverse Engineer. Deobfuscate this code (Lua, JS, or Python). Rename variables to readable English, fix indentation, remove junk code. Return ONLY the clean code, no markdown block. Code:\n" + code }] }]
+                    contents: [{ parts: [{ text: "You are an expert Reverse Engineer. Deobfuscate this code. Rename variables to readable English, fix indentation, remove junk code. Return ONLY the clean code, no markdown block. Code:\n" + code }] }]
                 })
             });
             const data = await response.json();
@@ -819,7 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  let resCode = data.candidates[0].content.parts[0].text;
                  resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
                  els.wsEditor.value = resCode;
-                 logToTerminal("Deobfuscation complete.");
+                 logToTerminal("Deobfuscation complete (AI).");
             }
         } catch(e) {
             logToTerminal("Deobfuscation failed.", 'error');
