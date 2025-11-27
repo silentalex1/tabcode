@@ -114,9 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    const TARGET_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
-    const FALLBACK_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-    const SAFETY_FALLBACK_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent";
+    const ENDPOINTS = [
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent"
+    ];
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -136,6 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function changeMode(val) {
         if(val === 'Coding') {
             activateCodingWorkspace();
+        } else if(val === 'Code Dumper') {
+            if(!isCodeDumperUnlocked) toggleDumperKey(true);
+            else activateDumper();
         } else {
             updateDropdownUI(val);
             switchToStandard();
@@ -144,17 +149,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateDropdownUI(val) {
-        const iconMap = {
-            'AI Assistant': 'fa-sparkles', 'Coding': 'fa-code', 'Rizz tool': 'fa-heart',
-            'Geometry': 'fa-shapes', 'English': 'fa-feather', 'Biology': 'fa-dna',
-            'Physics': 'fa-atom', 'Chemistry': 'fa-flask', 'Code Dumper': 'fa-terminal',
-            'Debate': 'fa-gavel', 'Psychology': 'fa-brain', 'History': 'fa-landmark'
-        };
-        const iconClass = iconMap[val] || 'fa-sparkles';
+        const items = Array.from(els.modeDrop.children);
+        const item = items.find(i => i.dataset.val === val);
+        let iconClass = 'fa-sparkles';
+        if (item) iconClass = item.dataset.icon || 'fa-sparkles';
         
         els.modeIcon.innerHTML = `<i class="fa-solid ${iconClass} text-violet-400"></i>`;
         els.modeTxt.innerText = val;
     }
+
+    els.modeDrop.querySelectorAll('.mode-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            changeMode(item.dataset.val);
+        });
+    });
 
     function toggleDropdown(force) {
         if (force === false) {
@@ -337,6 +346,11 @@ document.addEventListener('DOMContentLoaded', () => {
         els.codingWorkspace.classList.remove('hidden');
     }
 
+    function activateDumper() {
+        updateDropdownUI("Code Dumper");
+        switchToStandard(); 
+    }
+
     function switchToStandard() {
         els.standardUI.classList.remove('hidden');
         els.codingWorkspace.classList.add('hidden');
@@ -349,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!key) return;
         isCodeDumperUnlocked = true;
         toggleDumperKey(false);
-        activateCodingWorkspace();
+        activateDumper();
         els.dumperKeyInput.value = "";
     });
 
@@ -572,43 +586,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 ]
             };
 
-            let response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                signal: abortController.signal
-            });
-            
-            if(response.status === 404) {
-                response = await fetch(`${FALLBACK_URL}?key=${localStorage.getItem('prysmis_key')}`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(payload), 
-                    signal: abortController.signal 
-                });
-            }
-            
-            if(response.status === 404) {
-                response = await fetch(`${SAFETY_FALLBACK_URL}?key=${localStorage.getItem('prysmis_key')}`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(payload), 
-                    signal: abortController.signal 
-                });
+            let data = null;
+            let success = false;
+
+            for(let url of ENDPOINTS) {
+                try {
+                    const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                        signal: abortController.signal
+                    });
+                    
+                    if(response.ok) {
+                        data = await response.json();
+                        success = true;
+                        break;
+                    }
+                } catch(e) {
+                    continue;
+                }
             }
 
-            const data = await response.json();
             document.getElementById(loaderId).remove();
             els.flashOverlay.classList.add('opacity-0');
             els.flashOverlay.classList.remove('bg-flash-green');
 
-            if(data.candidates && data.candidates[0].content) {
+            if(success && data && data.candidates && data.candidates[0].content) {
                 const aiText = data.candidates[0].content.parts[0].text;
                 chatHistory[chatIndex].messages.push({ role: 'ai', text: aiText, img: null });
                 saveChatToStorage(chatHistory);
                 streamResponse(aiText);
             } else {
-                appendMsg('ai', "Error generating response.");
+                appendMsg('ai', "Error generating response. Please check your API Key or try again.");
             }
 
         } catch(err) {
@@ -719,7 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
             els.wsRawOutput.innerText = "Simulating execution environment...\n";
             
             try {
-                const response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
+                const response = await fetch(`${ENDPOINTS[0]}?key=${localStorage.getItem('prysmis_key')}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -743,7 +753,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!code.trim()) return;
         logToTerminal("Obfuscating...");
         try {
-            const response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
+            const response = await fetch(`${ENDPOINTS[0]}?key=${localStorage.getItem('prysmis_key')}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -765,7 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!code.trim()) return;
         logToTerminal("Deobfuscating...");
         try {
-             const response = await fetch(`${TARGET_URL}?key=${localStorage.getItem('prysmis_key')}`, {
+             const response = await fetch(`${ENDPOINTS[0]}?key=${localStorage.getItem('prysmis_key')}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
