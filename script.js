@@ -53,8 +53,6 @@ function deob(code, isLua = false) {
                 out = out.replace(/eval\s*\(\s*function\s*\([^\)]*\)\s*\{([^}]*)\}\s*\(\s*['"][^'"]*['"]\s*(?:,\s*\d+\s*){3}/s, (m, body) => "/*eval*/(" + body.replace(/^return/, "") + ")")
                 out = out.replace(/\bfunction\s*\([^)]*\)\s*\{\s*return\s*[^}]*\}\s*\(\s*\)\s*;?/g, "")
                 out = out.replace(/;\s*;+/g, ";").replace(/,\s*,+/g, ",")
-                out = out.replace(/if\s*\(\s*true\s*\)\s*\{([^}]+)\}\s*else\s*\{[^}]*\}/g, "$1")
-                out = out.replace(/if\s*\(\s*false\s*\)\s*\{[^}]*\}\s*else\s*\{([^}]+)\}/g, "$1")
             } else {
                 out = out.replace(/loadstring\s*\(\s*game\s*:\s*HttpGet\s*\([^)]+\)\s*\)\s*\(\s*\)/g, "")
                 out = out.replace(/--\[\[[\s\S]*?--\]\]/g, "")
@@ -161,41 +159,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    const ENDPOINTS = [
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-exp-1206:generateContent",
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent",
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
+    const API_MODELS = [
+        "gemini-2.5-pro:streamGenerateContent?alt=sse", 
+        "gemini-1.5-pro-exp-0827",
+        "gemini-1.5-pro",
+        "gemini-1.5-flash"
     ];
-
-    function applyTheme(theme) {
-        document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-violet-500 selection:text-white ${theme}`;
-        const particleContainer = document.getElementById('theme-particles');
-        particleContainer.innerHTML = ''; 
-        
-        if (theme === 'theme-christmas') {
-            createParticles(particleContainer, 'snow', 50);
-        } else if (theme === 'theme-thanksgiving') {
-            createParticles(particleContainer, 'leaf', 20);
-        } else if (theme === 'theme-ocean') {
-            const wave = document.createElement('div');
-            wave.className = 'wave-layer';
-            particleContainer.appendChild(wave);
-        } else if (theme === 'theme-cherry') {
-            createParticles(particleContainer, 'petal', 30);
-        }
-    }
-
-    function createParticles(container, type, count) {
-        for(let i=0; i<count; i++) {
-            const p = document.createElement('div');
-            p.className = `particle ${type}`;
-            p.style.left = Math.random() * 100 + 'vw';
-            p.style.animationDuration = (Math.random() * 5 + 5) + 's';
-            p.style.animationDelay = Math.random() * 5 + 's';
-            if(type === 'snow') p.style.width = p.style.height = (Math.random() * 3 + 2) + 'px';
-            container.appendChild(p);
-        }
-    }
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -203,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fastSpeed = localStorage.getItem('prysmis_fast_speed');
         if(fastSpeed === 'true' && els.fastSpeedToggle) els.fastSpeedToggle.checked = true;
         const theme = localStorage.getItem('prysmis_theme') || 'theme-midnight';
-        applyTheme(theme);
+        document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white ${theme}`;
         if(els.themeSelector) els.themeSelector.value = theme;
     };
     loadKey();
@@ -237,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let iconClass = 'fa-sparkles';
         if (item) iconClass = item.dataset.icon || 'fa-sparkles';
         
-        els.modeIcon.innerHTML = `<i class="fa-solid ${iconClass} text-violet-400"></i>`;
+        els.modeIcon.innerHTML = `<i class="fa-solid ${iconClass} text-accent"></i>`;
         els.modeTxt.innerText = val;
     }
 
@@ -275,10 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
             els.heroSection.style.display = 'flex';
         }
         else if(cmd === '/features') {
-            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: #a78bfa;">PrysmisAI features</div><hr class="visual-line"><ul class="feature-list list-disc pl-5"><li>Scan Analysis: Say "Analysis or scan this file and ___"</li><li>YouTube analysis</li><li>Domain external viewer</li><li>Modes</li><li>Roleplay</li><li>Invisible tab</li></ul>`;
+            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: var(--accent);">PrysmisAI features</div><hr class="visual-line"><ul class="feature-list list-disc pl-5"><li>Scan Analysis: Say "Analysis or scan this file and ___"</li><li>YouTube analysis</li><li>Domain external viewer</li><li>Modes</li><li>Roleplay</li><li>Invisible tab</li></ul>`;
             const div = document.createElement('div');
             div.className = `flex w-full justify-start msg-anim mb-6`;
-            div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ai-msg text-gray-200 rounded-bl-none">${featureHTML}</div>`;
+            div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ai-msg rounded-bl-none">${featureHTML}</div>`;
             els.chatFeed.appendChild(div);
             els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
             els.heroSection.style.display = 'none';
@@ -340,9 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if(els.apiKey.value.trim()) localStorage.setItem('prysmis_key', els.apiKey.value.trim());
         if(els.fastSpeedToggle) localStorage.setItem('prysmis_fast_speed', els.fastSpeedToggle.checked);
         if(els.themeSelector) {
-            const theme = els.themeSelector.value;
-            localStorage.setItem('prysmis_theme', theme);
-            applyTheme(theme);
+            localStorage.setItem('prysmis_theme', els.themeSelector.value);
+            document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white ${els.themeSelector.value}`;
         }
         els.saveSettings.textContent = "Saved";
         els.saveSettings.classList.add('bg-green-500', 'text-white');
@@ -549,16 +517,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (els.modeTxt.innerText === 'Coding') {
                 els.wsEditor.value = content;
                 logToTerminal(`Loaded file: ${file.name}`);
-            } else if (els.modeTxt.innerText === 'Image Generation' && file.type.startsWith('image')) {
-                els.imgPrompt.value = "Create a variation of this image: "; 
-                uploadedFile = { data: content.split(',')[1], type: file.type, name: file.name };
-                // Using input value as marker
             } else {
                 uploadedFile = { data: content.split(',')[1], type: file.type, name: file.name };
                 let previewContent = file.type.startsWith('image') 
                     ? `<img src="${content}" class="w-full h-full object-cover">`
                     : `<div class="flex items-center justify-center h-full bg-white/10 text-xs p-2 text-center">${file.name}</div>`;
-                els.mediaPreview.innerHTML = `<div class="relative w-14 h-14 rounded-lg overflow-hidden border border-violet-500 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
+                els.mediaPreview.innerHTML = `<div class="relative w-14 h-14 rounded-lg overflow-hidden border border-accent/20 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
             }
         };
         if(els.modeTxt.innerText === 'Coding' || file.type.includes('text') || file.name.endsWith('.js') || file.name.endsWith('.lua') || file.name.endsWith('.py') || file.name.endsWith('.txt')) {
@@ -622,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showNotification(msg) {
         const notif = document.createElement('div');
         notif.className = 'notification';
-        notif.innerHTML = `<i class="fa-brands fa-discord text-[#5865F2] text-lg"></i> ${msg}`;
+        notif.innerHTML = `<i class="fa-brands fa-discord text-accent text-lg"></i> ${msg}`;
         els.notificationArea.appendChild(notif);
         setTimeout(() => {
             notif.style.animation = 'slideOutRight 0.3s forwards';
@@ -659,8 +623,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if(text.toLowerCase().includes('analyze') || text.toLowerCase().includes('scan')) {
              const scanDiv = document.createElement('div');
-             scanDiv.className = "border border-violet-500/50 rounded-xl p-4 my-4 bg-violet-500/5 relative overflow-hidden transition-all duration-300";
-             scanDiv.innerHTML = `<div class="text-xs text-violet-300 font-mono mb-2 flex justify-between"><span>SCANNING FILE STRUCTURE...</span><span id="scan-status">INITIALIZING</span></div><div class="h-1 bg-white/10 rounded overflow-hidden"><div class="h-full bg-violet-500 w-0 transition-all duration-[2000ms] ease-out" style="width: 0%"></div></div><div class="text-right text-[10px] text-white mt-1 font-mono" id="scan-pct">0%</div>`;
+             scanDiv.className = "border border-accent/20 rounded-xl p-4 my-4 bg-panel relative overflow-hidden transition-all duration-300";
+             scanDiv.innerHTML = `<div class="text-xs text-accent font-mono mb-2 flex justify-between"><span>SCANNING FILE STRUCTURE...</span><span id="scan-status">INITIALIZING</span></div><div class="h-1 bg-white/10 rounded overflow-hidden"><div class="h-full bg-accent w-0 transition-all duration-[2000ms] ease-out" style="width: 0%"></div></div><div class="text-right text-[10px] text-white mt-1 font-mono" id="scan-pct">0%</div>`;
              els.chatFeed.appendChild(scanDiv);
              
              setTimeout(() => { 
@@ -689,7 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const loaderDiv = document.createElement('div');
         loaderDiv.id = loaderId;
         loaderDiv.className = "flex w-full justify-start msg-anim mb-4";
-        loaderDiv.innerHTML = `<div class="bg-[#18181b] border border-white/10 px-4 py-3 rounded-2xl rounded-bl-none flex gap-1 items-center"><div class="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce delay-75"></div><div class="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce delay-150"></div></div>`;
+        loaderDiv.innerHTML = `<div class="bg-panel border border-accent/20 px-4 py-3 rounded-2xl rounded-bl-none flex gap-1 items-center"><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-75"></div><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-150"></div></div>`;
         els.chatFeed.appendChild(loaderDiv);
         els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
 
@@ -727,7 +691,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let data = null;
             let success = false;
 
-            for(let url of ENDPOINTS) {
+            for(let model of API_MODELS) {
+                let url = model.startsWith("http") ? model : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+                if(model.includes("stream")) url = url.replace(":generateContent", ""); // Handle legacy url format if needed
+
                 try {
                     const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
                         method: 'POST',
@@ -770,7 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.createElement('div');
         div.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'} msg-anim mb-6`;
         let content = parseMD(text);
-        if(img) content = `<div class="relative"><img src="${img}" class="max-w-[200px] rounded-lg mb-2 border border-white/20"></div>` + content;
+        if(img) content = `<div class="relative"><img src="${img}" class="max-w-[200px] rounded-lg mb-2 border border-accent/20"></div>` + content;
         div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ${role === 'user' ? 'user-msg text-white rounded-br-none cursor-pointer' : 'ai-msg text-gray-200 rounded-bl-none'}">${content}</div>`;
         els.chatFeed.appendChild(div);
         els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
@@ -869,7 +836,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let data = null;
             let success = false;
 
-            for(let url of ENDPOINTS) {
+            for(let model of API_MODELS) {
+                let url = model.startsWith("http") ? model : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+                if(model.includes("stream")) url = url.replace(":generateContent", "");
+
                 try {
                     const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
                         method: 'POST',
@@ -905,7 +875,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let data = null;
         let success = false;
 
-        for(let url of ENDPOINTS) {
+        for(let model of API_MODELS) {
+            let url = model.startsWith("http") ? model : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+            if(model.includes("stream")) url = url.replace(":generateContent", "");
+
             try {
                 const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
                     method: 'POST',
@@ -953,7 +926,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let data = null;
         let success = false;
 
-        for(let url of ENDPOINTS) {
+        for(let model of API_MODELS) {
+            let url = model.startsWith("http") ? model : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+            if(model.includes("stream")) url = url.replace(":generateContent", "");
+
             try {
                 const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
                     method: 'POST',
@@ -988,12 +964,9 @@ document.addEventListener('DOMContentLoaded', () => {
         els.generatedImage.classList.add('hidden');
         els.imagePlaceholder.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-4xl text-accent mb-4 block"></i><span class="text-xs font-mono">GENERATING...</span>';
         
-        let enhancedPrompt = prompt;
-        // Auto-enhance for anime/quality
-        if(prompt.toLowerCase().includes('anime') || prompt.toLowerCase().includes('character') || prompt.toLowerCase().includes('girl') || prompt.toLowerCase().includes('boy')) {
-            enhancedPrompt = `masterpiece, best quality, ultra-detailed, anime style, 8k, ${prompt}`;
-        } else {
-            enhancedPrompt = `masterpiece, best quality, 8k, photorealistic, ${prompt}`;
+        let enhancedPrompt = `masterpiece, best quality, 8k, highly detailed, ${prompt}`;
+        if(prompt.toLowerCase().includes('anime') || prompt.toLowerCase().includes('waifu') || prompt.toLowerCase().includes('character')) {
+            enhancedPrompt = `masterpiece, best quality, anime style, highly detailed, ${prompt}`;
         }
 
         const encodedPrompt = encodeURIComponent(enhancedPrompt);
