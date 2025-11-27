@@ -13,19 +13,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white theme-midnight">
+<body class="bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white theme-midnight transition-colors duration-500">
 
     <div class="glow-bg"></div>
+    <div id="bg-effects" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
     <div id="flash-overlay" class="pointer-events-none fixed inset-0 z-0 opacity-0 transition-opacity duration-500 mix-blend-screen"></div>
     
-    <div id="drop-overlay" class="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md hidden flex-col items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none" aria-hidden="true">
-        <div class="border-2 border-dashed border-accent rounded-3xl p-8 md:p-16 flex flex-col items-center animate-bounce">
+    <div id="drop-overlay" class="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md hidden flex-col items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none" aria-hidden="true">
+        <div class="border-2 border-dashed border-accent rounded-3xl p-8 md:p-16 flex flex-col items-center animate-bounce bg-panel">
             <i class="fa-solid fa-file-import text-4xl md:text-6xl text-accent mb-6"></i>
             <h2 class="text-2xl md:text-3xl font-bold text-white">Drop File Here</h2>
         </div>
     </div>
 
-    <div id="notification-area" class="fixed top-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="notification-area" class="fixed top-6 right-6 z-[99999] flex flex-col gap-2 pointer-events-none"></div>
 
     <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-panel backdrop-blur-2xl border-r border-white/5 transform -translate-x-full md:translate-x-0 md:static md:w-20 md:bg-transparent md:border-r-0 transition-transform duration-300 z-[100] flex flex-col items-center py-8" aria-label="Main Navigation">
         <button class="w-12 h-12 bg-gradient-to-br from-accent to-accent-dark rounded-2xl flex items-center justify-center shadow-glow mb-auto cursor-pointer hover:scale-105 transition duration-300 group relative shrink-0 z-[101] pointer-events-auto" id="home-btn" aria-label="Go to Home">
@@ -62,14 +63,14 @@
                 <p class="text-gray-600 text-[9px] font-bold tracking-[0.4em] uppercase mt-2">Personal Learning Tool</p>
             </div>
             
-            <div class="pointer-events-auto mt-6 relative z-[202]">
-                <button id="mode-btn" class="glass-pill px-6 py-2 rounded-full text-xs font-medium flex items-center gap-3 text-gray-300 hover:text-white transition-all duration-300 hover:border-accent shadow-lg hover:shadow-accent/20 cursor-pointer min-w-[160px] justify-center" aria-label="Change Mode">
+            <div class="pointer-events-auto mt-6 relative z-[9999]">
+                <button id="mode-btn" class="glass-pill px-6 py-2 rounded-full text-xs font-medium flex items-center gap-3 text-gray-300 hover:text-white transition-all duration-300 hover:border-accent shadow-lg hover:shadow-accent/20 cursor-pointer min-w-[160px] justify-center bg-panel" aria-label="Change Mode">
                     <span id="mode-icon"><i class="fa-solid fa-sparkles text-accent"></i></span>
                     <span id="current-mode-txt">AI Assistant</span>
                     <i class="fa-solid fa-chevron-down text-[10px] opacity-50 pointer-events-none ml-auto"></i>
                 </button>
                 
-                <div id="mode-dropdown" class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-panel backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[9999] py-1 max-h-64 overflow-y-auto custom-scrollbar">
+                <div id="mode-dropdown" class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-panel backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[9999] py-1 max-h-64 overflow-y-auto custom-scrollbar ring-1 ring-white/5">
                     <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-accent w-5"></i> AI Assistant</div>
                     <div class="mode-item" data-val="Coding" data-icon="fa-code"><i class="fa-solid fa-code text-cyan-400 w-5"></i> Coding</div>
                     <div class="mode-item" data-val="Image Generation" data-icon="fa-image"><i class="fa-solid fa-image text-purple-400 w-5"></i> Image Generation</div>
@@ -151,7 +152,6 @@
         </div>
 
         <div id="coding-workspace-ui" class="hidden flex-1 flex-col h-full relative bg-main z-[10] overflow-hidden">
-             <!-- Z-Index High to stay on top of code content -->
              <div class="sticky top-0 h-14 bg-panel/95 backdrop-blur border-b border-white/5 flex items-center justify-between px-4 z-[9000] shrink-0 w-full shadow-lg">
                 <div class="flex items-center gap-3">
                     <div class="w-2 h-2 rounded-full bg-red-500/80"></div>
@@ -207,7 +207,7 @@
                     <a id="download-btn" class="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition hidden" download="image.jpg"><i class="fa-solid fa-download"></i></a>
                 </div>
                 <div class="flex gap-2">
-                    <input type="text" id="image-prompt" class="flex-1 bg-panel border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-accent text-white" placeholder="Describe the image you want to see...">
+                    <input type="text" id="image-prompt" class="flex-1 bg-panel border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-accent text-white" placeholder="Describe the image (e.g. Anime girl, Cyberpunk city)...">
                     <button id="generate-img-btn" class="bg-white text-black font-bold px-6 py-3 rounded-xl hover:scale-105 transition shadow-lg">Generate</button>
                 </div>
             </div>
