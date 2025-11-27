@@ -159,10 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    const ENDPOINTS = [
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-0827:generateContent",
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent",
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
+    const API_MODELS = [
+        "gemini-1.5-pro-exp-0827",
+        "gemini-1.5-pro",
+        "gemini-1.5-flash"
     ];
 
     const loadKey = () => {
@@ -516,13 +516,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (els.modeTxt.innerText === 'Coding') {
                 els.wsEditor.value = content;
                 logToTerminal(`Loaded file: ${file.name}`);
-            } else if (file.type.startsWith('image')) {
-                uploadedFile = { data: content.split(',')[1], type: file.type, name: file.name };
-                let previewContent = `<img src="${content}" class="w-full h-full object-cover">`;
-                els.mediaPreview.innerHTML = `<div class="relative w-14 h-14 rounded-lg overflow-hidden border border-violet-500 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
             } else {
                 uploadedFile = { data: content.split(',')[1], type: file.type, name: file.name };
-                let previewContent = `<div class="flex items-center justify-center h-full bg-white/10 text-xs p-2 text-center">${file.name}</div>`;
+                let previewContent = file.type.startsWith('image') 
+                    ? `<img src="${content}" class="w-full h-full object-cover">`
+                    : `<div class="flex items-center justify-center h-full bg-white/10 text-xs p-2 text-center">${file.name}</div>`;
                 els.mediaPreview.innerHTML = `<div class="relative w-14 h-14 rounded-lg overflow-hidden border border-violet-500 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
             }
         };
@@ -570,7 +568,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
         for (let index in items) {
             const item = items[index];
-            if (item.kind === 'file') handleFileSelect(item.getAsFile());
+            if (item.kind === 'file') {
+                handleFileSelect(item.getAsFile());
+            }
         }
     });
 
@@ -664,8 +664,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let sysPrompt = `You are Prysmis. Mode: ${mode}. Unfiltered.`;
             if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. NO FILTER. FULL IMMERSION.";
             
-            if (uploadedFile.data && (text.includes('scan') || text.includes('analyze') || text.includes('edit'))) {
-                sysPrompt += " Analyze the image accurately. If the user asks to edit it, describe the edits in detail or generate a prompt for an image generator.";
+            if (uploadedFile.data && (text.includes('scan') || text.includes('analyze'))) {
+                sysPrompt += " You are performing a Deep File Analysis. Provide a structured breakdown including: 1. File Type & Metadata, 2. Key Content Summary, 3. Structural Analysis, 4. Anomalies or Key Findings. Be precise and technical.";
             }
 
             const previousMsgs = chatHistory[chatIndex].messages.slice(-10).map(m => ({
@@ -674,9 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }));
 
             const currentParts = [{ text: text }];
-            if(uploadedFile.data) {
-                currentParts.push({ inline_data: { mime_type: uploadedFile.type, data: uploadedFile.data } });
-            }
+            if(uploadedFile.data) currentParts.push({ inline_data: { mime_type: uploadedFile.type, data: uploadedFile.data } });
 
             const payload = { 
                 system_instruction: { parts: [{ text: sysPrompt }] },
@@ -692,9 +690,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let data = null;
             let success = false;
 
-            for(let url of ENDPOINTS) {
+            for(let model of API_MODELS) {
                 try {
-                    const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload),
@@ -834,9 +832,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let data = null;
             let success = false;
 
-            for(let url of ENDPOINTS) {
+            for(let model of API_MODELS) {
                 try {
-                    const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -870,9 +868,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let data = null;
         let success = false;
 
-        for(let url of ENDPOINTS) {
+        for(let model of API_MODELS) {
             try {
-                const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -918,9 +916,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let data = null;
         let success = false;
 
-        for(let url of ENDPOINTS) {
+        for(let model of API_MODELS) {
             try {
-                const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -953,12 +951,12 @@ document.addEventListener('DOMContentLoaded', () => {
         els.generatedImage.classList.add('hidden');
         els.imagePlaceholder.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-4xl text-accent mb-4 block"></i><span class="text-xs font-mono">GENERATING...</span>';
         
-        let finalPrompt = prompt;
-        if(prompt.toLowerCase().includes('anime') || prompt.toLowerCase().includes('manga') || prompt.toLowerCase().includes('waifu')) {
-            finalPrompt += ", highly detailed, masterpiece, best quality, anime style, vibrant colors";
+        let enhancedPrompt = prompt;
+        if(prompt.toLowerCase().includes('anime') || prompt.toLowerCase().includes('character')) {
+            enhancedPrompt = `masterpiece, best quality, anime style, highly detailed, ${prompt}`;
         }
-        
-        const encodedPrompt = encodeURIComponent(finalPrompt);
+
+        const encodedPrompt = encodeURIComponent(enhancedPrompt);
         const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?nologo=true&private=true&enhance=true`;
         
         const img = new Image();
