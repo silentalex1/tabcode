@@ -79,7 +79,7 @@ function saveChatToStorage(chatHistory) {
         }));
         localStorage.setItem('prysmis_history', JSON.stringify(historyToSave));
     } catch (e) {
-        console.warn("Local storage full or error saving chat.", e);
+        console.warn("Local storage full", e);
     }
 }
 
@@ -120,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebar: document.getElementById('sidebar'),
         dropOverlay: document.getElementById('drop-overlay'),
         themeSelector: document.getElementById('theme-selector'),
+        bgEffects: document.getElementById('bg-effects'),
         
         wsEditor: document.getElementById('ws-editor'),
         wsIframe: document.getElementById('ws-iframe'),
@@ -160,10 +161,45 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragCounter = 0;
 
     const API_MODELS = [
-        "gemini-1.5-pro-exp-0827",
         "gemini-1.5-pro",
         "gemini-1.5-flash"
     ];
+
+    const updateThemeEffects = (theme) => {
+        els.bgEffects.innerHTML = '';
+        if (theme === 'theme-christmas') {
+            for(let i=0; i<50; i++) {
+                const el = document.createElement('div');
+                el.className = 'snowflake fa-solid fa-snowflake';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                el.style.opacity = Math.random();
+                els.bgEffects.appendChild(el);
+            }
+        } else if (theme === 'theme-thanksgiving') {
+            for(let i=0; i<30; i++) {
+                const el = document.createElement('div');
+                el.className = 'leaf fa-brands fa-canadian-maple-leaf';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.animationDuration = (Math.random() * 8 + 5) + 's';
+                el.style.opacity = Math.random();
+                els.bgEffects.appendChild(el);
+            }
+        } else if (theme === 'theme-ocean') {
+            const el = document.createElement('div');
+            el.className = 'wave-bg';
+            els.bgEffects.appendChild(el);
+        } else if (theme === 'theme-matrix') {
+            for(let i=0; i<40; i++) {
+                const el = document.createElement('div');
+                el.className = 'matrix-char';
+                el.innerText = String.fromCharCode(0x30A0 + Math.random() * 96);
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                els.bgEffects.appendChild(el);
+            }
+        }
+    };
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -171,8 +207,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const fastSpeed = localStorage.getItem('prysmis_fast_speed');
         if(fastSpeed === 'true' && els.fastSpeedToggle) els.fastSpeedToggle.checked = true;
         const theme = localStorage.getItem('prysmis_theme') || 'theme-midnight';
-        document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-violet-500 selection:text-white ${theme}`;
+        document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white ${theme} transition-colors duration-500`;
         if(els.themeSelector) els.themeSelector.value = theme;
+        updateThemeEffects(theme);
     };
     loadKey();
 
@@ -205,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let iconClass = 'fa-sparkles';
         if (item) iconClass = item.dataset.icon || 'fa-sparkles';
         
-        els.modeIcon.innerHTML = `<i class="fa-solid ${iconClass} text-violet-400"></i>`;
+        els.modeIcon.innerHTML = `<i class="fa-solid ${iconClass} text-accent"></i>`;
         els.modeTxt.innerText = val;
     }
 
@@ -243,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
             els.heroSection.style.display = 'flex';
         }
         else if(cmd === '/features') {
-            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: #a78bfa;">PrysmisAI features</div><hr class="visual-line"><ul class="feature-list list-disc pl-5"><li>Scan Analysis: Say "Analysis or scan this file and ___"</li><li>YouTube analysis</li><li>Domain external viewer</li><li>Modes</li><li>Roleplay</li><li>Invisible tab</li></ul>`;
+            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: var(--accent);">PrysmisAI features</div><hr class="visual-line"><ul class="feature-list list-disc pl-5"><li>Scan Analysis: Say "Analysis or scan this file and ___"</li><li>YouTube analysis</li><li>Domain external viewer</li><li>Modes</li><li>Roleplay</li><li>Invisible tab</li></ul>`;
             const div = document.createElement('div');
             div.className = `flex w-full justify-start msg-anim mb-6`;
             div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ai-msg text-gray-200 rounded-bl-none">${featureHTML}</div>`;
@@ -309,7 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if(els.fastSpeedToggle) localStorage.setItem('prysmis_fast_speed', els.fastSpeedToggle.checked);
         if(els.themeSelector) {
             localStorage.setItem('prysmis_theme', els.themeSelector.value);
-            document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-violet-500 selection:text-white ${els.themeSelector.value}`;
+            document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white ${els.themeSelector.value} transition-colors duration-500`;
+            updateThemeEffects(els.themeSelector.value);
         }
         els.saveSettings.textContent = "Saved";
         els.saveSettings.classList.add('bg-green-500', 'text-white');
@@ -516,6 +554,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (els.modeTxt.innerText === 'Coding') {
                 els.wsEditor.value = content;
                 logToTerminal(`Loaded file: ${file.name}`);
+            } else if (file.type.startsWith('image') && els.modeTxt.innerText === 'Image Generation') {
+                 // Auto switch for image gen context if needed, mostly for chat
+                 uploadedFile = { data: content.split(',')[1], type: file.type, name: file.name };
+                 let previewContent = `<img src="${content}" class="w-full h-full object-cover">`;
+                 els.mediaPreview.innerHTML = `<div class="relative w-14 h-14 rounded-lg overflow-hidden border border-violet-500 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
             } else {
                 uploadedFile = { data: content.split(',')[1], type: file.type, name: file.name };
                 let previewContent = file.type.startsWith('image') 
@@ -530,6 +573,16 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(file);
         }
     }
+
+    document.addEventListener('paste', (e) => {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let index in items) {
+            const item = items[index];
+            if (item.kind === 'file') {
+                handleFileSelect(item.getAsFile());
+            }
+        }
+    });
 
     document.addEventListener('dragenter', (e) => {
         e.preventDefault();
@@ -562,16 +615,6 @@ document.addEventListener('DOMContentLoaded', () => {
         els.dropOverlay.classList.add('opacity-0');
         setTimeout(() => els.dropOverlay.classList.add('hidden'), 300);
         if(e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]);
-    });
-
-    els.input.addEventListener('paste', (e) => {
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (let index in items) {
-            const item = items[index];
-            if (item.kind === 'file') {
-                handleFileSelect(item.getAsFile());
-            }
-        }
     });
 
     document.addEventListener('selectionchange', () => {
@@ -652,7 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const loaderDiv = document.createElement('div');
         loaderDiv.id = loaderId;
         loaderDiv.className = "flex w-full justify-start msg-anim mb-4";
-        loaderDiv.innerHTML = `<div class="bg-[#18181b] border border-white/10 px-4 py-3 rounded-2xl rounded-bl-none flex gap-1 items-center"><div class="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce delay-75"></div><div class="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce delay-150"></div></div>`;
+        loaderDiv.innerHTML = `<div class="bg-panel border border-white/10 px-4 py-3 rounded-2xl rounded-bl-none flex gap-1 items-center"><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-75"></div><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-150"></div></div>`;
         els.chatFeed.appendChild(loaderDiv);
         els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
 
@@ -692,281 +735,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for(let model of API_MODELS) {
                 try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
-                        signal: abortController.signal
-                    });
-                    
-                    if(response.ok) {
-                        data = await response.json();
-                        success = true;
-                        break;
-                    }
-                } catch(e) {
-                    continue;
-                }
-            }
-
-            document.getElementById(loaderId).remove();
-            els.flashOverlay.classList.add('opacity-0');
-            els.flashOverlay.classList.remove('bg-flash-green');
-
-            if(success && data && data.candidates && data.candidates[0].content) {
-                const aiText = data.candidates[0].content.parts[0].text;
-                chatHistory[chatIndex].messages.push({ role: 'ai', text: aiText, img: null });
-                saveChatToStorage(chatHistory);
-                streamResponse(aiText);
-            } else {
-                appendMsg('ai', "Error generating response. Please check your API Key or try again.");
-            }
-
-        } catch(err) {
-            if(document.getElementById(loaderId)) document.getElementById(loaderId).remove();
-            if(err.name !== 'AbortError') appendMsg('ai', "Connection failed.");
-        }
-        window.clearMedia();
-    }
-
-    function appendMsg(role, text, img) {
-        const div = document.createElement('div');
-        div.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'} msg-anim mb-6`;
-        let content = parseMD(text);
-        if(img) content = `<div class="relative"><img src="${img}" class="max-w-[200px] rounded-lg mb-2 border border-white/20"></div>` + content;
-        div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ${role === 'user' ? 'user-msg text-white rounded-br-none cursor-pointer' : 'ai-msg text-gray-200 rounded-bl-none'}">${content}</div>`;
-        els.chatFeed.appendChild(div);
-        els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
-    }
-
-    function parseMD(text) {
-        if (!text) return "";
-        let html = text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/\n/g, '<br>');
-        html = html.replace(/```(\w+)?<br>([\s\S]*?)```/g, (match, lang, code) => {
-            const cleanCode = code.replace(/<br>/g, '\n');
-            return `<div class="code-block"><div class="code-header"><span>${lang || 'code'}</span><button class="copy-btn" onclick="window.copyCode(this)">Copy</button></div><pre><code class="language-${lang}">${cleanCode}</code></pre></div>`;
-        });
-        return html;
-    }
-
-    function streamResponse(text) {
-        if(stopGeneration) return;
-        if(els.stopAiBtn) els.stopAiBtn.classList.remove('opacity-0', 'pointer-events-none');
-        
-        const div = document.createElement('div');
-        div.className = `flex w-full justify-start msg-anim mb-6`;
-        const bubble = document.createElement('div');
-        bubble.className = "max-w-[90%] md:max-w-[75%] p-5 rounded-[20px] rounded-bl-none shadow-lg prose ai-msg text-gray-200";
-        div.appendChild(bubble);
-        els.chatFeed.appendChild(div);
-
-        const chars = text.split('');
-        let i = 0;
-        let currentText = "";
-        
-        const isFast = (els.fastSpeedToggle && els.fastSpeedToggle.checked);
-        const delay = isFast ? 1 : 15;
-        
-        if (isFast) {
-            bubble.innerHTML = parseMD(text);
-            els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
-            if(els.stopAiBtn) els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
-            showContinueButton();
-            return;
-        }
-        
-        currentInterval = setInterval(() => {
-            if(stopGeneration || i >= chars.length) {
-                clearInterval(currentInterval);
-                bubble.innerHTML = parseMD(text);
-                if(els.stopAiBtn) els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
-                showContinueButton();
-                return;
-            }
-            currentText += chars[i];
-            bubble.innerHTML = parseMD(currentText);
-            els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
-            i++;
-        }, delay);
-    }
-
-    function showContinueButton() {
-        if(els.continueBtn) {
-            els.continueBtn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
-        }
-    }
-    
-    function logToTerminal(msg, type='info') {
-        const line = document.createElement('div');
-        const arrow = type === 'error' ? '<span class="text-red-500">➜</span>' : '<span class="text-green-500">➜</span>';
-        const color = type === 'error' ? 'text-red-400' : 'text-gray-400';
-        line.innerHTML = `${arrow} <span class="text-cyan-400">~</span> <span class="${color}">${msg}</span>`;
-        els.wsTerminal.appendChild(line);
-        els.wsTerminalContainer.scrollTop = els.wsTerminalContainer.scrollHeight;
-    }
-
-    els.wsRunBtn.addEventListener('click', async () => {
-        const code = els.wsEditor.value;
-        if(!code.trim()) return;
-        
-        logToTerminal("Running code...");
-        els.wsPlaceholder.classList.add('hidden');
-        
-        if(code.trim().startsWith('<html') || code.includes('document.') || code.includes('window.')) {
-            els.wsIframe.classList.remove('hidden');
-            els.wsRawOutput.classList.add('hidden');
-            const blob = new Blob([code], {type: 'text/html'});
-            els.wsIframe.src = URL.createObjectURL(blob);
-            logToTerminal("Executed web view.");
-        } else {
-            els.wsIframe.classList.add('hidden');
-            els.wsRawOutput.classList.remove('hidden');
-            els.wsRawOutput.innerText = "Simulating execution environment...\n";
-            
-            let data = null;
-            let success = false;
-
-            for(let model of API_MODELS) {
-                try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: "Act as a code runner/compiler terminal. Execute this code strictly. Return ONLY the output or errors. No explanations. Code:\n" + code }] }]
-                        })
-                    });
-                    
-                    if(response.ok) {
-                        data = await response.json();
-                        success = true;
-                        break;
-                    }
-                } catch(e) { continue; }
-            }
-
-            if(success && data && data.candidates && data.candidates[0].content) {
-                 const out = data.candidates[0].content.parts[0].text;
-                 els.wsRawOutput.innerText = out;
-                 logToTerminal("Execution complete.");
-            } else {
-                logToTerminal("Execution failed.", 'error');
-            }
-        }
-    });
-
-    els.wsObfBtn.addEventListener('click', async () => {
-        const code = els.wsEditor.value;
-        if(!code.trim()) return;
-        logToTerminal("Obfuscating...");
-        
-        let data = null;
-        let success = false;
-
-        for(let model of API_MODELS) {
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Obfuscate this code heavily. Return ONLY the code, no markdown. Code:\n" + code }] }]
-                    })
-                });
-                if(response.ok) {
-                    data = await response.json();
-                    success = true;
-                    break;
-                }
-            } catch(e) { continue; }
-        }
-
-        if(success && data.candidates && data.candidates[0].content) {
-             let res = data.candidates[0].content.parts[0].text.replace(/```\w*/g, '').replace(/```/g, '').trim();
-             els.wsEditor.value = res;
-             logToTerminal("Obfuscation complete.");
-             showNotification("Code Obfuscated!");
-        } else {
-            logToTerminal("Obfuscation failed.", 'error');
-        }
-    });
-
-    els.wsDeobfBtn.addEventListener('click', async () => {
-        const code = els.wsEditor.value;
-        if(!code.trim()) return;
-        
-        logToTerminal("Deobfuscating (Local)...");
-        
-        const isLua = code.includes('local ') || code.includes('function') || code.includes('end');
-        const localResult = deob(code, isLua);
-        
-        if (localResult && localResult !== code && localResult.length < code.length) {
-             els.wsEditor.value = localResult;
-             logToTerminal("Deobfuscation complete (Local).");
-             showNotification("Code Deobfuscated!");
-             return;
-        }
-
-        logToTerminal("Local engine insufficient. Using AI Analysis...");
-        
-        let data = null;
-        let success = false;
-
-        for(let model of API_MODELS) {
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: "You are an expert Reverse Engineer. Deobfuscate this code. Rename variables to readable English, fix indentation, remove junk code. Return ONLY the clean code, no markdown block. Code:\n" + code }] }]
-                    })
-                });
-                if(response.ok) {
-                    data = await response.json();
-                    success = true;
-                    break;
-                }
-            } catch(e) { continue; }
-        }
-
-        if(success && data.candidates && data.candidates[0].content) {
-             let resCode = data.candidates[0].content.parts[0].text;
-             resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
-             els.wsEditor.value = resCode;
-             logToTerminal("Deobfuscation complete (AI).");
-             showNotification("Code Deobfuscated!");
-        } else {
-            logToTerminal("Deobfuscation failed.", 'error');
-        }
-    });
-
-    els.imgGenBtn.addEventListener('click', () => {
-        const prompt = els.imgPrompt.value.trim();
-        if(!prompt) return;
-        
-        els.generatedImage.classList.add('hidden');
-        els.imagePlaceholder.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-4xl text-accent mb-4 block"></i><span class="text-xs font-mono">GENERATING...</span>';
-        
-        let enhancedPrompt = prompt;
-        if(prompt.toLowerCase().includes('anime') || prompt.toLowerCase().includes('character')) {
-            enhancedPrompt = `masterpiece, best quality, anime style, highly detailed, ${prompt}`;
-        }
-
-        const encodedPrompt = encodeURIComponent(enhancedPrompt);
-        const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?nologo=true&private=true&enhance=true`;
-        
-        const img = new Image();
-        img.onload = () => {
-            els.generatedImage.src = url;
-            els.generatedImage.classList.remove('hidden');
-            els.imagePlaceholder.classList.add('hidden');
-            els.downloadBtn.href = url;
-            els.downloadBtn.classList.remove('hidden');
-        };
-        img.src = url;
-    });
-});
+                    c
