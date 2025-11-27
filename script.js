@@ -1,4 +1,3 @@
-// Define Global Functions First
 window.setInput = function(txt) {
     const input = document.getElementById('prompt-input');
     if(input) { input.value = txt; input.focus(); }
