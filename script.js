@@ -82,7 +82,7 @@ function saveChatToStorage(chatHistory) {
         }));
         localStorage.setItem('prysmis_history', JSON.stringify(historyToSave));
     } catch (e) {
-        console.warn("Local storage limit reached.");
+        
     }
 }
 
@@ -161,13 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let abortController = null;
     let currentInterval = null;
     let dragCounter = 0;
-
-    // UPDATED MODELS TO FIX 404 ERROR - REMOVED "-latest" SUFFIX
-    const API_MODELS = [
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-pro"
-    ];
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -681,50 +674,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let data = null;
             let success = false;
-
-            // Loop through models to handle 404s gracefully
-            for(let model of API_MODELS) {
-                let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-                
-                let requestBody = {
-                    contents: [...previousMsgs, { role: 'user', parts: currentParts }],
-                    safetySettings: [
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                    ],
-                    generationConfig: {
-                        temperature: 0.9,
-                        topK: 40,
-                        topP: 0.95,
-                        maxOutputTokens: 8192,
-                    }
-                };
-
-                // Handle older models that don't support system_instruction field
-                if (model.includes("1.5")) {
-                    requestBody.system_instruction = { parts: [{ text: sysPrompt }] };
-                } else {
-                    requestBody.contents[0].parts[0].text = `[SYSTEM: ${sysPrompt}]\n\n` + requestBody.contents[0].parts[0].text;
+            
+            const model = "gemini-1.5-pro";
+            let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+            
+            let requestBody = {
+                contents: [...previousMsgs, { role: 'user', parts: currentParts }],
+                system_instruction: { parts: [{ text: sysPrompt }] },
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                ],
+                generationConfig: {
+                    temperature: 0.9,
+                    topK: 40,
+                    topP: 0.95,
+                    maxOutputTokens: 8192,
                 }
+            };
 
-                try {
-                    const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestBody),
-                        signal: abortController.signal
-                    });
-                    
-                    if(response.ok) {
-                        data = await response.json();
-                        success = true;
-                        break;
-                    } 
-                } catch(e) {
-                    continue;
-                }
+            const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
+                signal: abortController.signal
+            });
+            
+            if(response.ok) {
+                data = await response.json();
+                success = true;
             }
 
             document.getElementById(loaderId).remove();
@@ -842,28 +822,25 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             els.wsIframe.classList.add('hidden');
             els.wsRawOutput.classList.remove('hidden');
-            els.wsRawOutput.innerText = "Simulating execution environment...\n";
             
             let data = null;
             let success = false;
-
-            for(let model of API_MODELS) {
-                let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: "Act as a code runner terminal. Return ONLY the output. Code:\n" + code }] }]
-                        })
-                    });
-                    if(response.ok) {
-                        data = await response.json();
-                        success = true;
-                        break;
-                    }
-                } catch(e) { continue; }
-            }
+            const model = "gemini-1.5-pro";
+            let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Act as a code runner terminal. Return ONLY the output. Code:\n" + code }] }]
+                    })
+                });
+                if(response.ok) {
+                    data = await response.json();
+                    success = true;
+                }
+            } catch(e) {}
 
             if(success && data && data.candidates && data.candidates[0].content) {
                  const out = data.candidates[0].content.parts[0].text;
@@ -882,24 +859,22 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let data = null;
         let success = false;
+        const model = "gemini-1.5-pro";
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
-        for(let model of API_MODELS) {
-            let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Obfuscate this code heavily using varied techniques. Return ONLY the code. Code:\n" + code }] }]
-                    })
-                });
-                if(response.ok) {
-                    data = await response.json();
-                    success = true;
-                    break;
-                }
-            } catch(e) { continue; }
-        }
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: "Obfuscate this code heavily using varied techniques. Return ONLY the code. Code:\n" + code }] }]
+                })
+            });
+            if(response.ok) {
+                data = await response.json();
+                success = true;
+            }
+        } catch(e) {}
 
         if(success && data.candidates && data.candidates[0].content) {
              let res = data.candidates[0].content.parts[0].text.replace(/```\w*/g, '').replace(/```/g, '').trim();
@@ -931,24 +906,22 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let data = null;
         let success = false;
+        const model = "gemini-1.5-pro";
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
-        for(let model of API_MODELS) {
-            let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. Code:\n" + code }] }]
-                    })
-                });
-                if(response.ok) {
-                    data = await response.json();
-                    success = true;
-                    break;
-                }
-            } catch(e) { continue; }
-        }
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. Code:\n" + code }] }]
+                })
+            });
+            if(response.ok) {
+                data = await response.json();
+                success = true;
+            }
+        } catch(e) {}
 
         if(success && data.candidates && data.candidates[0].content) {
              let resCode = data.candidates[0].content.parts[0].text;
