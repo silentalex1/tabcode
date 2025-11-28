@@ -11,9 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }))
             }));
             localStorage.setItem('prysmis_history', JSON.stringify(historyToSave));
-        } catch (e) {
-            
-        }
+        } catch (e) {}
     }
 
     async function setupCspBypass() {
@@ -41,16 +39,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const id = Math.random().toString(36).substring(2);
                     return new Promise((resolve, reject) => {
                         const queue = [];
-                        let done = !1,
-                            error = null,
-                            onData = null;
+                        let done = !1, error = null, onData = null;
                         const reqObj = {
                             onStart: d => {
                                 resolve({
-                                    ok: d.ok,
-                                    status: d.status,
-                                    statusText: d.statusText,
-                                    headers: new Headers(d.headers),
+                                    ok: d.ok, status: d.status, statusText: d.statusText, headers: new Headers(d.headers),
                                     json: async () => {
                                         const chunks = [];
                                         while (!done || queue.length > 0) {
@@ -61,56 +54,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         const total = chunks.reduce((a, c) => a + c.length, 0);
                                         const res = new Uint8Array(total);
                                         let off = 0;
-                                        for (const c of chunks) {
-                                            res.set(c, off);
-                                            off += c.length
-                                        }
+                                        for (const c of chunks) { res.set(c, off); off += c.length }
                                         return JSON.parse(new TextDecoder().decode(res))
                                     },
-                                    body: {
-                                        getReader: () => ({
-                                            read: async () => {
-                                                while (!done || queue.length > 0) {
-                                                    if (queue.length > 0) return {
-                                                        value: queue.shift(),
-                                                        done: !1
-                                                    };
-                                                    if (error) throw new Error(error);
-                                                    await new Promise(r => onData = r)
-                                                }
-                                                return {
-                                                    value: undefined,
-                                                    done: !0
-                                                }
-                                            }
-                                        })
-                                    }
+                                    body: { getReader: () => ({ read: async () => { while (!done || queue.length > 0) { if (queue.length > 0) return { value: queue.shift(), done: !1 }; if (error) throw new Error(error); await new Promise(r => onData = r) } return { value: undefined, done: !0 } } }) }
                                 })
                             },
-                            onChunk: v => {
-                                queue.push(v);
-                                if (onData) {
-                                    const r = onData;
-                                    onData = null;
-                                    r()
-                                }
-                            },
-                            onDone: () => {
-                                done = !0;
-                                if (onData) onData()
-                            },
-                            onError: e => {
-                                error = e;
-                                if (!done) reject(new TypeError(e));
-                                if (onData) onData()
-                            }
+                            onChunk: v => { queue.push(v); if (onData) { const r = onData; onData = null; r() } },
+                            onDone: () => { done = !0; if (onData) onData() },
+                            onError: e => { error = e; if (!done) reject(new TypeError(e)); if (onData) onData() }
                         };
                         requests.set(id, reqObj);
-                        iframe.contentWindow.postMessage({
-                            url,
-                            options,
-                            id
-                        }, "*")
+                        iframe.contentWindow.postMessage({ url, options, id }, "*")
                     })
                 };
                 iframe.onload = () => resolve(proxyFetch);
@@ -204,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    const MODEL_NAME = "gemini-1.5-pro";
+    const MODEL_NAME = "gemini-1.5-flash";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -219,10 +174,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderHistory();
 
-    document.addEventListener('runCmdGlobal', (e) => executeCommand(e.detail));
-    document.addEventListener('insertFormatGlobal', (e) => insertFormatInternal(e.detail.start, e.detail.end));
-    document.addEventListener('clearMediaGlobal', () => clearMediaInternal());
-    document.addEventListener('setModeGlobal', (e) => changeMode(e.detail));
+    window.chipAction = (mode, prompt) => {
+        changeMode(mode);
+        els.input.value = prompt;
+        handleSend();
+    };
+
+    window.runCmd = (cmd) => executeCommand(cmd);
+    
+    window.insertFormat = (s, e) => {
+        const start = els.input.selectionStart;
+        const end = els.input.selectionEnd;
+        const txt = els.input.value;
+        els.input.value = txt.substring(0, start) + s + txt.substring(start, end) + e + txt.substring(end);
+        els.input.focus();
+    };
+    
+    window.clearMedia = () => {
+        uploadedFile = { data: null, type: null };
+        els.mediaPreview.innerHTML = '';
+        els.fileInput.value = '';
+    };
+
+    window.copyCode = (btn) => {
+        const code = btn.parentElement.nextElementSibling.innerText;
+        navigator.clipboard.writeText(code);
+        const original = btn.innerText;
+        btn.innerText = "COPIED";
+        setTimeout(() => btn.innerText = original, 1000);
+    };
 
     function changeMode(val) {
         updateDropdownUI(val);
@@ -315,20 +295,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.cmdPopup.classList.remove('flex');
         els.input.value = '';
         els.input.focus();
-    }
-
-    function insertFormatInternal(s, e) {
-        const start = els.input.selectionStart;
-        const end = els.input.selectionEnd;
-        const txt = els.input.value;
-        els.input.value = txt.substring(0, start) + s + txt.substring(start, end) + e + txt.substring(end);
-        els.input.focus();
-    }
-
-    function clearMediaInternal() {
-        uploadedFile = { data: null, type: null };
-        els.mediaPreview.innerHTML = '';
-        els.fileInput.value = '';
     }
 
     function toggleSettings(show) {
@@ -711,7 +677,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function showNotification(msg) {
         const notif = document.createElement('div');
         notif.className = 'notification';
-        notif.innerHTML = `<i class="fa-brands fa-discord text-accent text-lg"></i> ${msg}`;
+        notif.innerHTML = `<i class="fa-solid fa-comment-dots text-accent text-lg"></i> ${msg}`;
         els.notificationArea.appendChild(notif);
         setTimeout(() => {
             notif.style.animation = 'slideOutRight 0.3s forwards';
