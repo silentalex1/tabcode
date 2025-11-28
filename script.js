@@ -1,3 +1,109 @@
+/* PRYSMIS CSP BYPASS v2.0 (PostMessage Proxy) */
+async function setupCspBypass() {
+    return new Promise(resolve => {
+        try {
+            const workerCode = `window.addEventListener('message',async(e)=>{const{url,options,id}=e.data;try{const response=await fetch(url,options);const headers={};response.headers.forEach((v,k)=>headers[k]=v);window.parent.postMessage({type:'PROXY_START',id,status:response.status,statusText:response.statusText,ok:response.ok,headers},'*');if(!response.body){window.parent.postMessage({type:'PROXY_DONE',id},'*');return}const reader=response.body.getReader();while(true){const{done,value}=await reader.read();if(done){window.parent.postMessage({type:'PROXY_DONE',id},'*');break}window.parent.postMessage({type:'PROXY_CHUNK',id,value},'*')}}catch(err){window.parent.postMessage({type:'PROXY_ERROR',id,error:err.message},'*')}});`;
+            const blob = new Blob([`<script>${workerCode}<\/script>`], { type: 'text/html' });
+            const iframe = document.createElement("iframe");
+            iframe.style.cssText = "display:none;width:0;height:0;";
+            iframe.setAttribute("sandbox", "allow-scripts");
+            iframe.src = URL.createObjectURL(blob);
+            document.body.appendChild(iframe);
+            const requests = new Map();
+            window.addEventListener("message", e => {
+                const d = e.data;
+                if (!d || !d.type || !d.type.startsWith("PROXY_")) return;
+                const req = requests.get(d.id);
+                if (!req) return;
+                if (d.type === "PROXY_START") req.onStart(d);
+                else if (d.type === "PROXY_CHUNK") req.onChunk(d.value);
+                else if (d.type === "PROXY_DONE") req.onDone();
+                else if (d.type === "PROXY_ERROR") req.onError(d.error)
+            });
+            const proxyFetch = (url, options) => {
+                const id = Math.random().toString(36).substring(2);
+                return new Promise((resolve, reject) => {
+                    const queue = [];
+                    let done = !1,
+                        error = null,
+                        onData = null;
+                    const reqObj = {
+                        onStart: d => {
+                            resolve({
+                                ok: d.ok,
+                                status: d.status,
+                                statusText: d.statusText,
+                                headers: new Headers(d.headers),
+                                json: async () => {
+                                    const chunks = [];
+                                    while (!done || queue.length > 0) {
+                                        if (queue.length > 0) chunks.push(queue.shift());
+                                        else if (error) throw new Error(error);
+                                        else await new Promise(r => onData = r)
+                                    }
+                                    const total = chunks.reduce((a, c) => a + c.length, 0);
+                                    const res = new Uint8Array(total);
+                                    let off = 0;
+                                    for (const c of chunks) {
+                                        res.set(c, off);
+                                        off += c.length
+                                    }
+                                    return JSON.parse(new TextDecoder().decode(res))
+                                },
+                                body: {
+                                    getReader: () => ({
+                                        read: async () => {
+                                            while (!done || queue.length > 0) {
+                                                if (queue.length > 0) return {
+                                                    value: queue.shift(),
+                                                    done: !1
+                                                };
+                                                if (error) throw new Error(error);
+                                                await new Promise(r => onData = r)
+                                            }
+                                            return {
+                                                value: undefined,
+                                                done: !0
+                                            }
+                                        }
+                                    })
+                                }
+                            })
+                        },
+                        onChunk: v => {
+                            queue.push(v);
+                            if (onData) {
+                                const r = onData;
+                                onData = null;
+                                r()
+                            }
+                        },
+                        onDone: () => {
+                            done = !0;
+                            if (onData) onData()
+                        },
+                        onError: e => {
+                            error = e;
+                            if (!done) reject(new TypeError(e));
+                            if (onData) onData()
+                        }
+                    };
+                    requests.set(id, reqObj);
+                    iframe.contentWindow.postMessage({
+                        url,
+                        options,
+                        id
+                    }, "*")
+                })
+            };
+            iframe.onload = () => resolve(proxyFetch);
+            setTimeout(() => resolve(proxyFetch), 2000)
+        } catch (e) {
+            console.warn("CSP Bypass failed, falling back"), resolve(window.fetch)
+        }
+    })
+}
+
 window.setInput = function(txt) {
     const input = document.getElementById('prompt-input');
     if(input) { input.value = txt; input.focus(); }
@@ -86,7 +192,10 @@ function saveChatToStorage(chatHistory) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // INIT CSP BYPASS
+    const safeFetch = await setupCspBypass();
+
     const els = {
         input: document.getElementById('prompt-input'),
         submitBtn: document.getElementById('submit-btn'),
@@ -659,41 +768,47 @@ document.addEventListener('DOMContentLoaded', () => {
             const mode = els.modeTxt.innerText;
             let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered.`;
             if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER.";
+            
             if (uploadedFile.data && (text.includes('scan') || text.includes('analyze'))) {
                 sysPrompt += " Perform Deep File Analysis. Return breakdown: 1. Metadata, 2. Content Summary, 3. Structural Analysis, 4. Key Findings.";
             }
 
-            const messages = [{ role: 'system', content: sysPrompt }];
-            
-            chatHistory[chatIndex].messages.slice(-10).forEach(m => {
-                if(m.role === 'ai') messages.push({ role: 'assistant', content: m.text });
-                else messages.push({ role: 'user', content: m.text });
-            });
+            const previousMsgs = chatHistory[chatIndex].messages.slice(-10).map(m => ({
+                role: m.role === 'ai' ? 'model' : 'user',
+                parts: [{ text: m.text }]
+            }));
 
-            const userContent = [];
-            userContent.push({ type: "text", text: text });
-            if(uploadedFile.data) {
-                userContent.push({ type: "image_url", image_url: { url: `data:${uploadedFile.type};base64,${uploadedFile.data}` } });
-            }
-            messages.push({ role: 'user', content: userContent });
+            const currentParts = [{ text: text }];
+            if(uploadedFile.data) currentParts.push({ inline_data: { mime_type: uploadedFile.type, data: uploadedFile.data } });
 
             let data = null;
             let success = false;
             
-            const url = `https://api.groq.com/openai/v1/chat/completions`;
+            const model = "gemini-1.5-pro";
+            let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
             
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('prysmis_key')}`
-                },
-                body: JSON.stringify({
-                    model: "llama-3.2-90b-vision-preview",
-                    messages: messages,
+            let requestBody = {
+                contents: [...previousMsgs, { role: 'user', parts: currentParts }],
+                system_instruction: { parts: [{ text: sysPrompt }] },
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                ],
+                generationConfig: {
                     temperature: 0.9,
-                    max_completion_tokens: 8192
-                }),
+                    topK: 40,
+                    topP: 0.95,
+                    maxOutputTokens: 8192,
+                }
+            };
+
+            // USE CSP BYPASS FETCH
+            const response = await safeFetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
                 signal: abortController.signal
             });
             
@@ -706,8 +821,8 @@ document.addEventListener('DOMContentLoaded', () => {
             els.flashOverlay.classList.add('opacity-0');
             els.flashOverlay.classList.remove('bg-flash-green');
 
-            if(success && data && data.choices && data.choices[0].message) {
-                const aiText = data.choices[0].message.content;
+            if(success && data && data.candidates && data.candidates[0].content) {
+                const aiText = data.candidates[0].content.parts[0].text;
                 chatHistory[chatIndex].messages.push({ role: 'ai', text: aiText, img: null });
                 saveChatToStorage(chatHistory);
                 streamResponse(aiText);
@@ -820,17 +935,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let data = null;
             let success = false;
+            const model = "gemini-1.5-pro";
+            let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
             
             try {
-                const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+                const response = await safeFetch(url, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('prysmis_key')}`
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        model: "llama-3.2-90b-vision-preview",
-                        messages: [{ role: "user", content: "Act as a code runner terminal. Return ONLY the output. Code:\n" + code }]
+                        contents: [{ parts: [{ text: "Act as a code runner terminal. Return ONLY the output. Code:\n" + code }] }]
                     })
                 });
                 if(response.ok) {
@@ -839,8 +952,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch(e) {}
 
-            if(success && data && data.choices) {
-                 const out = data.choices[0].message.content;
+            if(success && data && data.candidates && data.candidates[0].content) {
+                 const out = data.candidates[0].content.parts[0].text;
                  els.wsRawOutput.innerText = out;
                  logToTerminal("Execution complete.");
             } else {
@@ -856,17 +969,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let data = null;
         let success = false;
+        const model = "gemini-1.5-pro";
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
-            const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+            const response = await safeFetch(url, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('prysmis_key')}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: "llama-3.2-90b-vision-preview",
-                    messages: [{ role: "user", content: "Obfuscate this code heavily using varied techniques. Return ONLY the code. Code:\n" + code }]
+                    contents: [{ parts: [{ text: "Obfuscate this code heavily using varied techniques. Return ONLY the code. Code:\n" + code }] }]
                 })
             });
             if(response.ok) {
@@ -875,8 +986,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch(e) {}
 
-        if(success && data && data.choices) {
-             let res = data.choices[0].message.content.replace(/```\w*/g, '').replace(/```/g, '').trim();
+        if(success && data && data.candidates && data.candidates[0].content) {
+             let res = data.candidates[0].content.parts[0].text.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.wsEditor.value = res;
              logToTerminal("Obfuscation complete.");
              showNotification("Code Obfuscated.");
@@ -905,17 +1016,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let data = null;
         let success = false;
+        const model = "gemini-1.5-pro";
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
-            const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+            const response = await safeFetch(url, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('prysmis_key')}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: "llama-3.2-90b-vision-preview",
-                    messages: [{ role: "user", content: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. Code:\n" + code }]
+                    contents: [{ parts: [{ text: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. Code:\n" + code }] }]
                 })
             });
             if(response.ok) {
@@ -924,8 +1033,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch(e) {}
 
-        if(success && data && data.choices) {
-             let resCode = data.choices[0].message.content.replace(/```\w*/g, '').replace(/```/g, '').trim();
+        if(success && data && data.candidates && data.candidates[0].content) {
+             let resCode = data.candidates[0].content.parts[0].text;
+             resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.wsEditor.value = resCode;
              logToTerminal("Deobfuscation complete (AI).");
              showNotification("Code Deobfuscated.");
