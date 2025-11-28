@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(els.fastSpeedToggle) localStorage.setItem('prysmis_fast_speed', els.fastSpeedToggle.checked);
         if(els.themeSelector) {
             localStorage.setItem('prysmis_theme', els.themeSelector.value);
-            document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white ${els.themeSelector.value}`;
+            document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-violet-500 selection:text-white ${els.themeSelector.value}`;
         }
         els.saveSettings.textContent = "Saved";
         els.saveSettings.classList.add('bg-green-500', 'text-white');
@@ -693,7 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for(let model of API_MODELS) {
                 let url = model.startsWith("http") ? model : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-                if(model.includes("stream")) url = url.replace(":generateContent", ""); // Handle legacy url format if needed
+                if(model.includes("stream")) url = url.replace(":generateContent", "");
 
                 try {
                     const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
