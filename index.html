@@ -29,9 +29,9 @@
     <div id="notification-area" class="fixed top-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
 
     <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-panel/90 backdrop-blur-2xl border-r border-white/5 transform -translate-x-full md:translate-x-0 md:static md:w-24 md:bg-transparent md:border-r-0 transition-transform duration-300 z-[100] flex flex-col items-center py-8" aria-label="Main Navigation">
-        <button class="w-14 h-14 bg-gradient-to-br from-accent to-accent-dark rounded-2xl flex items-center justify-center shadow-glow mb-auto cursor-pointer hover:scale-105 transition duration-300 group relative shrink-0 z-[101] pointer-events-auto border border-white/10" id="home-btn" aria-label="Go to Home">
+        <button class="w-14 h-14 bg-gradient-to-br from-red-600 to-red-900 rounded-2xl flex items-center justify-center shadow-glow mb-auto cursor-pointer hover:scale-105 transition duration-300 group relative shrink-0 z-[101] pointer-events-auto border border-white/10" id="home-btn" aria-label="Go to Home">
             <i class="fa-solid fa-bolt text-white text-2xl pointer-events-none"></i>
-            <span class="tooltip-right md:block hidden">Home</span>
+            <span class="tooltip-right md:block hidden">Home & Clear</span>
         </button>
 
         <div class="flex flex-col gap-8 mb-auto mt-8 w-full items-center">
@@ -72,6 +72,7 @@
                 
                 <div id="mode-dropdown" class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-72 bg-panel/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[9999] py-2 max-h-72 overflow-y-auto custom-scrollbar ring-1 ring-white/5">
                     <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-accent w-5"></i> AI Assistant</div>
+                    <div class="mode-item" data-val="Exploit Creation" data-icon="fa-skull"><i class="fa-solid fa-skull text-red-500 w-5"></i> Exploit Creation</div>
                     <div class="mode-item" data-val="Coding" data-icon="fa-code"><i class="fa-solid fa-code text-cyan-400 w-5"></i> Coding</div>
                     <div class="mode-item" data-val="Image Generation" data-icon="fa-image"><i class="fa-solid fa-image text-purple-400 w-5"></i> Image Generation</div>
                     <div class="mode-item" data-val="Code Dumper" data-icon="fa-terminal"><i class="fa-solid fa-terminal text-emerald-500 w-5"></i> Code Dumper</div>
@@ -198,6 +199,29 @@
                          </div>
                      </div>
                  </div>
+             </div>
+        </div>
+
+        <div id="exploit-ui" class="hidden flex-1 flex-col h-full relative bg-main z-[10] overflow-hidden">
+             <div class="sticky top-0 h-16 bg-panel border-b border-white/5 flex items-center justify-between px-6 z-[9000] shrink-0 w-full shadow-lg backdrop-blur-xl">
+                 <div class="flex items-center gap-4">
+                     <i class="fa-solid fa-skull text-red-500 text-xl"></i>
+                     <span class="text-sm font-bold tracking-widest text-red-500">EXPLOIT STUDIO</span>
+                     <div class="h-6 w-px bg-white/10 mx-2"></div>
+                     <select id="exploit-subject" class="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-gray-300 outline-none focus:border-red-500 transition font-mono uppercase tracking-wider">
+                         <option value="General">General Scripting</option>
+                         <option value="Roblox">Roblox (Luau)</option>
+                         <option value="Minecraft">Minecraft (Java/Bedrock)</option>
+                         <option value="FiveM">FiveM (Lua)</option>
+                         <option value="Python">Python Tools</option>
+                         <option value="JavaScript">Browser JS</option>
+                     </select>
+                 </div>
+                 <button id="exploit-improve-btn" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg text-[10px] font-bold transition flex items-center gap-2 tracking-widest font-mono shadow-lg shadow-red-500/20"><i class="fa-solid fa-wand-magic-sparkles"></i> AI IMPROVE CODE</button>
+             </div>
+             <div class="flex-1 flex relative bg-[#050505]">
+                 <div class="w-12 border-r border-white/5 flex flex-col items-center pt-4 text-gray-700 text-xs font-mono select-none bg-[#0a0a0a]" id="exploit-lines">1</div>
+                 <textarea id="exploit-editor" class="flex-1 bg-transparent text-gray-300 font-mono text-[13px] p-4 outline-none resize-none custom-scrollbar leading-6 z-10" spellcheck="false" placeholder="-- Enter exploit code here..."></textarea>
              </div>
         </div>
 
