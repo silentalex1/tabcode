@@ -1,110 +1,126 @@
-
-async function setupCspBypass() {
-    return new Promise(resolve => {
-        try {
-            const workerCode = `window.addEventListener('message',async(e)=>{const{url,options,id}=e.data;try{const response=await fetch(url,options);const headers={};response.headers.forEach((v,k)=>headers[k]=v);window.parent.postMessage({type:'PROXY_START',id,status:response.status,statusText:response.statusText,ok:response.ok,headers},'*');if(!response.body){window.parent.postMessage({type:'PROXY_DONE',id},'*');return}const reader=response.body.getReader();while(true){const{done,value}=await reader.read();if(done){window.parent.postMessage({type:'PROXY_DONE',id},'*');break}window.parent.postMessage({type:'PROXY_CHUNK',id,value},'*')}}catch(err){window.parent.postMessage({type:'PROXY_ERROR',id,error:err.message},'*')}});`;
-            const blob = new Blob([`<script>${workerCode}<\/script>`], { type: 'text/html' });
-            const iframe = document.createElement("iframe");
-            iframe.style.cssText = "display:none;width:0;height:0;";
-            iframe.setAttribute("sandbox", "allow-scripts");
-            iframe.src = URL.createObjectURL(blob);
-            document.body.appendChild(iframe);
-            const requests = new Map();
-            window.addEventListener("message", e => {
-                const d = e.data;
-                if (!d || !d.type || !d.type.startsWith("PROXY_")) return;
-                const req = requests.get(d.id);
-                if (!req) return;
-                if (d.type === "PROXY_START") req.onStart(d);
-                else if (d.type === "PROXY_CHUNK") req.onChunk(d.value);
-                else if (d.type === "PROXY_DONE") req.onDone();
-                else if (d.type === "PROXY_ERROR") req.onError(d.error)
-            });
-            const proxyFetch = (url, options) => {
-                const id = Math.random().toString(36).substring(2);
-                return new Promise((resolve, reject) => {
-                    const queue = [];
-                    let done = !1,
-                        error = null,
-                        onData = null;
-                    const reqObj = {
-                        onStart: d => {
-                            resolve({
-                                ok: d.ok,
-                                status: d.status,
-                                statusText: d.statusText,
-                                headers: new Headers(d.headers),
-                                json: async () => {
-                                    const chunks = [];
-                                    while (!done || queue.length > 0) {
-                                        if (queue.length > 0) chunks.push(queue.shift());
-                                        else if (error) throw new Error(error);
-                                        else await new Promise(r => onData = r)
-                                    }
-                                    const total = chunks.reduce((a, c) => a + c.length, 0);
-                                    const res = new Uint8Array(total);
-                                    let off = 0;
-                                    for (const c of chunks) {
-                                        res.set(c, off);
-                                        off += c.length
-                                    }
-                                    return JSON.parse(new TextDecoder().decode(res))
-                                },
-                                body: {
-                                    getReader: () => ({
-                                        read: async () => {
-                                            while (!done || queue.length > 0) {
-                                                if (queue.length > 0) return {
-                                                    value: queue.shift(),
-                                                    done: !1
-                                                };
-                                                if (error) throw new Error(error);
-                                                await new Promise(r => onData = r)
-                                            }
-                                            return {
-                                                value: undefined,
-                                                done: !0
-                                            }
-                                        }
-                                    })
-                                }
-                            })
-                        },
-                        onChunk: v => {
-                            queue.push(v);
-                            if (onData) {
-                                const r = onData;
-                                onData = null;
-                                r()
-                            }
-                        },
-                        onDone: () => {
-                            done = !0;
-                            if (onData) onData()
-                        },
-                        onError: e => {
-                            error = e;
-                            if (!done) reject(new TypeError(e));
-                            if (onData) onData()
-                        }
-                    };
-                    requests.set(id, reqObj);
-                    iframe.contentWindow.postMessage({
-                        url,
-                        options,
-                        id
-                    }, "*")
-                })
-            };
-            iframe.onload = () => resolve(proxyFetch);
-            setTimeout(() => resolve(proxyFetch), 2000)
-        } catch (e) {
-            resolve(window.fetch)
-        }
-    })
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
+    function saveChatToStorage(chatHistory) {
+        try {
+            const historyToSave = chatHistory.map(chat => ({
+                id: chat.id,
+                title: chat.title,
+                messages: chat.messages.map(msg => ({
+                    role: msg.role,
+                    text: msg.text,
+                    img: msg.img && msg.img.length > 5000 ? null : msg.img 
+                }))
+            }));
+            localStorage.setItem('prysmis_history', JSON.stringify(historyToSave));
+        } catch (e) {
+            
+        }
+    }
+
+    async function setupCspBypass() {
+        return new Promise(resolve => {
+            try {
+                const workerCode = `window.addEventListener('message',async(e)=>{const{url,options,id}=e.data;try{const response=await fetch(url,options);const headers={};response.headers.forEach((v,k)=>headers[k]=v);window.parent.postMessage({type:'PROXY_START',id,status:response.status,statusText:response.statusText,ok:response.ok,headers},'*');if(!response.body){window.parent.postMessage({type:'PROXY_DONE',id},'*');return}const reader=response.body.getReader();while(true){const{done,value}=await reader.read();if(done){window.parent.postMessage({type:'PROXY_DONE',id},'*');break}window.parent.postMessage({type:'PROXY_CHUNK',id,value},'*')}}catch(err){window.parent.postMessage({type:'PROXY_ERROR',id,error:err.message},'*')}});`;
+                const blob = new Blob([`<script>${workerCode}<\/script>`], { type: 'text/html' });
+                const iframe = document.createElement("iframe");
+                iframe.style.cssText = "display:none;width:0;height:0;";
+                iframe.setAttribute("sandbox", "allow-scripts");
+                iframe.src = URL.createObjectURL(blob);
+                document.body.appendChild(iframe);
+                const requests = new Map();
+                window.addEventListener("message", e => {
+                    const d = e.data;
+                    if (!d || !d.type || !d.type.startsWith("PROXY_")) return;
+                    const req = requests.get(d.id);
+                    if (!req) return;
+                    if (d.type === "PROXY_START") req.onStart(d);
+                    else if (d.type === "PROXY_CHUNK") req.onChunk(d.value);
+                    else if (d.type === "PROXY_DONE") req.onDone();
+                    else if (d.type === "PROXY_ERROR") req.onError(d.error)
+                });
+                const proxyFetch = (url, options) => {
+                    const id = Math.random().toString(36).substring(2);
+                    return new Promise((resolve, reject) => {
+                        const queue = [];
+                        let done = !1,
+                            error = null,
+                            onData = null;
+                        const reqObj = {
+                            onStart: d => {
+                                resolve({
+                                    ok: d.ok,
+                                    status: d.status,
+                                    statusText: d.statusText,
+                                    headers: new Headers(d.headers),
+                                    json: async () => {
+                                        const chunks = [];
+                                        while (!done || queue.length > 0) {
+                                            if (queue.length > 0) chunks.push(queue.shift());
+                                            else if (error) throw new Error(error);
+                                            else await new Promise(r => onData = r)
+                                        }
+                                        const total = chunks.reduce((a, c) => a + c.length, 0);
+                                        const res = new Uint8Array(total);
+                                        let off = 0;
+                                        for (const c of chunks) {
+                                            res.set(c, off);
+                                            off += c.length
+                                        }
+                                        return JSON.parse(new TextDecoder().decode(res))
+                                    },
+                                    body: {
+                                        getReader: () => ({
+                                            read: async () => {
+                                                while (!done || queue.length > 0) {
+                                                    if (queue.length > 0) return {
+                                                        value: queue.shift(),
+                                                        done: !1
+                                                    };
+                                                    if (error) throw new Error(error);
+                                                    await new Promise(r => onData = r)
+                                                }
+                                                return {
+                                                    value: undefined,
+                                                    done: !0
+                                                }
+                                            }
+                                        })
+                                    }
+                                })
+                            },
+                            onChunk: v => {
+                                queue.push(v);
+                                if (onData) {
+                                    const r = onData;
+                                    onData = null;
+                                    r()
+                                }
+                            },
+                            onDone: () => {
+                                done = !0;
+                                if (onData) onData()
+                            },
+                            onError: e => {
+                                error = e;
+                                if (!done) reject(new TypeError(e));
+                                if (onData) onData()
+                            }
+                        };
+                        requests.set(id, reqObj);
+                        iframe.contentWindow.postMessage({
+                            url,
+                            options,
+                            id
+                        }, "*")
+                    })
+                };
+                iframe.onload = () => resolve(proxyFetch);
+                setTimeout(() => resolve(proxyFetch), 2000)
+            } catch (e) {
+                resolve(window.fetch)
+            }
+        })
+    }
+
     const safeFetch = await setupCspBypass();
 
     const els = {
@@ -256,10 +272,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function executeCommand(cmd) {
         if(cmd === '/clear') {
-            currentChatId = null;
-            els.chatFeed.innerHTML = '';
-            els.chatFeed.appendChild(els.heroSection);
-            els.heroSection.style.display = 'flex';
+            if(confirm("Are you sure you want to clear the current chat?")) {
+                currentChatId = null;
+                els.chatFeed.innerHTML = '';
+                els.chatFeed.appendChild(els.heroSection);
+                els.heroSection.style.display = 'flex';
+                showNotification("Chat cleared.");
+            }
         }
         else if(cmd === '/features') {
             const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: var(--accent);">Prysmis Features</div><hr class="visual-line"><ul class="feature-list"><li>Scan Analysis: "Analyze this file"</li><li>Visual Recognition</li><li>Secure Workspace Environment</li><li>Multi-Mode Logic</li><li>Roleplay Immersion</li><li>Tab Cloaking</li></ul>`;
