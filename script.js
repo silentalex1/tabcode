@@ -1,4 +1,3 @@
-/* PRYSMIS CSP BYPASS v2.0 (PostMessage Proxy) */
 async function setupCspBypass() {
     return new Promise(resolve => {
         try {
