@@ -1,29 +1,33 @@
-// Global functions defined immediately to prevent onclick errors
-window.runCmd = function(cmd) {
-    document.dispatchEvent(new CustomEvent('runCmdGlobal', { detail: cmd }));
-};
-
-window.chipAction = function(mode, prompt) {
-    document.dispatchEvent(new CustomEvent('chipActionGlobal', { detail: { mode, prompt } }));
-};
-
-window.insertFormat = function(s, e) {
-    document.dispatchEvent(new CustomEvent('insertFormatGlobal', { detail: { start: s, end: e } }));
-};
-
-window.clearMedia = function() {
-    document.dispatchEvent(new CustomEvent('clearMediaGlobal'));
-};
-
-window.copyCode = function(btn) {
-    const code = btn.parentElement.nextElementSibling.innerText;
-    navigator.clipboard.writeText(code);
-    const original = btn.innerText;
-    btn.innerText = "COPIED";
-    setTimeout(() => btn.innerText = original, 1000);
-};
-
 document.addEventListener('DOMContentLoaded', async () => {
+    // --- Passcode Logic ---
+    const passOverlay = document.getElementById('passcode-overlay');
+    const passInput = document.getElementById('passcode-input');
+    const passBtn = document.getElementById('passcode-btn');
+    const passError = document.getElementById('passcode-error');
+
+    function checkPass() {
+        if(passInput.value === 'schoolistrash') {
+            passOverlay.style.opacity = '0';
+            setTimeout(() => {
+                passOverlay.classList.add('hidden');
+                passOverlay.classList.remove('flex');
+            }, 500);
+        } else {
+            passError.style.opacity = '1';
+            passInput.classList.add('border-red-500');
+            setTimeout(() => {
+                passError.style.opacity = '0';
+                passInput.classList.remove('border-red-500');
+            }, 2000);
+        }
+    }
+
+    passBtn.addEventListener('click', checkPass);
+    passInput.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') checkPass();
+    });
+    // ----------------------
+
     function saveChatToStorage(chatHistory) {
         try {
             const historyToSave = chatHistory.map(chat => ({
@@ -39,11 +43,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {}
     }
 
-    // Safe Proxy Setup with automatic fallback to standard fetch if Blob/CSP fails
     async function setupCspBypass() {
         return new Promise(resolve => {
             try {
-                // Try creating the worker blob
+                // Try to create the proxy iframe. If CSP blocks Blob URLs, this will throw.
                 const workerCode = `window.addEventListener('message',async(e)=>{const{url,options,id}=e.data;try{const response=await fetch(url,options);const headers={};response.headers.forEach((v,k)=>headers[k]=v);window.parent.postMessage({type:'PROXY_START',id,status:response.status,statusText:response.statusText,ok:response.ok,headers},'*');if(!response.body){window.parent.postMessage({type:'PROXY_DONE',id},'*');return}const reader=response.body.getReader();while(true){const{done,value}=await reader.read();if(done){window.parent.postMessage({type:'PROXY_DONE',id},'*');break}window.parent.postMessage({type:'PROXY_CHUNK',id,value},'*')}}catch(err){window.parent.postMessage({type:'PROXY_ERROR',id,error:err.message},'*')}});`;
                 const blob = new Blob([`<script>${workerCode}<\/script>`], { type: 'text/html' });
                 const iframe = document.createElement("iframe");
@@ -98,13 +101,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     })
                 };
                 
+                // If iframe loads, use proxy. If it errors, we will fallback.
                 iframe.onload = () => resolve(proxyFetch);
-                // Fallback if iframe fails to load in 2s
-                setTimeout(() => resolve(proxyFetch), 2000);
-
+                
+                // Fallback if loading takes too long (blocked)
+                setTimeout(() => resolve(window.fetch), 2000);
             } catch (e) {
-                // If blob creation fails (CSP error), fallback to standard fetch immediately
-                console.warn("Proxy setup failed, falling back to standard fetch:", e);
+                // IMPORTANT: Fallback to standard fetch if Blob is blocked
+                console.warn("CSP Blocked Blob Proxy, using standard fetch");
                 resolve(window.fetch);
             }
         })
@@ -193,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    const MODEL_NAME = "gemini-1.5-flash"; // Stable Model
+    const MODEL_NAME = "gemini-1.5-flash";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -208,15 +212,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderHistory();
 
-    // Event listeners from global events
-    document.addEventListener('runCmdGlobal', (e) => executeCommand(e.detail));
-    document.addEventListener('insertFormatGlobal', (e) => insertFormatInternal(e.detail.start, e.detail.end));
-    document.addEventListener('clearMediaGlobal', () => clearMediaInternal());
-    document.addEventListener('chipActionGlobal', (e) => {
-        changeMode(e.detail.mode);
-        els.input.value = e.detail.prompt;
+    // EXPOSE FUNCTIONS TO WINDOW TO FIX "is not a function" ERRORS
+    window.chipAction = (mode, prompt) => {
+        changeMode(mode);
+        els.input.value = prompt;
         handleSend();
-    });
+    };
+
+    window.runCmd = (cmd) => executeCommand(cmd);
+    
+    window.insertFormat = (s, e) => {
+        const start = els.input.selectionStart;
+        const end = els.input.selectionEnd;
+        const txt = els.input.value;
+        els.input.value = txt.substring(0, start) + s + txt.substring(start, end) + e + txt.substring(end);
+        els.input.focus();
+    };
+    
+    window.clearMedia = () => {
+        uploadedFile = { data: null, type: null };
+        if(els.mediaPreview) els.mediaPreview.innerHTML = '';
+        if(els.fileInput) els.fileInput.value = '';
+    };
+
+    window.copyCode = (btn) => {
+        const code = btn.parentElement.nextElementSibling.innerText;
+        navigator.clipboard.writeText(code);
+        const original = btn.innerText;
+        btn.innerText = "COPIED";
+        setTimeout(() => btn.innerText = original, 1000);
+    };
 
     function changeMode(val) {
         updateDropdownUI(val);
@@ -283,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         else if(cmd === '/features') {
-            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: var(--accent);">Prysmis Features</div><hr class="visual-line"><ul class="feature-list"><li>System Status: ONLINE</li><li>Scan Analysis: "Analyze this file"</li><li>Visual Recognition</li><li>Secure Workspace Environment</li><li>Multi-Mode Logic</li><li>Roleplay Immersion</li><li>Tab Cloaking</li></ul>`;
+            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: var(--accent);">Prysmis Features</div><hr class="visual-line"><ul class="feature-list"><li>Scan Analysis: "Analyze this file"</li><li>Visual Recognition</li><li>Secure Workspace Environment</li><li>Multi-Mode Logic</li><li>Roleplay Immersion</li><li>Tab Cloaking</li></ul>`;
             const div = document.createElement('div');
             div.className = `flex w-full justify-start msg-anim mb-6`;
             div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ai-msg rounded-bl-none">${featureHTML}</div>`;
@@ -309,20 +334,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.cmdPopup.classList.remove('flex');
         els.input.value = '';
         els.input.focus();
-    }
-
-    function insertFormatInternal(s, e) {
-        const start = els.input.selectionStart;
-        const end = els.input.selectionEnd;
-        const txt = els.input.value;
-        els.input.value = txt.substring(0, start) + s + txt.substring(start, end) + e + txt.substring(end);
-        els.input.focus();
-    }
-
-    function clearMediaInternal() {
-        uploadedFile = { data: null, type: null };
-        els.mediaPreview.innerHTML = '';
-        els.fileInput.value = '';
     }
 
     function toggleSettings(show) {
@@ -526,7 +537,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify({
                     contents: [{ 
                         parts: [{ 
-                            text: `Act as an expert ${subject} developer. Fix bugs, improve logic, and optimize this code. DO NOT ADD COMMENTS. RETURN ONLY CODE. Code:\n${code}` 
+                            text: `Fix, Improve, and Optimize this ${subject} exploit script. Remove errors. Make it more efficient. NO COMMENTS. NO EXPLANATIONS. RETURN ONLY CODE. Code:\n${code}` 
                         }] 
                     }],
                     safetySettings: [
