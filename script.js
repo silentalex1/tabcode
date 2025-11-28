@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', async () => {
-
     const passOverlay = document.getElementById('passcode-overlay');
     const passInput = document.getElementById('passcode-input');
     const passBtn = document.getElementById('passcode-btn');
@@ -26,7 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     passInput.addEventListener('keydown', (e) => {
         if(e.key === 'Enter') checkPass();
     });
-    // ----------------------
 
     function saveChatToStorage(chatHistory) {
         try {
@@ -43,85 +41,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {}
     }
 
-    async function setupCspBypass() {
-        return new Promise(resolve => {
-            try {
-                // Try to create the proxy iframe. If CSP blocks Blob URLs, this will throw.
-                const workerCode = `window.addEventListener('message',async(e)=>{const{url,options,id}=e.data;try{const response=await fetch(url,options);const headers={};response.headers.forEach((v,k)=>headers[k]=v);window.parent.postMessage({type:'PROXY_START',id,status:response.status,statusText:response.statusText,ok:response.ok,headers},'*');if(!response.body){window.parent.postMessage({type:'PROXY_DONE',id},'*');return}const reader=response.body.getReader();while(true){const{done,value}=await reader.read();if(done){window.parent.postMessage({type:'PROXY_DONE',id},'*');break}window.parent.postMessage({type:'PROXY_CHUNK',id,value},'*')}}catch(err){window.parent.postMessage({type:'PROXY_ERROR',id,error:err.message},'*')}});`;
-                const blob = new Blob([`<script>${workerCode}<\/script>`], { type: 'text/html' });
-                const iframe = document.createElement("iframe");
-                iframe.style.cssText = "display:none;width:0;height:0;";
-                iframe.setAttribute("sandbox", "allow-scripts");
-                iframe.src = URL.createObjectURL(blob);
-                document.body.appendChild(iframe);
-                
-                const requests = new Map();
-                window.addEventListener("message", e => {
-                    const d = e.data;
-                    if (!d || !d.type || !d.type.startsWith("PROXY_")) return;
-                    const req = requests.get(d.id);
-                    if (!req) return;
-                    if (d.type === "PROXY_START") req.onStart(d);
-                    else if (d.type === "PROXY_CHUNK") req.onChunk(d.value);
-                    else if (d.type === "PROXY_DONE") req.onDone();
-                    else if (d.type === "PROXY_ERROR") req.onError(d.error)
-                });
-
-                const proxyFetch = (url, options) => {
-                    const id = Math.random().toString(36).substring(2);
-                    return new Promise((resolve, reject) => {
-                        const queue = [];
-                        let done = !1, error = null, onData = null;
-                        const reqObj = {
-                            onStart: d => {
-                                resolve({
-                                    ok: d.ok, status: d.status, statusText: d.statusText, headers: new Headers(d.headers),
-                                    json: async () => {
-                                        const chunks = [];
-                                        while (!done || queue.length > 0) {
-                                            if (queue.length > 0) chunks.push(queue.shift());
-                                            else if (error) throw new Error(error);
-                                            else await new Promise(r => onData = r)
-                                        }
-                                        const total = chunks.reduce((a, c) => a + c.length, 0);
-                                        const res = new Uint8Array(total);
-                                        let off = 0;
-                                        for (const c of chunks) { res.set(c, off); off += c.length }
-                                        return JSON.parse(new TextDecoder().decode(res))
-                                    },
-                                    body: { getReader: () => ({ read: async () => { while (!done || queue.length > 0) { if (queue.length > 0) return { value: queue.shift(), done: !1 }; if (error) throw new Error(error); await new Promise(r => onData = r) } return { value: undefined, done: !0 } } }) }
-                                })
-                            },
-                            onChunk: v => { queue.push(v); if (onData) { const r = onData; onData = null; r() } },
-                            onDone: () => { done = !0; if (onData) onData() },
-                            onError: e => { error = e; if (!done) reject(new TypeError(e)); if (onData) onData() }
-                        };
-                        requests.set(id, reqObj);
-                        iframe.contentWindow.postMessage({ url, options, id }, "*")
-                    })
-                };
-                
-                // If iframe loads, use proxy. If it errors, we will fallback.
-                iframe.onload = () => resolve(proxyFetch);
-                
-                // Fallback if loading takes too long (blocked)
-                setTimeout(() => resolve(window.fetch), 2000);
-            } catch (e) {
-                // IMPORTANT: Fallback to standard fetch if Blob is blocked
-                console.warn("CSP Blocked Blob Proxy, using standard fetch");
-                resolve(window.fetch);
-            }
-        })
-    }
-
-    const safeFetch = await setupCspBypass();
-
     const els = {
         input: document.getElementById('prompt-input'),
         submitBtn: document.getElementById('submit-btn'),
         chatFeed: document.getElementById('chat-feed'),
         heroSection: document.getElementById('hero-section'),
         flashOverlay: document.getElementById('flash-overlay'),
+        loaderContainer: document.getElementById('loader-container'),
         historyModal: document.getElementById('history-modal'),
         historyList: document.getElementById('history-list'),
         searchInput: document.getElementById('search-input'),
@@ -212,7 +138,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderHistory();
 
-    // EXPOSE FUNCTIONS TO WINDOW TO FIX "is not a function" ERRORS
     window.chipAction = (mode, prompt) => {
         changeMode(mode);
         els.input.value = prompt;
@@ -531,7 +456,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
-            const response = await safeFetch(url, {
+             // Direct fetch without proxy as requested
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -748,44 +674,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.input.style.height = 'auto';
         els.cmdPopup.classList.add('hidden');
         
+        // --- LOADING STATE ---
         els.flashOverlay.classList.remove('opacity-0');
         els.flashOverlay.classList.add('bg-flash-green');
-        
-        if(text.toLowerCase().includes('analyze') || text.toLowerCase().includes('scan')) {
-             const scanDiv = document.createElement('div');
-             scanDiv.className = "border border-accent/20 rounded-xl p-4 my-4 bg-panel relative overflow-hidden transition-all duration-300";
-             scanDiv.innerHTML = `<div class="text-xs text-accent font-mono mb-2 flex justify-between"><span>ANALYZING DATA...</span><span id="scan-status" class="animate-pulse">INITIALIZING</span></div><div class="h-1 bg-white/10 rounded overflow-hidden"><div class="h-full bg-accent w-0 transition-all duration-[2000ms] ease-out shadow-glow" style="width: 0%"></div></div><div class="text-right text-[10px] text-white mt-1 font-mono" id="scan-pct">0%</div>`;
-             els.chatFeed.appendChild(scanDiv);
-             
-             setTimeout(() => { 
-                scanDiv.querySelector('div > div').style.width = "45%"; 
-                scanDiv.querySelector('#scan-pct').innerText = "45%";
-                scanDiv.querySelector('#scan-status').innerText = "PARSING BYTES";
-             }, 300);
-             
-             setTimeout(() => { 
-                scanDiv.querySelector('div > div').style.width = "80%"; 
-                scanDiv.querySelector('#scan-pct').innerText = "80%";
-                scanDiv.querySelector('#scan-status').innerText = "IDENTIFYING ANOMALIES";
-             }, 1200);
-
-             setTimeout(() => { 
-                scanDiv.querySelector('div > div').style.width = "100%"; 
-                scanDiv.querySelector('#scan-pct').innerText = "100%";
-                scanDiv.querySelector('#scan-status').innerText = "COMPLETE";
-             }, 2200);
-
-             await new Promise(r => setTimeout(r, 2500));
-             scanDiv.remove();
-        }
-
-        const loaderId = 'loader-' + Date.now();
-        const loaderDiv = document.createElement('div');
-        loaderDiv.id = loaderId;
-        loaderDiv.className = "flex w-full justify-start msg-anim mb-4";
-        loaderDiv.innerHTML = `<div class="bg-panel border border-accent/20 px-4 py-3 rounded-2xl rounded-bl-none flex gap-1.5 items-center"><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-75"></div><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-150"></div></div>`;
-        els.chatFeed.appendChild(loaderDiv);
-        els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
+        els.loaderContainer.classList.remove('hidden'); 
+        // ---------------------
 
         stopGeneration = false;
         abortController = new AbortController();
@@ -829,7 +722,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             };
 
-            const response = await safeFetch(url, {
+            // DIRECT FETCH - NO PROXY
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
@@ -841,9 +735,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 success = true;
             }
 
-            document.getElementById(loaderId).remove();
+            // --- END LOADING STATE ---
             els.flashOverlay.classList.add('opacity-0');
             els.flashOverlay.classList.remove('bg-flash-green');
+            els.loaderContainer.classList.add('hidden');
+            // -------------------------
 
             if(success && data && data.candidates && data.candidates[0].content) {
                 const aiText = data.candidates[0].content.parts[0].text;
@@ -855,7 +751,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
         } catch(err) {
-            if(document.getElementById(loaderId)) document.getElementById(loaderId).remove();
+            // Ensure loader is hidden on error
+            els.flashOverlay.classList.add('opacity-0');
+            els.flashOverlay.classList.remove('bg-flash-green');
+            els.loaderContainer.classList.add('hidden');
+            
             if(err.name !== 'AbortError') appendMsg('ai', "Connection failed. Please check your internet or API Key.");
         }
         window.clearMedia();
@@ -962,7 +862,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
             
             try {
-                const response = await safeFetch(url, {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -995,7 +895,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
-            const response = await safeFetch(url, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1029,7 +929,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
-            const response = await safeFetch(url, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
