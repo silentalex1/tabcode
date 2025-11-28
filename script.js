@@ -171,6 +171,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         wsResizer: document.getElementById('ws-resizer'),
         wsTerminalContainer: document.getElementById('ws-terminal-container'),
         
+        exploitUI: document.getElementById('exploit-ui'),
+        exploitEditor: document.getElementById('exploit-editor'),
+        exploitSubject: document.getElementById('exploit-subject'),
+        exploitImproveBtn: document.getElementById('exploit-improve-btn'),
+        exploitLines: document.getElementById('exploit-lines'),
+
         imgPrompt: document.getElementById('image-prompt'),
         imgGenBtn: document.getElementById('generate-img-btn'),
         generatedImage: document.getElementById('generated-image'),
@@ -228,6 +234,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             else activateDumper();
         } else if (val === 'Image Generation') {
             activateImageGen();
+        } else if (val === 'Exploit Creation') {
+            activateExploitStudio();
         } else {
             switchToStandard();
         }
@@ -419,7 +427,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.heroSection.style.display = 'flex';
         toggleHistory(false);
         switchToStandard();
+        showNotification("New Chat Started");
     }
+
+    els.homeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        startNewChat();
+    });
 
     if(els.newChatBtn) els.newChatBtn.addEventListener('click', startNewChat);
     if(els.quickNewChatBtn) els.quickNewChatBtn.addEventListener('click', startNewChat);
@@ -438,13 +452,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateDropdownUI("Coding");
         els.standardUI.classList.add('hidden');
         els.imageGenUI.classList.add('hidden');
+        els.exploitUI.classList.add('hidden');
         els.codingWorkspace.classList.remove('hidden');
+    }
+
+    function activateExploitStudio() {
+        updateDropdownUI("Exploit Creation");
+        els.standardUI.classList.add('hidden');
+        els.imageGenUI.classList.add('hidden');
+        els.codingWorkspace.classList.add('hidden');
+        els.exploitUI.classList.remove('hidden');
+        els.exploitUI.classList.add('flex');
     }
 
     function activateImageGen() {
         updateDropdownUI("Image Generation");
         els.standardUI.classList.add('hidden');
         els.codingWorkspace.classList.add('hidden');
+        els.exploitUI.classList.add('hidden');
         els.imageGenUI.classList.remove('hidden');
         els.imageGenUI.classList.add('flex');
     }
@@ -459,6 +484,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.codingWorkspace.classList.add('hidden');
         els.imageGenUI.classList.add('hidden');
         els.imageGenUI.classList.remove('flex');
+        els.exploitUI.classList.add('hidden');
+        els.exploitUI.classList.remove('flex');
     }
 
     els.closeDumperKey.addEventListener('click', () => toggleDumperKey(false));
@@ -470,6 +497,71 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleDumperKey(false);
         activateDumper();
         els.dumperKeyInput.value = "";
+    });
+
+    els.exploitEditor.addEventListener('input', () => {
+        const lines = els.exploitEditor.value.split('\n').length;
+        els.exploitLines.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+    });
+
+    els.exploitEditor.addEventListener('scroll', () => {
+        els.exploitLines.scrollTop = els.exploitEditor.scrollTop;
+    });
+
+    els.exploitImproveBtn.addEventListener('click', async () => {
+        const code = els.exploitEditor.value;
+        const subject = els.exploitSubject.value;
+        
+        if(!code.trim()) {
+            showNotification("No code to improve!");
+            return;
+        }
+
+        const btnText = els.exploitImproveBtn.innerHTML;
+        els.exploitImproveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> IMPROVING...`;
+        els.exploitImproveBtn.classList.add('opacity-50', 'pointer-events-none');
+
+        let data = null;
+        let success = false;
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
+
+        try {
+            const response = await safeFetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ 
+                        parts: [{ 
+                            text: `Fix, Improve, and Optimize this ${subject} exploit script. Remove errors. Make it more efficient. NO COMMENTS. NO EXPLANATIONS. RETURN ONLY CODE. Code:\n${code}` 
+                        }] 
+                    }],
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    ]
+                })
+            });
+            if(response.ok) {
+                data = await response.json();
+                success = true;
+            }
+        } catch(e) {}
+
+        els.exploitImproveBtn.innerHTML = btnText;
+        els.exploitImproveBtn.classList.remove('opacity-50', 'pointer-events-none');
+
+        if(success && data && data.candidates && data.candidates[0].content) {
+             let resCode = data.candidates[0].content.parts[0].text;
+             resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
+             els.exploitEditor.value = resCode;
+             const lines = resCode.split('\n').length;
+             els.exploitLines.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+             showNotification("Exploit Improved Successfully.");
+        } else {
+            showNotification("AI Improvement Failed.");
+        }
     });
 
     let isResizing = false;
@@ -515,13 +607,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.input.style.height = 'auto';
         els.input.style.height = Math.min(els.input.scrollHeight, 150) + 'px';
         
-        const val = e.target.value.toLowerCase();
-        if(val.includes('deobfuscate') || val.includes('code') || val.includes('obfuscate') || val.includes('script')) {
-            if(els.modeTxt.innerText !== 'Coding' && els.modeTxt.innerText !== 'Code Dumper') {
-                
-            }
-        }
-        
         if(els.input.value.trim().startsWith('/')) {
             els.cmdPopup.classList.remove('hidden');
             els.cmdPopup.classList.add('flex');
@@ -553,6 +638,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (els.modeTxt.innerText === 'Coding') {
                 els.wsEditor.value = content;
                 logToTerminal(`Loaded file: ${file.name}`);
+            } else if (els.modeTxt.innerText === 'Exploit Creation') {
+                els.exploitEditor.value = content;
+                const lines = content.split('\n').length;
+                els.exploitLines.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
             } else {
                 uploadedFile = { data: content.split(',')[1], type: file.type, name: file.name };
                 let previewContent = file.type.startsWith('image') 
@@ -561,7 +650,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 els.mediaPreview.innerHTML = `<div class="relative w-16 h-16 rounded-xl overflow-hidden border border-accent/20 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
             }
         };
-        if(els.modeTxt.innerText === 'Coding' || file.type.includes('text') || file.name.endsWith('.js') || file.name.endsWith('.lua') || file.name.endsWith('.py') || file.name.endsWith('.txt')) {
+        if(els.modeTxt.innerText === 'Coding' || els.modeTxt.innerText === 'Exploit Creation' || file.type.includes('text') || file.name.endsWith('.js') || file.name.endsWith('.lua') || file.name.endsWith('.py') || file.name.endsWith('.txt')) {
             reader.readAsText(file);
         } else {
             reader.readAsDataURL(file);
@@ -698,8 +787,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const mode = els.modeTxt.innerText;
-            let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered.`;
-            if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER.";
+            let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered. NO COMMENTS IN CODE.`;
+            if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER. NO COMMENTS.";
             
             if (uploadedFile.data && (text.includes('scan') || text.includes('analyze'))) {
                 sysPrompt += " Perform Deep File Analysis. Return breakdown: 1. Metadata, 2. Content Summary, 3. Structural Analysis, 4. Key Findings.";
@@ -762,7 +851,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } catch(err) {
             if(document.getElementById(loaderId)) document.getElementById(loaderId).remove();
-            if(err.name !== 'AbortError') appendMsg('ai', "Connection failed.");
+            if(err.name !== 'AbortError') appendMsg('ai', "Connection failed. Please check your internet or API Key.");
         }
         window.clearMedia();
     }
@@ -872,7 +961,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Act as a code runner terminal. Return ONLY the output. Code:\n" + code }] }]
+                        contents: [{ parts: [{ text: "Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n" + code }] }]
                     })
                 });
                 if(response.ok) {
@@ -905,7 +994,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Obfuscate this code heavily using varied techniques. Return ONLY the code. Code:\n" + code }] }]
+                    contents: [{ parts: [{ text: "Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n" + code }] }]
                 })
             });
             if(response.ok) {
@@ -928,19 +1017,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const code = els.wsEditor.value;
         if(!code.trim()) return;
         
-        logToTerminal("Deobfuscating (Local Heuristics)...");
-        
-        const isLua = code.includes('local ') || code.includes('function') || code.includes('end');
-        const localResult = deob(code, isLua);
-        
-        if (localResult && localResult !== code && localResult.length < code.length) {
-             els.wsEditor.value = localResult;
-             logToTerminal("Deobfuscation complete (Local).");
-             showNotification("Code Deobfuscated.");
-             return;
-        }
-
-        logToTerminal("Local engine insufficient. Engaging AI...");
+        logToTerminal("Deobfuscating...");
         
         let data = null;
         let success = false;
@@ -951,7 +1028,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. Code:\n" + code }] }]
+                    contents: [{ parts: [{ text: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n" + code }] }]
                 })
             });
             if(response.ok) {
