@@ -1,3 +1,4 @@
+/* PRYSMIS CSP BYPASS v2.0 */
 async function setupCspBypass() {
     return new Promise(resolve => {
         try {
@@ -98,101 +99,12 @@ async function setupCspBypass() {
             iframe.onload = () => resolve(proxyFetch);
             setTimeout(() => resolve(proxyFetch), 2000)
         } catch (e) {
-            console.warn("CSP Bypass failed, falling back"), resolve(window.fetch)
+            resolve(window.fetch)
         }
     })
 }
 
-window.setInput = function(txt) {
-    const input = document.getElementById('prompt-input');
-    if(input) { input.value = txt; input.focus(); }
-};
-
-window.runCmd = function(cmd) {
-    const event = new CustomEvent('runCmdGlobal', { detail: cmd });
-    document.dispatchEvent(event);
-};
-
-window.insertFormat = function(s, e) {
-    const event = new CustomEvent('insertFormatGlobal', { detail: {start: s, end: e} });
-    document.dispatchEvent(event);
-};
-
-window.copyCode = function(btn) {
-    const code = btn.parentElement.nextElementSibling.innerText;
-    navigator.clipboard.writeText(code);
-    const original = btn.innerText;
-    btn.innerText = "COPIED";
-    setTimeout(() => btn.innerText = original, 2000);
-};
-
-window.clearMedia = function() {
-    const event = new CustomEvent('clearMediaGlobal');
-    document.dispatchEvent(event);
-};
-
-window.setMode = function(mode) {
-    const event = new CustomEvent('setModeGlobal', { detail: mode });
-    document.dispatchEvent(event);
-};
-
-window.chipAction = function(mode, text) {
-    window.setMode(mode);
-    setTimeout(() => {
-        window.setInput(text);
-    }, 50);
-};
-
-function deob(code, isLua = false) {
-    let out = code;
-    try {
-        for (let i = 0; i < 99; i++) {
-            let old = out;
-            out = out.replace(/\\x([0-9a-f]{2})/gi, (m, h) => String.fromCharCode(parseInt(h, 16)))
-            out = out.replace(/\\u([0-9a-f]{4})/gi, (m, h) => String.fromCharCode(parseInt(h, 16)))
-            out = out.replace(/0x([a-f0-9]+)/gi, (m, h) => parseInt(h, 16).toString())
-            out = out.replace(/!0/g, "true").replace(/!1/g, "false").replace(/!!\[\]/g, "true")
-            
-            if (!isLua) {
-                out = out.replace(/\b_0x[a-f0-9]{4,8}\b/g, (m) => { try { return typeof window[m] !== 'undefined' ? window[m] : m } catch(e){return m} })
-                out = out.replace(/eval\s*\(\s*function\s*\([^\)]*\)\s*\{([^}]*)\}\s*\(\s*['"][^'"]*['"]\s*(?:,\s*\d+\s*){3}/s, (m, body) => "/*eval*/(" + body.replace(/^return/, "") + ")")
-                out = out.replace(/\bfunction\s*\([^)]*\)\s*\{\s*return\s*[^}]*\}\s*\(\s*\)\s*;?/g, "")
-                out = out.replace(/;\s*;+/g, ";").replace(/,\s*,+/g, ",")
-                out = out.replace(/if\s*\(\s*true\s*\)\s*\{([^}]+)\}\s*else\s*\{[^}]*\}/g, "$1")
-                out = out.replace(/if\s*\(\s*false\s*\)\s*\{[^}]*\}\s*else\s*\{([^}]+)\}/g, "$1")
-                out = out.replace(/\[\s*(['"])(\w+)\1\s*\]/g, '.$2');
-            } else {
-                out = out.replace(/loadstring\s*\(\s*game\s*:\s*HttpGet\s*\([^)]+\)\s*\)\s*\(\s*\)/g, "-- Remote Script Loaded")
-                out = out.replace(/--\[\[[\s\S]*?--\]\]/g, "")
-                out = out.replace(/load%s*%(%s*"\s*\\(\d+%s*\\%d+%s*)*"\s*"\s*%)%/g,(m,s)=>{let bytes=s.match(/\d+/g);return bytes ? new Function('return "'+bytes.map(b=>String.fromCharCode(b)).join("")+'"')() : m})
-            }
-            if (out === old) break;
-        }
-    } catch(e) {
-        return code; 
-    }
-    return out.replace(/;\s*;/g, ";").replace(/,\s*,/g, ",").replace(/\s+/g, " ").trim();
-}
-
-function saveChatToStorage(chatHistory) {
-    try {
-        const historyToSave = chatHistory.map(chat => ({
-            id: chat.id,
-            title: chat.title,
-            messages: chat.messages.map(msg => ({
-                role: msg.role,
-                text: msg.text,
-                img: msg.img && msg.img.length > 5000 ? null : msg.img 
-            }))
-        }));
-        localStorage.setItem('prysmis_history', JSON.stringify(historyToSave));
-    } catch (e) {
-        
-    }
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
-    // INIT CSP BYPASS
     const safeFetch = await setupCspBypass();
 
     const els = {
@@ -269,6 +181,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let abortController = null;
     let currentInterval = null;
     let dragCounter = 0;
+
+    const MODEL_NAME = "gemini-1.5-pro";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -783,8 +697,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             let data = null;
             let success = false;
             
-            const model = "gemini-1.5-pro";
-            let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
+            let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
             
             let requestBody = {
                 contents: [...previousMsgs, { role: 'user', parts: currentParts }],
@@ -803,7 +716,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             };
 
-            // USE CSP BYPASS FETCH
             const response = await safeFetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -934,8 +846,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             let data = null;
             let success = false;
-            const model = "gemini-1.5-pro";
-            let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
+            let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
             
             try {
                 const response = await safeFetch(url, {
@@ -968,8 +879,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let data = null;
         let success = false;
-        const model = "gemini-1.5-pro";
-        let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
             const response = await safeFetch(url, {
@@ -1015,8 +925,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let data = null;
         let success = false;
-        const model = "gemini-1.5-pro";
-        let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
             const response = await safeFetch(url, {
