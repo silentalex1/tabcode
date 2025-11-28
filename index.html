@@ -15,6 +15,19 @@
 </head>
 <body class="bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white theme-midnight">
 
+    <div id="passcode-overlay" class="fixed inset-0 z-[999999] bg-black flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="text-center p-8 animate-fade-in max-w-md w-full">
+            <h1 class="majestic-text text-4xl mb-2 tracking-widest text-white">PRYSMIS</h1>
+            <p class="text-gray-500 text-[10px] uppercase tracking-[0.3em] mb-10">Security Clearance Required</p>
+            <div class="relative group">
+                <input type="password" id="passcode-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-center text-white outline-none focus:border-red-500 focus:bg-white/10 transition-all duration-300 font-mono tracking-widest placeholder-gray-700" placeholder="ENTER PASSCODE">
+                <div class="absolute inset-0 rounded-xl border border-red-500/0 group-focus-within:border-red-500/50 pointer-events-none transition-all duration-500 shadow-[0_0_30px_rgba(239,68,68,0)] group-focus-within:shadow-[0_0_30px_rgba(239,68,68,0.2)]"></div>
+            </div>
+            <button id="passcode-btn" class="mt-6 w-full bg-white text-black font-bold py-4 rounded-xl hover:scale-[1.02] transition-transform uppercase text-xs tracking-[0.2em] shadow-lg cursor-pointer">Unlock System</button>
+            <p id="passcode-error" class="text-red-500 text-xs mt-4 h-4 font-mono opacity-0 transition-opacity">ACCESS DENIED</p>
+        </div>
+    </div>
+
     <div class="glow-bg"></div>
     <div class="vignette"></div>
     <div id="flash-overlay" class="pointer-events-none fixed inset-0 z-0 opacity-0 transition-opacity duration-500 mix-blend-screen"></div>
