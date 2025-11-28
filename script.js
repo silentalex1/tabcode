@@ -659,46 +659,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const mode = els.modeTxt.innerText;
             let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered.`;
             if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER.";
-            
             if (uploadedFile.data && (text.includes('scan') || text.includes('analyze'))) {
                 sysPrompt += " Perform Deep File Analysis. Return breakdown: 1. Metadata, 2. Content Summary, 3. Structural Analysis, 4. Key Findings.";
             }
 
-            const previousMsgs = chatHistory[chatIndex].messages.slice(-10).map(m => ({
-                role: m.role === 'ai' ? 'model' : 'user',
-                parts: [{ text: m.text }]
-            }));
+            const messages = [{ role: 'system', content: sysPrompt }];
+            
+            chatHistory[chatIndex].messages.slice(-10).forEach(m => {
+                if(m.role === 'ai') messages.push({ role: 'assistant', content: m.text });
+                else messages.push({ role: 'user', content: m.text });
+            });
 
-            const currentParts = [{ text: text }];
-            if(uploadedFile.data) currentParts.push({ inline_data: { mime_type: uploadedFile.type, data: uploadedFile.data } });
+            const userContent = [];
+            userContent.push({ type: "text", text: text });
+            if(uploadedFile.data) {
+                userContent.push({ type: "image_url", image_url: { url: `data:${uploadedFile.type};base64,${uploadedFile.data}` } });
+            }
+            messages.push({ role: 'user', content: userContent });
 
             let data = null;
             let success = false;
             
-            const model = "gemini-1.5-pro";
-            let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+            const url = `https://api.groq.com/openai/v1/chat/completions`;
             
-            let requestBody = {
-                contents: [...previousMsgs, { role: 'user', parts: currentParts }],
-                system_instruction: { parts: [{ text: sysPrompt }] },
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                ],
-                generationConfig: {
-                    temperature: 0.9,
-                    topK: 40,
-                    topP: 0.95,
-                    maxOutputTokens: 8192,
-                }
-            };
-
-            const response = await fetch(`${url}?key=${localStorage.getItem('prysmis_key')}`, {
+            const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody),
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('prysmis_key')}`
+                },
+                body: JSON.stringify({
+                    model: "llama-3.2-90b-vision-preview",
+                    messages: messages,
+                    temperature: 0.9,
+                    max_completion_tokens: 8192
+                }),
                 signal: abortController.signal
             });
             
@@ -711,8 +706,8 @@ document.addEventListener('DOMContentLoaded', () => {
             els.flashOverlay.classList.add('opacity-0');
             els.flashOverlay.classList.remove('bg-flash-green');
 
-            if(success && data && data.candidates && data.candidates[0].content) {
-                const aiText = data.candidates[0].content.parts[0].text;
+            if(success && data && data.choices && data.choices[0].message) {
+                const aiText = data.choices[0].message.content;
                 chatHistory[chatIndex].messages.push({ role: 'ai', text: aiText, img: null });
                 saveChatToStorage(chatHistory);
                 streamResponse(aiText);
@@ -825,15 +820,17 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let data = null;
             let success = false;
-            const model = "gemini-1.5-pro";
-            let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
             
             try {
-                const response = await fetch(url, {
+                const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('prysmis_key')}`
+                    },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Act as a code runner terminal. Return ONLY the output. Code:\n" + code }] }]
+                        model: "llama-3.2-90b-vision-preview",
+                        messages: [{ role: "user", content: "Act as a code runner terminal. Return ONLY the output. Code:\n" + code }]
                     })
                 });
                 if(response.ok) {
@@ -842,8 +839,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch(e) {}
 
-            if(success && data && data.candidates && data.candidates[0].content) {
-                 const out = data.candidates[0].content.parts[0].text;
+            if(success && data && data.choices) {
+                 const out = data.choices[0].message.content;
                  els.wsRawOutput.innerText = out;
                  logToTerminal("Execution complete.");
             } else {
@@ -859,15 +856,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let data = null;
         let success = false;
-        const model = "gemini-1.5-pro";
-        let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
-            const response = await fetch(url, {
+            const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('prysmis_key')}`
+                },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Obfuscate this code heavily using varied techniques. Return ONLY the code. Code:\n" + code }] }]
+                    model: "llama-3.2-90b-vision-preview",
+                    messages: [{ role: "user", content: "Obfuscate this code heavily using varied techniques. Return ONLY the code. Code:\n" + code }]
                 })
             });
             if(response.ok) {
@@ -876,8 +875,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch(e) {}
 
-        if(success && data.candidates && data.candidates[0].content) {
-             let res = data.candidates[0].content.parts[0].text.replace(/```\w*/g, '').replace(/```/g, '').trim();
+        if(success && data && data.choices) {
+             let res = data.choices[0].message.content.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.wsEditor.value = res;
              logToTerminal("Obfuscation complete.");
              showNotification("Code Obfuscated.");
@@ -906,15 +905,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let data = null;
         let success = false;
-        const model = "gemini-1.5-pro";
-        let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
-            const response = await fetch(url, {
+            const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('prysmis_key')}`
+                },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. Code:\n" + code }] }]
+                    model: "llama-3.2-90b-vision-preview",
+                    messages: [{ role: "user", content: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. Code:\n" + code }]
                 })
             });
             if(response.ok) {
@@ -923,9 +924,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch(e) {}
 
-        if(success && data.candidates && data.candidates[0].content) {
-             let resCode = data.candidates[0].content.parts[0].text;
-             resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
+        if(success && data && data.choices) {
+             let resCode = data.choices[0].message.content.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.wsEditor.value = resCode;
              logToTerminal("Deobfuscation complete (AI).");
              showNotification("Code Deobfuscated.");
