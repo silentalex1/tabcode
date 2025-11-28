@@ -162,8 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragCounter = 0;
 
     const API_MODELS = [
-        "gemini-1.5-flash-latest",
         "gemini-1.5-pro-latest",
+        "gemini-1.5-flash-latest",
         "gemini-1.0-pro"
     ];
 
@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(els.fastSpeedToggle) localStorage.setItem('prysmis_fast_speed', els.fastSpeedToggle.checked);
         if(els.themeSelector) {
             localStorage.setItem('prysmis_theme', els.themeSelector.value);
-            document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white ${els.themeSelector.value}`;
+            document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-violet-500 selection:text-white ${els.themeSelector.value}`;
         }
         els.saveSettings.textContent = "Saved";
         els.saveSettings.classList.add('bg-green-500', 'text-white');
@@ -398,12 +398,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function activateCodingWorkspace() {
+        updateDropdownUI("Coding");
         els.standardUI.classList.add('hidden');
         els.imageGenUI.classList.add('hidden');
         els.codingWorkspace.classList.remove('hidden');
     }
 
     function activateImageGen() {
+        updateDropdownUI("Image Generation");
         els.standardUI.classList.add('hidden');
         els.codingWorkspace.classList.add('hidden');
         els.imageGenUI.classList.remove('hidden');
