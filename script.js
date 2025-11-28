@@ -53,6 +53,8 @@ function deob(code, isLua = false) {
                 out = out.replace(/eval\s*\(\s*function\s*\([^\)]*\)\s*\{([^}]*)\}\s*\(\s*['"][^'"]*['"]\s*(?:,\s*\d+\s*){3}/s, (m, body) => "/*eval*/(" + body.replace(/^return/, "") + ")")
                 out = out.replace(/\bfunction\s*\([^)]*\)\s*\{\s*return\s*[^}]*\}\s*\(\s*\)\s*;?/g, "")
                 out = out.replace(/;\s*;+/g, ";").replace(/,\s*,+/g, ",")
+                out = out.replace(/if\s*\(\s*true\s*\)\s*\{([^}]+)\}\s*else\s*\{[^}]*\}/g, "$1")
+                out = out.replace(/if\s*\(\s*false\s*\)\s*\{[^}]*\}\s*else\s*\{([^}]+)\}/g, "$1")
             } else {
                 out = out.replace(/loadstring\s*\(\s*game\s*:\s*HttpGet\s*\([^)]+\)\s*\)\s*\(\s*\)/g, "")
                 out = out.replace(/--\[\[[\s\S]*?--\]\]/g, "")
@@ -160,7 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragCounter = 0;
 
     const API_MODELS = [
-        "gemini-2.5-pro:streamGenerateContent?alt=sse", 
         "gemini-1.5-pro-exp-0827",
         "gemini-1.5-pro",
         "gemini-1.5-flash"
@@ -383,6 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
         switchToStandard();
     }
 
+    if(els.homeBtn) els.homeBtn.addEventListener('click', startNewChat);
     if(els.newChatBtn) els.newChatBtn.addEventListener('click', startNewChat);
     if(els.quickNewChatBtn) els.quickNewChatBtn.addEventListener('click', startNewChat);
 
