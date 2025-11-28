@@ -162,10 +162,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentInterval = null;
     let dragCounter = 0;
 
+    // UPDATED MODELS TO FIX 404 ERROR
     const API_MODELS = [
         "gemini-1.5-flash",
         "gemini-1.5-pro",
-        "gemini-1.0-pro"
+        "gemini-pro"
     ];
 
     const loadKey = () => {
@@ -681,6 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let data = null;
             let success = false;
 
+            // Loop through models to handle 404s gracefully
             for(let model of API_MODELS) {
                 let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
                 
@@ -700,6 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
+                // Handle older models that don't support system_instruction field
                 if (model.includes("1.5")) {
                     requestBody.system_instruction = { parts: [{ text: sysPrompt }] };
                 } else {
