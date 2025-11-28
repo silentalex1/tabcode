@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // --- Passcode Logic ---
+
     const passOverlay = document.getElementById('passcode-overlay');
     const passInput = document.getElementById('passcode-input');
     const passBtn = document.getElementById('passcode-btn');
