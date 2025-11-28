@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    // UPDATED MODELS TO FIX 404 ERROR
+    // UPDATED MODELS TO FIX 404 ERROR - REMOVED "-latest" SUFFIX
     const API_MODELS = [
         "gemini-1.5-flash",
         "gemini-1.5-pro",
