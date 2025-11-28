@@ -23,7 +23,7 @@
         <div class="leaves hidden"></div>
         <div class="rain hidden"></div>
         <div class="waves hidden"></div>
-        <div class="sun-container hidden absolute top-10 right-10 w-32 h-32">
+        <div class="sun-container hidden">
             <div class="sun"></div>
             <div class="sun-glow"></div>
         </div>
@@ -81,7 +81,7 @@
                     <i class="fa-solid fa-chevron-down text-[10px] opacity-50 pointer-events-none ml-auto"></i>
                 </button>
                 
-                <div id="mode-dropdown" class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-panel backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[9999] py-1 max-h-64 overflow-y-auto custom-scrollbar">
+                <div id="mode-dropdown" class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-panel backdrop-blur-xl border border-accent/20 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[9999] py-1 max-h-64 overflow-y-auto custom-scrollbar">
                     <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-accent w-5"></i> AI Assistant</div>
                     <div class="mode-item" data-val="Coding" data-icon="fa-code"><i class="fa-solid fa-code text-cyan-400 w-5"></i> Coding</div>
                     <div class="mode-item" data-val="Image Generation" data-icon="fa-image"><i class="fa-solid fa-image text-purple-400 w-5"></i> Image Generation</div>
@@ -226,19 +226,19 @@
     </main>
 
     <div id="settings-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[99999] hidden flex items-center justify-center opacity-0 transition-opacity duration-300" aria-modal="true" role="dialog">
-        <div class="bg-panel border border-white/10 w-full max-w-lg rounded-[2rem] shadow-2xl transform scale-95 transition-all duration-300 relative mx-4 p-8" id="settings-box">
+        <div class="bg-panel border border-accent/20 w-full max-w-lg rounded-[2rem] shadow-2xl transform scale-95 transition-all duration-300 relative mx-4 p-8" id="settings-box">
             <button id="close-settings" class="absolute top-6 right-6 text-gray-500 hover:text-white text-xl" aria-label="Close Settings"><i class="fa-solid fa-xmark"></i></button>
             <h2 class="text-2xl font-bold text-white mb-6">Configuration</h2>
             <div class="space-y-6">
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Gemini API Key</label>
-                    <input type="password" id="api-key-field" class="w-full bg-main border border-white/10 rounded-xl px-5 py-4 text-white text-xs font-mono z-[1000]" placeholder="••••••••••••••••">
+                    <input type="password" id="api-key-field" class="w-full bg-[#0a0a0a] border border-accent/20 rounded-xl px-5 py-4 text-white text-xs font-mono z-[1000]" placeholder="••••••••••••••••">
                     <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-accent text-[10px] mt-3 inline-block hover:underline font-bold">GENERATE KEY</a>
                 </div>
                 
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Theme</label>
-                    <select id="theme-selector" class="w-full bg-main border border-white/10 rounded-xl px-5 py-4 text-white text-xs font-sans outline-none cursor-pointer">
+                    <select id="theme-selector" class="w-full bg-[#0a0a0a] border border-accent/20 rounded-xl px-5 py-4 text-white text-xs font-sans outline-none cursor-pointer">
                         <option value="theme-midnight">Midnight (Default)</option>
                         <option value="theme-sunset">Sunset</option>
                         <option value="theme-forest">Forest</option>
@@ -251,7 +251,7 @@
                     </select>
                 </div>
 
-                 <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                 <div class="flex items-center justify-between p-4 bg-[#0a0a0a] rounded-xl border border-accent/20">
                         <div>
                             <span class="text-sm font-bold text-white block">Fast Response Speed</span>
                         </div>
@@ -266,11 +266,11 @@
     </div>
 
     <div id="history-modal" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[99999] hidden flex items-center justify-center opacity-0 transition-opacity duration-300" aria-modal="true" role="dialog">
-        <div class="bg-panel border border-white/10 w-full max-w-3xl rounded-[2rem] shadow-2xl transform scale-95 transition-all duration-300 relative mx-6 flex flex-col h-[75vh]">
+        <div class="bg-panel border border-accent/20 w-full max-w-3xl rounded-[2rem] shadow-2xl transform scale-95 transition-all duration-300 relative mx-6 flex flex-col h-[75vh]">
             <button id="close-history" class="absolute top-6 right-6 text-gray-500 hover:text-white z-[1000]" aria-label="Close History"><i class="fa-solid fa-xmark text-xl"></i></button>
-            <div class="p-8 border-b border-white/5">
+            <div class="p-8 border-b border-accent/20">
                 <h2 class="text-2xl font-bold text-white mb-6">Chat History</h2>
-                <input type="text" id="search-input" placeholder="Search..." class="w-full bg-[#111] border border-white/5 rounded-2xl py-4 pl-4 text-white transition text-sm z-[1000]">
+                <input type="text" id="search-input" placeholder="Search..." class="w-full bg-[#0a0a0a] border border-accent/20 rounded-2xl py-4 pl-4 text-white transition text-sm z-[1000]">
             </div>
             <div id="history-list" class="flex-1 overflow-y-auto p-6 space-y-2 custom-scrollbar z-[1000]"></div>
         </div>
@@ -280,7 +280,7 @@
         <div class="bg-panel border border-emerald-500/20 w-full max-w-md rounded-[2rem] shadow-2xl transform scale-95 transition-all duration-300 relative mx-4 p-10 text-center">
              <button id="close-dumper-key" class="absolute top-6 right-6 text-gray-500 hover:text-white z-[1000]" aria-label="Close Modal"><i class="fa-solid fa-xmark text-lg"></i></button>
              <h2 class="text-2xl font-bold text-white mb-4">Access Required</h2>
-             <input type="text" id="dumper-key-input" class="w-full bg-[#111] border border-white/10 rounded-xl px-6 py-4 text-white text-center mb-6 font-mono z-[1000]" placeholder="XXXX-XXXX-XXXX">
+             <input type="text" id="dumper-key-input" class="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-6 py-4 text-white text-center mb-6 font-mono z-[1000]" placeholder="XXXX-XXXX-XXXX">
              <button id="verify-key-btn" class="w-full bg-white text-black font-bold py-4 rounded-xl transition hover:bg-emerald-5 cursor-pointer z-[1000]">Verify</button>
         </div>
     </div>
