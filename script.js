@@ -476,7 +476,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         { role: 'user', content: userPrompt }
                     ],
                     model: 'gemini',
-                    seed: Math.floor(Math.random() * 10000)
+                    seed: Math.floor(Math.random() * 10000),
+                    jsonMode: false
                 })
             });
             if(response.ok) {
@@ -735,7 +736,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (uploadedFile.data) {
                 if (uploadedFile.type === 'text') {
                     userMessageContent += `\n\n[Attached File: ${uploadedFile.name}]\nContent:\n${uploadedFile.data}`;
-                } else if (uploadedFile.type && uploadedFile.type.startsWith('image')) {
+                } else if (uploadedFile.type.startsWith('image')) {
                     userMessageContent = [
                         { type: "text", text: text },
                         { type: "image_url", image_url: { url: `data:${uploadedFile.type};base64,${uploadedFile.data}` } }
@@ -743,7 +744,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            const messages = chatHistory[chatIndex].messages.slice(-6).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text }));
+            const messages = chatHistory[chatIndex].messages.slice(-6).map(m => ({ 
+                role: m.role === 'ai' ? 'assistant' : 'user', 
+                content: m.text 
+            }));
             messages.unshift({ role: 'system', content: sysPrompt });
             messages.push({ role: 'user', content: userMessageContent });
 
@@ -756,7 +760,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify({
                     messages: messages,
                     model: 'gemini',
-                    seed: Math.floor(Math.random() * 10000)
+                    seed: Math.floor(Math.random() * 10000),
+                    jsonMode: false
                 }),
                 signal: abortController.signal
             });
@@ -896,7 +901,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             let success = false;
             
             const prompt = `Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n${code}`;
-            
+
             try {
                 const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
@@ -929,7 +934,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let success = false;
         
         const prompt = `Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
-        
+
         try {
             const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
@@ -963,7 +968,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let success = false;
         
         const prompt = `Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
-        
+
         try {
             const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
