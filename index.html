@@ -100,6 +100,11 @@
                     <i class="fa-solid fa-clock-rotate-left text-xl pointer-events-none transition-transform group-hover:-rotate-12"></i>
                     <span class="tooltip-right md:block hidden">History</span>
                 </button>
+
+                 <button id="reset-busy-btn" class="w-12 h-12 rounded-2xl hover:bg-red-500/20 flex items-center justify-center transition duration-300 text-red-500 hover:text-red-400 group relative cursor-pointer z-[101] pointer-events-auto border border-red-500/10" aria-label="Reset Busy State">
+                    <i class="fa-solid fa-power-off text-xl pointer-events-none group-hover:scale-110 transition-transform"></i>
+                    <span class="tooltip-right md:block hidden">Reset Busy</span>
+                </button>
             </div>
             
             <button id="settings-trigger" class="w-12 h-12 rounded-2xl hover:bg-white/5 flex items-center justify-center transition duration-300 text-gray-500 hover:text-white group relative mb-4 cursor-pointer z-[101] pointer-events-auto" aria-label="Open Settings">
@@ -322,7 +327,10 @@
                             <option value="qwen">Qwen 2.5 (Alibaba)</option>
                             <option value="searchgpt">SearchGPT (Web Aware)</option>
                             <option value="evil">Evil Mode (Unfiltered)</option>
+                            <option value="unity">Unity</option>
                             <option value="midijourney">Midijourney</option>
+                            <option value="rtist">Rtist</option>
+                            <option value="p1">Pollinations (Standard)</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
                     </div>
@@ -357,12 +365,8 @@
                             <div class="w-12 h-7 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-accent transition-colors"></div>
                         </label>
                     </div>
-
-                    <button id="reset-connection-btn" class="w-full bg-red-500/10 border border-red-500/30 text-red-400 font-bold py-3 rounded-xl hover:bg-red-500/20 transition uppercase text-[10px] tracking-widest flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-rotate-right"></i> Reset Connection Status
-                    </button>
             </div>
-            <button id="save-settings-btn" class="w-full mt-6 bg-white text-black font-bold py-4 rounded-2xl hover:scale-[1.02] transition-transform shadow-xl cursor-pointer z-[1000] uppercase text-xs tracking-widest">Save Changes</button>
+            <button id="save-settings-btn" class="w-full mt-10 bg-white text-black font-bold py-4 rounded-2xl hover:scale-[1.02] transition-transform shadow-xl cursor-pointer z-[1000] uppercase text-xs tracking-widest">Save Changes</button>
         </div>
     </div>
 
