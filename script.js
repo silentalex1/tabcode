@@ -1,16 +1,27 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const passOverlay = document.getElementById('passcode-overlay');
+    const passContent = document.getElementById('passcode-content');
+    const startupLoader = document.getElementById('startup-loader');
     const passInput = document.getElementById('passcode-input');
     const passBtn = document.getElementById('passcode-btn');
     const passError = document.getElementById('passcode-error');
 
     function checkPass() {
         if(passInput.value === 'schoolistrash') {
-            passOverlay.style.opacity = '0';
+            // Hide Input UI
+            passContent.classList.add('hidden');
+            
+            // Show Loader
+            startupLoader.classList.remove('hidden');
+            
+            // Wait for animation then remove overlay
             setTimeout(() => {
-                passOverlay.classList.add('hidden');
-                passOverlay.classList.remove('flex');
-            }, 500);
+                passOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    passOverlay.classList.add('hidden');
+                    passOverlay.classList.remove('flex');
+                }, 1000);
+            }, 4000); // 4 seconds animation
         } else {
             passError.style.opacity = '1';
             passInput.classList.add('border-red-500');
@@ -47,7 +58,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         chatFeed: document.getElementById('chat-feed'),
         heroSection: document.getElementById('hero-section'),
         flashOverlay: document.getElementById('flash-overlay'),
-        loaderContainer: document.getElementById('loader-container'),
         historyModal: document.getElementById('history-modal'),
         historyList: document.getElementById('history-list'),
         searchInput: document.getElementById('search-input'),
@@ -123,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    const MODEL_NAME = "gemini-1.5-flash";
+    const MODEL_NAME = "gemini-1.5-pro";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -456,7 +466,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
-             // Direct fetch without proxy as requested
+            // Direct fetch
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -674,11 +684,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.input.style.height = 'auto';
         els.cmdPopup.classList.add('hidden');
         
-        // --- LOADING STATE ---
         els.flashOverlay.classList.remove('opacity-0');
         els.flashOverlay.classList.add('bg-flash-green');
-        els.loaderContainer.classList.remove('hidden'); 
-        // ---------------------
+        
+        if(text.toLowerCase().includes('analyze') || text.toLowerCase().includes('scan')) {
+             const scanDiv = document.createElement('div');
+             scanDiv.className = "border border-accent/20 rounded-xl p-4 my-4 bg-panel relative overflow-hidden transition-all duration-300";
+             scanDiv.innerHTML = `<div class="text-xs text-accent font-mono mb-2 flex justify-between"><span>ANALYZING DATA...</span><span id="scan-status" class="animate-pulse">INITIALIZING</span></div><div class="h-1 bg-white/10 rounded overflow-hidden"><div class="h-full bg-accent w-0 transition-all duration-[2000ms] ease-out shadow-glow" style="width: 0%"></div></div><div class="text-right text-[10px] text-white mt-1 font-mono" id="scan-pct">0%</div>`;
+             els.chatFeed.appendChild(scanDiv);
+             
+             setTimeout(() => { 
+                scanDiv.querySelector('div > div').style.width = "45%"; 
+                scanDiv.querySelector('#scan-pct').innerText = "45%";
+                scanDiv.querySelector('#scan-status').innerText = "PARSING BYTES";
+             }, 300);
+             
+             setTimeout(() => { 
+                scanDiv.querySelector('div > div').style.width = "80%"; 
+                scanDiv.querySelector('#scan-pct').innerText = "80%";
+                scanDiv.querySelector('#scan-status').innerText = "IDENTIFYING ANOMALIES";
+             }, 1200);
+
+             setTimeout(() => { 
+                scanDiv.querySelector('div > div').style.width = "100%"; 
+                scanDiv.querySelector('#scan-pct').innerText = "100%";
+                scanDiv.querySelector('#scan-status').innerText = "COMPLETE";
+             }, 2200);
+
+             await new Promise(r => setTimeout(r, 2500));
+             scanDiv.remove();
+        }
+
+        const loaderId = 'loader-' + Date.now();
+        const loaderDiv = document.createElement('div');
+        loaderDiv.id = loaderId;
+        loaderDiv.className = "flex w-full justify-start msg-anim mb-4";
+        loaderDiv.innerHTML = `<div class="bg-panel border border-accent/20 px-4 py-3 rounded-2xl rounded-bl-none flex gap-1.5 items-center"><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-75"></div><div class="w-1.5 h-1.5 bg-accent rounded-full animate-bounce delay-150"></div></div>`;
+        els.chatFeed.appendChild(loaderDiv);
+        els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
 
         stopGeneration = false;
         abortController = new AbortController();
@@ -722,7 +765,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             };
 
-            // DIRECT FETCH - NO PROXY
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -735,11 +777,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 success = true;
             }
 
-            // --- END LOADING STATE ---
+            document.getElementById(loaderId).remove();
             els.flashOverlay.classList.add('opacity-0');
             els.flashOverlay.classList.remove('bg-flash-green');
-            els.loaderContainer.classList.add('hidden');
-            // -------------------------
 
             if(success && data && data.candidates && data.candidates[0].content) {
                 const aiText = data.candidates[0].content.parts[0].text;
@@ -751,11 +791,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
         } catch(err) {
-            // Ensure loader is hidden on error
-            els.flashOverlay.classList.add('opacity-0');
-            els.flashOverlay.classList.remove('bg-flash-green');
-            els.loaderContainer.classList.add('hidden');
-            
+            if(document.getElementById(loaderId)) document.getElementById(loaderId).remove();
             if(err.name !== 'AbortError') appendMsg('ai', "Connection failed. Please check your internet or API Key.");
         }
         window.clearMedia();
