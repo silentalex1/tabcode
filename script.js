@@ -8,16 +8,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function checkPass() {
         if(passInput.value === 'schoolistrash') {
-            
             passOverlay.style.opacity = '0';
             setTimeout(() => {
                 passOverlay.classList.add('hidden');
                 passOverlay.classList.remove('flex');
                 
-                
                 startupLoader.classList.remove('hidden');
                 startupLoader.classList.add('flex');
-                
                 
                 setTimeout(() => {
                     startupLoader.style.opacity = '0';
@@ -893,8 +890,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(code.trim().startsWith('<html') || code.includes('document.') || code.includes('window.')) {
             els.wsIframe.classList.remove('hidden');
             els.wsRawOutput.classList.add('hidden');
-            const blob = new Blob([code], {type: 'text/html'});
-            els.wsIframe.src = URL.createObjectURL(blob);
+            
+            els.wsIframe.srcdoc = code;
             logToTerminal("Web view rendered.");
         } else {
             els.wsIframe.classList.add('hidden');
