@@ -1,6 +1,4 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
-
     const passOverlay = document.getElementById('passcode-overlay');
     const passInput = document.getElementById('passcode-input');
     const passBtn = document.getElementById('passcode-btn');
@@ -173,13 +171,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.copyCode = (btn) => {
-        const codeBlock = btn.parentElement.nextElementSibling.querySelector('code');
-        if (codeBlock) {
-            navigator.clipboard.writeText(codeBlock.innerText);
-            const original = btn.innerText;
-            btn.innerText = "COPIED";
-            setTimeout(() => btn.innerText = original, 1000);
-        }
+        const code = btn.parentElement.nextElementSibling.innerText;
+        navigator.clipboard.writeText(code);
+        const original = btn.innerText;
+        btn.innerText = "COPIED";
+        setTimeout(() => btn.innerText = original, 1000);
     };
 
     function changeMode(val) {
@@ -773,36 +769,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-5 rounded-[24px] shadow-lg prose ${role === 'user' ? 'user-msg text-white rounded-br-sm cursor-pointer' : 'ai-msg text-gray-200 rounded-bl-sm'}">${content}</div>`;
         els.chatFeed.appendChild(div);
         els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
+        
+        if (role === 'ai') {
+            try {
+                mermaid.init(undefined, div.querySelectorAll('.mermaid'));
+            } catch(e) {}
+        }
     }
 
     function parseMD(text) {
         if (!text) return "";
-        
         let html = text
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-
-        html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-            lang = lang || 'text';
-            if (lang === 'mermaid') {
-                return `<div class="mermaid">${code.trim()}</div>`;
-            }
-            return `
-                <div class="code-block">
-                    <div class="code-header">
-                        <span>${lang.toUpperCase()}</span>
-                        <button class="copy-btn" onclick="window.copyCode(this)">COPY</button>
-                    </div>
-                    <pre><code class="language-${lang}">${code.trim()}</code></pre>
-                </div>`;
-        });
-
-        html = html
+            .replace(/>/g, "&gt;")
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/```mermaid([\s\S]*?)```/g, '<div class="mermaid">$1</div>')
             .replace(/\n/g, '<br>');
-
+            
+        html = html.replace(/```(\w+)?<br>([\s\S]*?)```/g, (match, lang, code) => {
+            const cleanCode = code.replace(/<br>/g, '\n');
+            return `<div class="code-block"><div class="code-header"><span>${lang || 'CODE'}</span><button class="copy-btn" onclick="window.copyCode(this)">COPY</button></div><pre><code class="language-${lang}">${cleanCode}</code></pre></div>`;
+        });
         return html;
     }
 
@@ -822,19 +811,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         let currentText = "";
         
         const isFast = (els.fastSpeedToggle && els.fastSpeedToggle.checked);
-        const delay = isFast ? 1 : 10;
-        const step = isFast ? 10 : 1; 
+        const delay = isFast ? 0 : 10;
+        const step = isFast ? chars.length : 5;
         
         currentInterval = setInterval(() => {
             if(stopGeneration || i >= chars.length) {
                 clearInterval(currentInterval);
                 bubble.innerHTML = parseMD(text);
-                
-                // Render any mermaid diagrams
-                if(text.includes('```mermaid')) {
-                    mermaid.init(undefined, bubble.querySelectorAll('.mermaid'));
-                }
-
+                try { mermaid.init(undefined, bubble.querySelectorAll('.mermaid')); } catch(e) {}
                 if(els.stopAiBtn) els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
                 showContinueButton();
                 return;
@@ -845,7 +829,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 i++;
             }
             
-            // Only update innerHTML occasionally to avoid lag with fast response
             bubble.innerHTML = parseMD(currentText);
             els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
         }, delay);
