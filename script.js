@@ -915,13 +915,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     els.wsRunBtn.addEventListener('click', async () => {
         const code = els.wsEditor.value;
         if(!code.trim()) return;
+        
         logToTerminal("Executing code...");
-        const result = await performAIRequest("Act as a code runner terminal. Return ONLY the output. NO COMMENTS.", `Code:\n${code}`);
-        if (result) {
-             els.wsRawOutput.innerText = result;
-             logToTerminal("Execution complete.");
+        els.wsPlaceholder.classList.add('hidden');
+        
+        if(code.trim().startsWith('<html') || code.includes('document.') || code.includes('window.')) {
+            els.wsIframe.classList.remove('hidden');
+            els.wsRawOutput.classList.add('hidden');
+            const blob = new Blob([code], {type: 'text/html'});
+            els.wsIframe.src = URL.createObjectURL(blob);
+            logToTerminal("Web view rendered.");
         } else {
-            logToTerminal("Execution failed.", 'error');
+            els.wsIframe.classList.add('hidden');
+            els.wsRawOutput.classList.remove('hidden');
+            
+            let data = null;
+            let success = false;
+            
+            const prompt = `Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n${code}`;
+            const result = await performAIRequest(prompt, "Execute Code");
+
+            if(result) {
+                 els.wsRawOutput.innerText = result;
+                 logToTerminal("Execution complete.");
+            } else {
+                logToTerminal("Execution failed.", 'error');
+            }
         }
     });
 
