@@ -37,10 +37,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    passBtn.addEventListener('click', checkPass);
-    passInput.addEventListener('keydown', (e) => {
-        if(e.key === 'Enter') checkPass();
-    });
+    if (passBtn && passInput) {
+        passBtn.addEventListener('click', checkPass);
+        passInput.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') checkPass();
+        });
+    }
 
     function saveChatToStorage(chatHistory) {
         try {
@@ -465,12 +467,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const systemInstruction = "You are an expert coder. Fix, Improve, and Optimize the code provided. NO COMMENTS. NO EXPLANATIONS. RETURN ONLY CODE.";
         const userPrompt = `Subject: ${subject}\n\nCode:\n${code}`;
-        const encodedPrompt = encodeURIComponent(userPrompt);
-        const encodedSys = encodeURIComponent(systemInstruction);
-        const url = `https://text.pollinations.ai/${encodedPrompt}?model=openai&system=${encodedSys}`;
-
+        
         try {
-            const response = await fetch(url, { method: 'GET' });
+            const response = await fetch('https://text.pollinations.ai/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [
+                        { role: 'system', content: systemInstruction },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    model: 'openai'
+                })
+            });
             if(response.ok) {
                 const text = await response.text();
                 data = { content: text };
@@ -572,14 +581,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const lines = content.split('\n').length;
                 els.exploitLines.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
             } else {
-                uploadedFile = { data: content.split(',')[1], type: file.type, name: file.name };
-                let previewContent = file.type.startsWith('image') 
-                    ? `<img src="${content}" class="w-full h-full object-cover">`
-                    : `<div class="flex items-center justify-center h-full bg-white/10 text-xs p-2 text-center break-all">${file.name}</div>`;
-                els.mediaPreview.innerHTML = `<div class="relative w-16 h-16 rounded-xl overflow-hidden border border-accent/20 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
+                const isImage = file.type.startsWith('image');
+                if (isImage) {
+                    uploadedFile = { data: content.split(',')[1], type: file.type, name: file.name };
+                    let previewContent = `<img src="${content}" class="w-full h-full object-cover">`;
+                    els.mediaPreview.innerHTML = `<div class="relative w-16 h-16 rounded-xl overflow-hidden border border-accent/20 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
+                } else {
+                    uploadedFile = { data: content, type: 'text', name: file.name };
+                    let previewContent = `<div class="flex items-center justify-center h-full bg-white/10 text-xs p-2 text-center break-all">${file.name}</div>`;
+                    els.mediaPreview.innerHTML = `<div class="relative w-16 h-16 rounded-xl overflow-hidden border border-accent/20 shadow-lg group">${previewContent}<button class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white" onclick="window.clearMedia()"><i class="fa-solid fa-xmark"></i></button></div>`;
+                }
             }
         };
-        if(els.modeTxt.innerText === 'Coding' || els.modeTxt.innerText === 'Exploit Creation' || file.type.includes('text') || file.name.endsWith('.js') || file.name.endsWith('.lua') || file.name.endsWith('.py') || file.name.endsWith('.txt')) {
+        
+        if(els.modeTxt.innerText === 'Coding' || els.modeTxt.innerText === 'Exploit Creation' || file.type.includes('text') || file.name.endsWith('.js') || file.name.endsWith('.lua') || file.name.endsWith('.py') || file.name.endsWith('.txt') || file.name.endsWith('.html') || file.name.endsWith('.css') || file.name.endsWith('.json')) {
             reader.readAsText(file);
         } else {
             reader.readAsDataURL(file);
@@ -660,11 +675,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const chatIndex = chatHistory.findIndex(c => c.id === currentChatId);
-        chatHistory[chatIndex].messages.push({ role: 'user', text: text, img: uploadedFile.data ? `data:${uploadedFile.type};base64,${uploadedFile.data}` : null });
+        chatHistory[chatIndex].messages.push({ role: 'user', text: text, img: uploadedFile.type && uploadedFile.type.startsWith('image') ? `data:${uploadedFile.type};base64,${uploadedFile.data}` : null });
         saveChatToStorage(chatHistory);
 
         els.heroSection.style.display = 'none';
-        appendMsg('user', text, uploadedFile.data ? `data:${uploadedFile.type};base64,${uploadedFile.data}` : null);
+        appendMsg('user', text, uploadedFile.type && uploadedFile.type.startsWith('image') ? `data:${uploadedFile.type};base64,${uploadedFile.data}` : null);
         
         if (!overrideText) els.input.value = '';
         els.input.style.height = 'auto';
@@ -717,21 +732,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered. NO COMMENTS IN CODE. If asked for a diagram, use Mermaid.js markdown syntax inside a \`\`\`mermaid block.`;
             if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER. NO COMMENTS.";
             
-            if (uploadedFile.data && (text.includes('scan') || text.includes('analyze'))) {
-                sysPrompt += " Perform Deep File Analysis. Return breakdown: 1. Metadata, 2. Content Summary, 3. Structural Analysis, 4. Key Findings.";
+            let userMessageContent = text;
+            if (uploadedFile.data) {
+                if (uploadedFile.type === 'text') {
+                    userMessageContent += `\n\n[Attached File: ${uploadedFile.name}]\nContent:\n${uploadedFile.data}`;
+                }
             }
 
-            const previousMsgs = chatHistory[chatIndex].messages.slice(-6).map(m => m.text).join('\n');
-            const fullPrompt = `${sysPrompt}\n\nHistory:\n${previousMsgs}\n\nUser: ${text}`;
-            
-            const encodedPrompt = encodeURIComponent(fullPrompt);
-            const url = `https://text.pollinations.ai/${encodedPrompt}?model=openai`;
+            const messages = chatHistory[chatIndex].messages.slice(-6).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text }));
+            messages.unshift({ role: 'system', content: sysPrompt });
+            messages.push({ role: 'user', content: userMessageContent });
 
             let data = null;
             let success = false;
             
-            const response = await fetch(url, {
-                method: 'GET',
+            const response = await fetch('https://text.pollinations.ai/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: messages,
+                    model: 'openai',
+                    seed: Math.floor(Math.random() * 10000)
+                }),
                 signal: abortController.signal
             });
             
@@ -870,11 +892,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             let success = false;
             
             const prompt = `Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n${code}`;
-            const encoded = encodeURIComponent(prompt);
-            const url = `https://text.pollinations.ai/${encoded}?model=openai`;
+            const url = 'https://text.pollinations.ai/';
 
             try {
-                const response = await fetch(url);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai' })
+                });
                 if(response.ok) {
                     const text = await response.text();
                     data = { content: text };
@@ -901,11 +926,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         let success = false;
         
         const prompt = `Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
-        const encoded = encodeURIComponent(prompt);
-        const url = `https://text.pollinations.ai/${encoded}?model=openai`;
+        const url = 'https://text.pollinations.ai/';
 
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai' })
+            });
             if(response.ok) {
                 const text = await response.text();
                 data = { content: text };
@@ -933,11 +961,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         let success = false;
         
         const prompt = `Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
-        const encoded = encodeURIComponent(prompt);
-        const url = `https://text.pollinations.ai/${encoded}?model=openai`;
+        const url = 'https://text.pollinations.ai/';
 
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai' })
+            });
             if(response.ok) {
                 const text = await response.text();
                 data = { content: text };
