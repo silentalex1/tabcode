@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         mobileOverlay: document.getElementById('mobile-overlay'),
         sidebar: document.getElementById('sidebar'),
         dropOverlay: document.getElementById('drop-overlay'),
+        resetBusyBtn: document.getElementById('reset-busy-btn'),
         
         wsEditor: document.getElementById('ws-editor'),
         wsIframe: document.getElementById('ws-iframe'),
@@ -137,6 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let abortController = null;
     let currentInterval = null;
     let dragCounter = 0;
+    let isBusy = false;
 
     const loadSettings = () => {
         const fastSpeed = localStorage.getItem('prysmis_fast_speed');
@@ -152,6 +154,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadSettings();
 
     renderHistory();
+
+    if (els.resetBusyBtn) {
+        els.resetBusyBtn.addEventListener('click', () => {
+            if (abortController) abortController.abort();
+            stopGeneration = true;
+            isBusy = false;
+            if (els.stopAiBtn) els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
+            showContinueButton();
+            showNotification("AI State Reset.");
+        });
+    }
 
     window.chipAction = (mode, prompt) => {
         changeMode(mode);
@@ -185,19 +198,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function changeMode(val) {
         updateDropdownUI(val);
-        
-        if(val === 'Coding') {
-            activateCodingWorkspace();
-        } else if(val === 'Code Dumper') {
+        if(val === 'Coding') activateCodingWorkspace();
+        else if(val === 'Code Dumper') {
             if(!isCodeDumperUnlocked) toggleDumperKey(true);
             else activateDumper();
-        } else if (val === 'Image Generation') {
-            activateImageGen();
-        } else if (val === 'Exploit Creation') {
-            activateExploitStudio();
-        } else {
-            switchToStandard();
-        }
+        } else if (val === 'Image Generation') activateImageGen();
+        else if (val === 'Exploit Creation') activateExploitStudio();
+        else switchToStandard();
         toggleDropdown(false);
     }
 
@@ -206,7 +213,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const item = items.find(i => i.dataset.val === val);
         let iconClass = 'fa-sparkles';
         if (item) iconClass = item.dataset.icon || 'fa-sparkles';
-        
         els.modeIcon.innerHTML = `<i class="fa-solid ${iconClass} text-accent"></i>`;
         els.modeTxt.innerText = val;
     }
@@ -455,6 +461,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.exploitLines.scrollTop = els.exploitEditor.scrollTop;
     });
 
+    async function performAIRequest(instruction, prompt) {
+        let preferredModel = localStorage.getItem('prysmis_model') || 'openai';
+        const fallbackModel = 'searchgpt';
+        
+        const tryFetch = async (model) => {
+             const response = await fetch('https://text.pollinations.ai/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [
+                        { role: 'system', content: instruction },
+                        { role: 'user', content: prompt }
+                    ],
+                    model: model,
+                    seed: Math.floor(Math.random() * 10000),
+                    jsonMode: false
+                })
+            });
+            if (!response.ok) throw new Error(`Status ${response.status}`);
+            return await response.text();
+        };
+
+        try {
+            return await tryFetch(preferredModel);
+        } catch (e) {
+            console.warn(`Model ${preferredModel} failed. Retrying with ${fallbackModel}.`);
+            try {
+                return await tryFetch(fallbackModel);
+            } catch (e2) {
+                return null;
+            }
+        }
+    }
+
     els.exploitImproveBtn.addEventListener('click', async () => {
         const code = els.exploitEditor.value;
         const subject = els.exploitSubject.value;
@@ -468,46 +508,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.exploitImproveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> IMPROVING...`;
         els.exploitImproveBtn.classList.add('opacity-50', 'pointer-events-none');
 
-        let data = null;
-        let success = false;
-        const model = localStorage.getItem('prysmis_model') || 'openai';
+        const sys = "You are an expert coder. Fix, Improve, and Optimize the code provided. NO COMMENTS. NO EXPLANATIONS. RETURN ONLY CODE.";
+        const usr = `Subject: ${subject}\n\nCode:\n${code}`;
         
-        const systemInstruction = "You are an expert coder. Fix, Improve, and Optimize the code provided. NO COMMENTS. NO EXPLANATIONS. RETURN ONLY CODE.";
-        const userPrompt = `Subject: ${subject}\n\nCode:\n${code}`;
+        const result = await performAIRequest(sys, usr);
         
-        try {
-            const response = await fetch('https://text.pollinations.ai/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: [
-                        { role: 'system', content: systemInstruction },
-                        { role: 'user', content: userPrompt }
-                    ],
-                    model: model,
-                    seed: Math.floor(Math.random() * 10000),
-                    jsonMode: false
-                })
-            });
-            if(response.ok) {
-                const text = await response.text();
-                data = { content: text };
-                success = true;
-            }
-        } catch(e) {}
-
         els.exploitImproveBtn.innerHTML = btnText;
         els.exploitImproveBtn.classList.remove('opacity-50', 'pointer-events-none');
 
-        if(success && data.content) {
-             let resCode = data.content;
-             resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
+        if(result) {
+             let resCode = result.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.exploitEditor.value = resCode;
              const lines = resCode.split('\n').length;
              els.exploitLines.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
              showNotification("Exploit Improved Successfully.");
         } else {
-            showNotification("AI Improvement Failed.");
+            showNotification("AI Improvement Failed. Try resetting.");
         }
     });
 
@@ -553,7 +569,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     els.input.addEventListener('input', (e) => {
         els.input.style.height = 'auto';
         els.input.style.height = Math.min(els.input.scrollHeight, 150) + 'px';
-        
         if(els.input.value.trim().startsWith('/')) {
             els.cmdPopup.classList.remove('hidden');
             els.cmdPopup.classList.add('flex');
@@ -653,14 +668,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    document.addEventListener('selectionchange', () => {
-        if (document.activeElement === els.input && els.input.selectionStart !== els.input.selectionEnd) {
-            els.textToolbar.classList.remove('hidden');
-        } else {
-            els.textToolbar.classList.add('hidden');
-        }
-    });
-
     function showNotification(msg) {
         const notif = document.createElement('div');
         notif.className = 'notification';
@@ -675,6 +682,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function handleSend(isEdit = false, overrideText = null) {
         const text = overrideText || els.input.value.trim();
         if(!text && !uploadedFile.data) return;
+
+        if(isBusy) {
+            showNotification("System busy. Please click 'Reset Busy' in sidebar.");
+            return;
+        }
 
         els.continueBtn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
 
@@ -708,19 +720,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 scanDiv.querySelector('#scan-pct').innerText = "45%";
                 scanDiv.querySelector('#scan-status').innerText = "PARSING BYTES";
              }, 300);
-             
              setTimeout(() => { 
                 scanDiv.querySelector('div > div').style.width = "80%"; 
                 scanDiv.querySelector('#scan-pct').innerText = "80%";
                 scanDiv.querySelector('#scan-status').innerText = "IDENTIFYING ANOMALIES";
              }, 1200);
-
              setTimeout(() => { 
                 scanDiv.querySelector('div > div').style.width = "100%"; 
                 scanDiv.querySelector('#scan-pct').innerText = "100%";
                 scanDiv.querySelector('#scan-status').innerText = "COMPLETE";
              }, 2200);
-
              await new Promise(r => setTimeout(r, 2500));
              scanDiv.remove();
         }
@@ -734,6 +743,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
 
         stopGeneration = false;
+        isBusy = true;
         abortController = new AbortController();
 
         try {
@@ -760,44 +770,50 @@ document.addEventListener('DOMContentLoaded', async () => {
             messages.unshift({ role: 'system', content: sysPrompt });
             messages.push({ role: 'user', content: userMessageContent });
 
-            let data = null;
-            let success = false;
-            const model = localStorage.getItem('prysmis_model') || 'openai';
-            
-            const response = await fetch('https://text.pollinations.ai/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: messages,
-                    model: model,
-                    seed: Math.floor(Math.random() * 10000),
-                    jsonMode: false
-                }),
-                signal: abortController.signal
-            });
-            
-            if(response.ok) {
-                const resultText = await response.text();
-                data = { content: resultText };
-                success = true;
+            let preferredModel = localStorage.getItem('prysmis_model') || 'openai';
+            const fallbackModel = 'searchgpt'; 
+
+            const tryFetch = async (model) => {
+                const response = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: messages,
+                        model: model,
+                        seed: Math.floor(Math.random() * 10000),
+                        jsonMode: false
+                    }),
+                    signal: abortController.signal
+                });
+                if (!response.ok) throw new Error(`Status ${response.status}`);
+                return await response.text();
+            };
+
+            let resultText = null;
+            try {
+                resultText = await tryFetch(preferredModel);
+            } catch(err) {
+                console.warn(`Primary model ${preferredModel} failed, retrying with ${fallbackModel}`);
+                resultText = await tryFetch(fallbackModel);
             }
 
             document.getElementById(loaderId).remove();
             els.flashOverlay.classList.add('opacity-0');
             els.flashOverlay.classList.remove('bg-flash-green');
+            isBusy = false;
 
-            if(success && data.content) {
-                const aiText = data.content;
-                chatHistory[chatIndex].messages.push({ role: 'ai', text: aiText, img: null });
+            if(resultText) {
+                chatHistory[chatIndex].messages.push({ role: 'ai', text: resultText, img: null });
                 saveChatToStorage(chatHistory);
-                streamResponse(aiText);
+                streamResponse(resultText);
             } else {
-                appendMsg('ai', "Error generating response. Server might be busy.");
+                appendMsg('ai', "Error generating response. Please try switching models in settings or click 'Reset Busy'.");
             }
 
         } catch(err) {
+            isBusy = false;
             if(document.getElementById(loaderId)) document.getElementById(loaderId).remove();
-            if(err.name !== 'AbortError') appendMsg('ai', "Connection failed. Please check internet.");
+            if(err.name !== 'AbortError') appendMsg('ai', "Connection failed. Please click 'Reset Busy' or check internet.");
         }
         window.clearMedia();
     }
@@ -893,45 +909,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     els.wsRunBtn.addEventListener('click', async () => {
         const code = els.wsEditor.value;
         if(!code.trim()) return;
-        
         logToTerminal("Executing code...");
-        els.wsPlaceholder.classList.add('hidden');
-        
-        if(code.trim().startsWith('<html') || code.includes('document.') || code.includes('window.')) {
-            els.wsIframe.classList.remove('hidden');
-            els.wsRawOutput.classList.add('hidden');
-            const blob = new Blob([code], {type: 'text/html'});
-            els.wsIframe.src = URL.createObjectURL(blob);
-            logToTerminal("Web view rendered.");
+        const result = await performAIRequest("Act as a code runner terminal. Return ONLY the output. NO COMMENTS.", `Code:\n${code}`);
+        if (result) {
+             els.wsRawOutput.innerText = result;
+             logToTerminal("Execution complete.");
         } else {
-            els.wsIframe.classList.add('hidden');
-            els.wsRawOutput.classList.remove('hidden');
-            
-            let data = null;
-            let success = false;
-            
-            const prompt = `Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n${code}`;
-
-            try {
-                const response = await fetch('https://text.pollinations.ai/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
-                });
-                if(response.ok) {
-                    const text = await response.text();
-                    data = { content: text };
-                    success = true;
-                }
-            } catch(e) {}
-
-            if(success && data.content) {
-                 const out = data.content;
-                 els.wsRawOutput.innerText = out;
-                 logToTerminal("Execution complete.");
-            } else {
-                logToTerminal("Execution failed.", 'error');
-            }
+            logToTerminal("Execution failed.", 'error');
         }
     });
 
@@ -939,66 +923,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         const code = els.wsEditor.value;
         if(!code.trim()) return;
         logToTerminal("Obfuscating...");
-        
-        let data = null;
-        let success = false;
-        
-        const prompt = `Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
-
-        try {
-            const response = await fetch('https://text.pollinations.ai/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
-            });
-            if(response.ok) {
-                const text = await response.text();
-                data = { content: text };
-                success = true;
-            }
-        } catch(e) {}
-
-        if(success && data.content) {
-             let res = data.content.replace(/```\w*/g, '').replace(/```/g, '').trim();
-             els.wsEditor.value = res;
+        const result = await performAIRequest("Obfuscate this code heavily. Return ONLY code.", `Code:\n${code}`);
+        if (result) {
+             els.wsEditor.value = result.replace(/```\w*/g, '').replace(/```/g, '').trim();
              logToTerminal("Obfuscation complete.");
-             showNotification("Code Obfuscated.");
         } else {
-            logToTerminal("Obfuscation failed.", 'error');
+             logToTerminal("Obfuscation failed.", 'error');
         }
     });
 
     els.wsDeobfBtn.addEventListener('click', async () => {
         const code = els.wsEditor.value;
         if(!code.trim()) return;
-        
         logToTerminal("Deobfuscating...");
-        
-        let data = null;
-        let success = false;
-        
-        const prompt = `Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
-
-        try {
-            const response = await fetch('https://text.pollinations.ai/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
-            });
-            if(response.ok) {
-                const text = await response.text();
-                data = { content: text };
-                success = true;
-            }
-        } catch(e) {}
-
-        if(success && data.content) {
-             let resCode = data.content.replace(/```\w*/g, '').replace(/```/g, '').trim();
-             els.wsEditor.value = resCode;
-             logToTerminal("Deobfuscation complete (AI).");
-             showNotification("Code Deobfuscated.");
+        const result = await performAIRequest("Deobfuscate this code. Rename variables readable. Return ONLY code.", `Code:\n${code}`);
+         if (result) {
+             els.wsEditor.value = result.replace(/```\w*/g, '').replace(/```/g, '').trim();
+             logToTerminal("Deobfuscation complete.");
         } else {
-            logToTerminal("Deobfuscation failed.", 'error');
+             logToTerminal("Deobfuscation failed.", 'error');
         }
     });
 
