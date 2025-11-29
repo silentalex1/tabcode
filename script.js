@@ -466,26 +466,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let data = null;
         let success = false;
-        const apiKey = localStorage.getItem('prysmis_key');
+        
+        const systemInstruction = "You are an expert coder. Fix, Improve, and Optimize the code provided. NO COMMENTS. NO EXPLANATIONS. RETURN ONLY CODE.";
+        const userPrompt = `Subject: ${subject}\n\nCode:\n${code}`;
+        const encodedPrompt = encodeURIComponent(userPrompt);
+        const encodedSys = encodeURIComponent(systemInstruction);
+        const url = `https://text.pollinations.ai/${encodedPrompt}?model=openai&system=${encodedSys}`;
 
         try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-4o",
-                    messages: [
-                        { role: "system", content: "You are an expert coder. Fix, Improve, and Optimize the code provided. NO COMMENTS. NO EXPLANATIONS. RETURN ONLY CODE." },
-                        { role: "user", content: `Subject: ${subject}\n\nCode:\n${code}` }
-                    ],
-                    temperature: 0.7
-                })
-            });
+            const response = await fetch(url, { method: 'GET' });
             if(response.ok) {
-                data = await response.json();
+                const text = await response.text();
+                data = { content: text };
                 success = true;
             }
         } catch(e) {}
@@ -493,8 +485,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.exploitImproveBtn.innerHTML = btnText;
         els.exploitImproveBtn.classList.remove('opacity-50', 'pointer-events-none');
 
-        if(success && data && data.choices && data.choices[0].message.content) {
-             let resCode = data.choices[0].message.content;
+        if(success && data.content) {
+             let resCode = data.content;
              resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.exploitEditor.value = resCode;
              const lines = resCode.split('\n').length;
@@ -664,8 +656,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const text = overrideText || els.input.value.trim();
         if(!text && !uploadedFile.data) return;
 
-        if(!localStorage.getItem('prysmis_key')) return toggleSettings(true);
-        
         els.continueBtn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
 
         if(!currentChatId) {
@@ -735,42 +725,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sysPrompt += " Perform Deep File Analysis. Return breakdown: 1. Metadata, 2. Content Summary, 3. Structural Analysis, 4. Key Findings.";
             }
 
-            const messages = chatHistory[chatIndex].messages.slice(-10).map(m => ({
-                role: m.role === 'ai' ? 'assistant' : 'user',
-                content: m.text 
-            }));
-
-            messages.unshift({ role: "system", content: sysPrompt });
-
-            let userContent = text;
-            if (uploadedFile.data) {
-                userContent = [
-                    { type: "text", text: text },
-                    { type: "image_url", image_url: { url: `data:${uploadedFile.type};base64,${uploadedFile.data}` } }
-                ];
-            }
-            messages.push({ role: "user", content: userContent });
+            const previousMsgs = chatHistory[chatIndex].messages.slice(-6).map(m => m.text).join('\n');
+            const fullPrompt = `${sysPrompt}\n\nHistory:\n${previousMsgs}\n\nUser: ${text}`;
+            
+            const encodedPrompt = encodeURIComponent(fullPrompt);
+            const url = `https://text.pollinations.ai/${encodedPrompt}?model=openai`;
 
             let data = null;
             let success = false;
-            const apiKey = localStorage.getItem('prysmis_key');
             
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-4o",
-                    messages: messages,
-                    temperature: 0.7
-                }),
+            const response = await fetch(url, {
+                method: 'GET',
                 signal: abortController.signal
             });
             
             if(response.ok) {
-                data = await response.json();
+                const resultText = await response.text();
+                data = { content: resultText };
                 success = true;
             }
 
@@ -778,18 +749,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             els.flashOverlay.classList.add('opacity-0');
             els.flashOverlay.classList.remove('bg-flash-green');
 
-            if(success && data && data.choices && data.choices[0].message.content) {
-                const aiText = data.choices[0].message.content;
+            if(success && data.content) {
+                const aiText = data.content;
                 chatHistory[chatIndex].messages.push({ role: 'ai', text: aiText, img: null });
                 saveChatToStorage(chatHistory);
                 streamResponse(aiText);
             } else {
-                appendMsg('ai', "Error generating response. Please check your API Key settings.");
+                appendMsg('ai', "Error generating response. Server might be busy.");
             }
 
         } catch(err) {
             if(document.getElementById(loaderId)) document.getElementById(loaderId).remove();
-            if(err.name !== 'AbortError') appendMsg('ai', "Connection failed. Please check your internet or API Key.");
+            if(err.name !== 'AbortError') appendMsg('ai', "Connection failed. Please check internet.");
         }
         window.clearMedia();
     }
@@ -892,29 +863,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             let data = null;
             let success = false;
-            const apiKey = localStorage.getItem('prysmis_key');
             
+            const prompt = `Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n${code}`;
+            const encoded = encodeURIComponent(prompt);
+            const url = `https://text.pollinations.ai/${encoded}?model=openai`;
+
             try {
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: "gpt-4o",
-                        messages: [{ role: "user", content: "Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n" + code }],
-                        temperature: 0.7
-                    })
-                });
+                const response = await fetch(url);
                 if(response.ok) {
-                    data = await response.json();
+                    const text = await response.text();
+                    data = { content: text };
                     success = true;
                 }
             } catch(e) {}
 
-            if(success && data && data.choices && data.choices[0].message.content) {
-                 const out = data.choices[0].message.content;
+            if(success && data.content) {
+                 const out = data.content;
                  els.wsRawOutput.innerText = out;
                  logToTerminal("Execution complete.");
             } else {
@@ -930,29 +894,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let data = null;
         let success = false;
-        const apiKey = localStorage.getItem('prysmis_key');
+        
+        const prompt = `Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
+        const encoded = encodeURIComponent(prompt);
+        const url = `https://text.pollinations.ai/${encoded}?model=openai`;
 
         try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-4o",
-                    messages: [{ role: "user", content: "Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n" + code }],
-                    temperature: 0.7
-                })
-            });
+            const response = await fetch(url);
             if(response.ok) {
-                data = await response.json();
+                const text = await response.text();
+                data = { content: text };
                 success = true;
             }
         } catch(e) {}
 
-        if(success && data && data.choices && data.choices[0].message.content) {
-             let res = data.choices[0].message.content.replace(/```\w*/g, '').replace(/```/g, '').trim();
+        if(success && data.content) {
+             let res = data.content.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.wsEditor.value = res;
              logToTerminal("Obfuscation complete.");
              showNotification("Code Obfuscated.");
@@ -969,30 +926,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let data = null;
         let success = false;
-        const apiKey = localStorage.getItem('prysmis_key');
+        
+        const prompt = `Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
+        const encoded = encodeURIComponent(prompt);
+        const url = `https://text.pollinations.ai/${encoded}?model=openai`;
 
         try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-4o",
-                    messages: [{ role: "user", content: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n" + code }],
-                    temperature: 0.7
-                })
-            });
+            const response = await fetch(url);
             if(response.ok) {
-                data = await response.json();
+                const text = await response.text();
+                data = { content: text };
                 success = true;
             }
         } catch(e) {}
 
-        if(success && data && data.choices && data.choices[0].message.content) {
-             let resCode = data.choices[0].message.content;
-             resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
+        if(success && data.content) {
+             let resCode = data.content.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.wsEditor.value = resCode;
              logToTerminal("Deobfuscation complete (AI).");
              showNotification("Code Deobfuscated.");
