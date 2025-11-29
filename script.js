@@ -78,7 +78,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         modeIcon: document.getElementById('mode-icon'),
         settingsOverlay: document.getElementById('settings-overlay'),
         settingsBox: document.getElementById('settings-box'),
-        apiKey: document.getElementById('api-key-field'),
         saveSettings: document.getElementById('save-settings-btn'),
         fastSpeedToggle: document.getElementById('fast-speed-toggle'),
         cmdPopup: document.getElementById('cmd-popup'),
@@ -139,8 +138,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let dragCounter = 0;
 
     const loadKey = () => {
-        const key = localStorage.getItem('prysmis_key');
-        if(key && els.apiKey) els.apiKey.value = key;
         const fastSpeed = localStorage.getItem('prysmis_fast_speed');
         if(fastSpeed === 'true' && els.fastSpeedToggle) els.fastSpeedToggle.checked = true;
         const theme = localStorage.getItem('prysmis_theme') || 'theme-midnight';
@@ -295,7 +292,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     els.getStartedBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSettings(true); });
     
     els.saveSettings.addEventListener('click', () => {
-        if(els.apiKey.value.trim()) localStorage.setItem('prysmis_key', els.apiKey.value.trim());
         if(els.fastSpeedToggle) localStorage.setItem('prysmis_fast_speed', els.fastSpeedToggle.checked);
         if(els.themeSelector) {
             localStorage.setItem('prysmis_theme', els.themeSelector.value);
