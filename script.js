@@ -80,6 +80,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         settingsBox: document.getElementById('settings-box'),
         saveSettings: document.getElementById('save-settings-btn'),
         fastSpeedToggle: document.getElementById('fast-speed-toggle'),
+        aiModelSelector: document.getElementById('ai-model-selector'),
+        themeSelector: document.getElementById('theme-selector'),
         cmdPopup: document.getElementById('cmd-popup'),
         textToolbar: document.getElementById('text-toolbar'),
         mediaPreview: document.getElementById('media-preview'),
@@ -91,7 +93,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         mobileOverlay: document.getElementById('mobile-overlay'),
         sidebar: document.getElementById('sidebar'),
         dropOverlay: document.getElementById('drop-overlay'),
-        themeSelector: document.getElementById('theme-selector'),
         
         wsEditor: document.getElementById('ws-editor'),
         wsIframe: document.getElementById('ws-iframe'),
@@ -137,14 +138,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    const loadKey = () => {
+    const loadSettings = () => {
         const fastSpeed = localStorage.getItem('prysmis_fast_speed');
         if(fastSpeed === 'true' && els.fastSpeedToggle) els.fastSpeedToggle.checked = true;
+        
         const theme = localStorage.getItem('prysmis_theme') || 'theme-midnight';
         document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white ${theme}`;
         if(els.themeSelector) els.themeSelector.value = theme;
+        
+        const savedModel = localStorage.getItem('prysmis_model');
+        if(savedModel && els.aiModelSelector) els.aiModelSelector.value = savedModel;
     };
-    loadKey();
+    loadSettings();
 
     renderHistory();
 
@@ -296,6 +301,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(els.themeSelector) {
             localStorage.setItem('prysmis_theme', els.themeSelector.value);
             document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white ${els.themeSelector.value}`;
+        }
+        if(els.aiModelSelector) {
+            localStorage.setItem('prysmis_model', els.aiModelSelector.value);
         }
         els.saveSettings.textContent = "SAVED";
         els.saveSettings.classList.add('bg-green-500', 'text-white');
@@ -462,6 +470,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let data = null;
         let success = false;
+        const model = localStorage.getItem('prysmis_model') || 'openai';
         
         const systemInstruction = "You are an expert coder. Fix, Improve, and Optimize the code provided. NO COMMENTS. NO EXPLANATIONS. RETURN ONLY CODE.";
         const userPrompt = `Subject: ${subject}\n\nCode:\n${code}`;
@@ -475,7 +484,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         { role: 'system', content: systemInstruction },
                         { role: 'user', content: userPrompt }
                     ],
-                    model: 'gemini',
+                    model: model,
                     seed: Math.floor(Math.random() * 10000),
                     jsonMode: false
                 })
@@ -753,13 +762,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             let data = null;
             let success = false;
+            const model = localStorage.getItem('prysmis_model') || 'openai';
             
             const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: messages,
-                    model: 'gemini',
+                    model: model,
                     seed: Math.floor(Math.random() * 10000),
                     jsonMode: false
                 }),
@@ -899,14 +909,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             let data = null;
             let success = false;
-            
+            const model = localStorage.getItem('prysmis_model') || 'openai';
             const prompt = `Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n${code}`;
 
             try {
                 const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
+                    body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: model })
                 });
                 if(response.ok) {
                     const text = await response.text();
@@ -932,14 +942,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let data = null;
         let success = false;
-        
+        const model = localStorage.getItem('prysmis_model') || 'openai';
         const prompt = `Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
 
         try {
             const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: model })
             });
             if(response.ok) {
                 const text = await response.text();
@@ -966,14 +976,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let data = null;
         let success = false;
-        
+        const model = localStorage.getItem('prysmis_model') || 'openai';
         const prompt = `Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
 
         try {
             const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: model })
             });
             if(response.ok) {
                 const text = await response.text();
