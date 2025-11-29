@@ -138,8 +138,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    const MODEL_NAME = "gemini-1.5-flash";
-
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
         if(key && els.apiKey) els.apiKey.value = key;
@@ -468,24 +466,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let data = null;
         let success = false;
-        let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
+        const apiKey = localStorage.getItem('prysmis_key');
 
         try {
-            const response = await fetch(url, {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
                 body: JSON.stringify({
-                    contents: [{ 
-                        parts: [{ 
-                            text: `Fix, Improve, and Optimize this ${subject} exploit script. Remove errors. Make it more efficient. NO COMMENTS. NO EXPLANATIONS. RETURN ONLY CODE. Code:\n${code}` 
-                        }] 
-                    }],
-                    safetySettings: [
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                    ]
+                    model: "gpt-4o",
+                    messages: [
+                        { role: "system", content: "You are an expert coder. Fix, Improve, and Optimize the code provided. NO COMMENTS. NO EXPLANATIONS. RETURN ONLY CODE." },
+                        { role: "user", content: `Subject: ${subject}\n\nCode:\n${code}` }
+                    ],
+                    temperature: 0.7
                 })
             });
             if(response.ok) {
@@ -497,8 +493,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.exploitImproveBtn.innerHTML = btnText;
         els.exploitImproveBtn.classList.remove('opacity-50', 'pointer-events-none');
 
-        if(success && data && data.candidates && data.candidates[0].content) {
-             let resCode = data.candidates[0].content.parts[0].text;
+        if(success && data && data.choices && data.choices[0].message.content) {
+             let resCode = data.choices[0].message.content;
              resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.exploitEditor.value = resCode;
              const lines = resCode.split('\n').length;
@@ -739,40 +735,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sysPrompt += " Perform Deep File Analysis. Return breakdown: 1. Metadata, 2. Content Summary, 3. Structural Analysis, 4. Key Findings.";
             }
 
-            const previousMsgs = chatHistory[chatIndex].messages.slice(-10).map(m => ({
-                role: m.role === 'ai' ? 'model' : 'user',
-                parts: [{ text: m.text }]
+            const messages = chatHistory[chatIndex].messages.slice(-10).map(m => ({
+                role: m.role === 'ai' ? 'assistant' : 'user',
+                content: m.text 
             }));
 
-            const currentParts = [{ text: text }];
-            if(uploadedFile.data) currentParts.push({ inline_data: { mime_type: uploadedFile.type, data: uploadedFile.data } });
+            messages.unshift({ role: "system", content: sysPrompt });
+
+            let userContent = text;
+            if (uploadedFile.data) {
+                userContent = [
+                    { type: "text", text: text },
+                    { type: "image_url", image_url: { url: `data:${uploadedFile.type};base64,${uploadedFile.data}` } }
+                ];
+            }
+            messages.push({ role: "user", content: userContent });
 
             let data = null;
             let success = false;
+            const apiKey = localStorage.getItem('prysmis_key');
             
-            let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
-            
-            let requestBody = {
-                contents: [...previousMsgs, { role: 'user', parts: currentParts }],
-                system_instruction: { parts: [{ text: sysPrompt }] },
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                ],
-                generationConfig: {
-                    temperature: 0.9,
-                    topK: 40,
-                    topP: 0.95,
-                    maxOutputTokens: 8192,
-                }
-            };
-
-            const response = await fetch(url, {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o",
+                    messages: messages,
+                    temperature: 0.7
+                }),
                 signal: abortController.signal
             });
             
@@ -785,8 +778,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             els.flashOverlay.classList.add('opacity-0');
             els.flashOverlay.classList.remove('bg-flash-green');
 
-            if(success && data && data.candidates && data.candidates[0].content) {
-                const aiText = data.candidates[0].content.parts[0].text;
+            if(success && data && data.choices && data.choices[0].message.content) {
+                const aiText = data.choices[0].message.content;
                 chatHistory[chatIndex].messages.push({ role: 'ai', text: aiText, img: null });
                 saveChatToStorage(chatHistory);
                 streamResponse(aiText);
@@ -899,14 +892,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             let data = null;
             let success = false;
-            let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
+            const apiKey = localStorage.getItem('prysmis_key');
             
             try {
-                const response = await fetch(url, {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: "Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n" + code }] }]
+                        model: "gpt-4o",
+                        messages: [{ role: "user", content: "Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n" + code }],
+                        temperature: 0.7
                     })
                 });
                 if(response.ok) {
@@ -915,8 +913,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch(e) {}
 
-            if(success && data && data.candidates && data.candidates[0].content) {
-                 const out = data.candidates[0].content.parts[0].text;
+            if(success && data && data.choices && data.choices[0].message.content) {
+                 const out = data.choices[0].message.content;
                  els.wsRawOutput.innerText = out;
                  logToTerminal("Execution complete.");
             } else {
@@ -932,14 +930,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let data = null;
         let success = false;
-        let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
+        const apiKey = localStorage.getItem('prysmis_key');
 
         try {
-            const response = await fetch(url, {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n" + code }] }]
+                    model: "gpt-4o",
+                    messages: [{ role: "user", content: "Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n" + code }],
+                    temperature: 0.7
                 })
             });
             if(response.ok) {
@@ -948,8 +951,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch(e) {}
 
-        if(success && data && data.candidates && data.candidates[0].content) {
-             let res = data.candidates[0].content.parts[0].text.replace(/```\w*/g, '').replace(/```/g, '').trim();
+        if(success && data && data.choices && data.choices[0].message.content) {
+             let res = data.choices[0].message.content.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.wsEditor.value = res;
              logToTerminal("Obfuscation complete.");
              showNotification("Code Obfuscated.");
@@ -966,14 +969,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let data = null;
         let success = false;
-        let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
+        const apiKey = localStorage.getItem('prysmis_key');
 
         try {
-            const response = await fetch(url, {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n" + code }] }]
+                    model: "gpt-4o",
+                    messages: [{ role: "user", content: "Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n" + code }],
+                    temperature: 0.7
                 })
             });
             if(response.ok) {
@@ -982,8 +990,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch(e) {}
 
-        if(success && data && data.candidates && data.candidates[0].content) {
-             let resCode = data.candidates[0].content.parts[0].text;
+        if(success && data && data.choices && data.choices[0].message.content) {
+             let resCode = data.choices[0].message.content;
              resCode = resCode.replace(/```\w*/g, '').replace(/```/g, '').trim();
              els.wsEditor.value = resCode;
              logToTerminal("Deobfuscation complete (AI).");
