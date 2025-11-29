@@ -167,7 +167,7 @@ body {
 .copy-btn:hover { color: var(--accent); }
 .prose pre { margin: 0; padding: 18px; overflow-x: auto; }
 .prose code { font-family: 'JetBrains Mono', monospace; color: #d8b4fe; font-size: 0.85em; text-shadow: 0 0 10px rgba(216, 180, 254, 0.2); }
-.prose p { margin-bottom: 1em; line-height: 1.7; color: #d1d5db; font-size: 0.95rem; }
+.prose p { margin-bottom: 1em; line-height: 1.7; color: #d1d5db; font-size: 0.95rem; word-break: break-word; }
 .prose strong { color: var(--accent); font-weight: 700; }
 .prose em { color: var(--text-grad-end); font-style: italic; }
 .prose ul { list-style-type: disc; padding-left: 20px; margin-bottom: 10px; }
