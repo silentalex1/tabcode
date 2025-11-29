@@ -1,27 +1,35 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const passOverlay = document.getElementById('passcode-overlay');
-    const passContent = document.getElementById('passcode-content');
-    const startupLoader = document.getElementById('startup-loader');
     const passInput = document.getElementById('passcode-input');
     const passBtn = document.getElementById('passcode-btn');
     const passError = document.getElementById('passcode-error');
+    const startupLoader = document.getElementById('startup-loader');
+    const mainContent = document.getElementById('main-content');
 
     function checkPass() {
         if(passInput.value === 'schoolistrash') {
-            // Hide Input UI
-            passContent.classList.add('hidden');
-            
-            // Show Loader
-            startupLoader.classList.remove('hidden');
-            
-            // Wait for animation then remove overlay
+            // 1. Hide Passcode Overlay
+            passOverlay.style.opacity = '0';
             setTimeout(() => {
-                passOverlay.style.opacity = '0';
+                passOverlay.classList.add('hidden');
+                passOverlay.classList.remove('flex');
+                
+                // 2. Show Loader
+                startupLoader.classList.remove('hidden');
+                startupLoader.classList.add('flex');
+                
+                // 3. Play Animation for 4 seconds, then show main content
                 setTimeout(() => {
-                    passOverlay.classList.add('hidden');
-                    passOverlay.classList.remove('flex');
-                }, 1000);
-            }, 4000); // 4 seconds animation
+                    startupLoader.style.opacity = '0';
+                    setTimeout(() => {
+                        startupLoader.classList.add('hidden');
+                        startupLoader.classList.remove('flex');
+                        
+                        mainContent.classList.remove('pointer-events-none');
+                        mainContent.classList.remove('opacity-0');
+                    }, 1000);
+                }, 4000);
+            }, 500);
         } else {
             passError.style.opacity = '1';
             passInput.classList.add('border-red-500');
@@ -133,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentInterval = null;
     let dragCounter = 0;
 
-    const MODEL_NAME = "gemini-1.5-pro";
+    const MODEL_NAME = "gemini-1.5-flash";
 
     const loadKey = () => {
         const key = localStorage.getItem('prysmis_key');
@@ -466,7 +474,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${localStorage.getItem('prysmis_key')}`;
 
         try {
-            // Direct fetch
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
