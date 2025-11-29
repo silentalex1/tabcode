@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         sidebar: document.getElementById('sidebar'),
         dropOverlay: document.getElementById('drop-overlay'),
         resetBusyBtn: document.getElementById('reset-busy-btn'),
+        wsLangSelect: document.getElementById('ws-lang-select'),
         
         wsEditor: document.getElementById('ws-editor'),
         wsIframe: document.getElementById('ws-iframe'),
@@ -928,9 +929,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             els.wsIframe.classList.add('hidden');
             els.wsRawOutput.classList.remove('hidden');
-            
-            let data = null;
-            let success = false;
             
             const prompt = `Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n${code}`;
             const result = await performAIRequest(prompt, "Execute Code");
