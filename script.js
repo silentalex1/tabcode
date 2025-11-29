@@ -37,12 +37,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    if (passBtn && passInput) {
-        passBtn.addEventListener('click', checkPass);
-        passInput.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter') checkPass();
-        });
-    }
+    passBtn.addEventListener('click', checkPass);
+    passInput.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') checkPass();
+    });
 
     function saveChatToStorage(chatHistory) {
         try {
@@ -477,7 +475,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         { role: 'system', content: systemInstruction },
                         { role: 'user', content: userPrompt }
                     ],
-                    model: 'openai'
+                    model: 'gemini',
+                    seed: Math.floor(Math.random() * 10000)
                 })
             });
             if(response.ok) {
@@ -736,6 +735,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (uploadedFile.data) {
                 if (uploadedFile.type === 'text') {
                     userMessageContent += `\n\n[Attached File: ${uploadedFile.name}]\nContent:\n${uploadedFile.data}`;
+                } else if (uploadedFile.type && uploadedFile.type.startsWith('image')) {
+                    userMessageContent = [
+                        { type: "text", text: text },
+                        { type: "image_url", image_url: { url: `data:${uploadedFile.type};base64,${uploadedFile.data}` } }
+                    ];
                 }
             }
 
@@ -751,7 +755,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: messages,
-                    model: 'openai',
+                    model: 'gemini',
                     seed: Math.floor(Math.random() * 10000)
                 }),
                 signal: abortController.signal
@@ -892,13 +896,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             let success = false;
             
             const prompt = `Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n${code}`;
-            const url = 'https://text.pollinations.ai/';
-
+            
             try {
-                const response = await fetch(url, {
+                const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai' })
+                    body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
                 });
                 if(response.ok) {
                     const text = await response.text();
@@ -926,13 +929,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         let success = false;
         
         const prompt = `Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
-        const url = 'https://text.pollinations.ai/';
-
+        
         try {
-            const response = await fetch(url, {
+            const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai' })
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
             });
             if(response.ok) {
                 const text = await response.text();
@@ -961,13 +963,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         let success = false;
         
         const prompt = `Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
-        const url = 'https://text.pollinations.ai/';
-
+        
         try {
-            const response = await fetch(url, {
+            const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai' })
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
             });
             if(response.ok) {
                 const text = await response.text();
