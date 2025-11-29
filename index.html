@@ -1,3 +1,4 @@
+html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -322,9 +323,7 @@
                             <option value="qwen">Qwen 2.5 (Alibaba)</option>
                             <option value="searchgpt">SearchGPT (Web Aware)</option>
                             <option value="evil">Evil Mode (Unfiltered)</option>
-                            <option value="unity">Unity</option>
                             <option value="midijourney">Midijourney</option>
-                            <option value="rtist">Rtist</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
                     </div>
@@ -359,8 +358,12 @@
                             <div class="w-12 h-7 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-accent transition-colors"></div>
                         </label>
                     </div>
+
+                    <button id="reset-connection-btn" class="w-full bg-red-500/10 border border-red-500/30 text-red-400 font-bold py-3 rounded-xl hover:bg-red-500/20 transition uppercase text-[10px] tracking-widest flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> Reset Connection Status
+                    </button>
             </div>
-            <button id="save-settings-btn" class="w-full mt-10 bg-white text-black font-bold py-4 rounded-2xl hover:scale-[1.02] transition-transform shadow-xl cursor-pointer z-[1000] uppercase text-xs tracking-widest">Save Changes</button>
+            <button id="save-settings-btn" class="w-full mt-6 bg-white text-black font-bold py-4 rounded-2xl hover:scale-[1.02] transition-transform shadow-xl cursor-pointer z-[1000] uppercase text-xs tracking-widest">Save Changes</button>
         </div>
     </div>
 
