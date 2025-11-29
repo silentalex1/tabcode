@@ -890,8 +890,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(code.trim().startsWith('<html') || code.includes('document.') || code.includes('window.')) {
             els.wsIframe.classList.remove('hidden');
             els.wsRawOutput.classList.add('hidden');
-            
-            els.wsIframe.srcdoc = code;
+            const blob = new Blob([code], {type: 'text/html'});
+            els.wsIframe.src = URL.createObjectURL(blob);
             logToTerminal("Web view rendered.");
         } else {
             els.wsIframe.classList.add('hidden');
