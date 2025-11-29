@@ -16,7 +16,7 @@
     --accent: #8b5cf6; 
     --accent-dark: #4c1d95; 
     --glow-color: rgba(139, 92, 246, 0.2); 
-    background-image: radial-gradient(circle at 10% 20%, #1e1030 0%, #030005 40%);
+    background-image: radial-gradient(circle at 10% 20%, #1e1030 0%, #030005 60%);
 }
 
 .theme-christmas { 
@@ -25,7 +25,7 @@
     --accent: #38bdf8; 
     --accent-dark: #0284c7; 
     --glow-color: rgba(56, 189, 248, 0.25); 
-    background-image: radial-gradient(circle at 50% 0%, #1e3a8a 0%, #0b1026 60%);
+    background-image: radial-gradient(circle at 50% 0%, #1e3a8a 0%, #0b1026 70%);
 }
 
 .theme-luxury { 
@@ -34,7 +34,7 @@
     --accent: #ffd700; 
     --accent-dark: #b8860b; 
     --glow-color: rgba(255, 215, 0, 0.15); 
-    background-image: radial-gradient(circle at 50% 100%, #1c1905 0%, #050505 50%);
+    background-image: radial-gradient(circle at 50% 100%, #1c1905 0%, #050505 60%);
 }
 
 .theme-cherry { 
@@ -43,7 +43,7 @@
     --accent: #fb7185; 
     --accent-dark: #e11d48; 
     --glow-color: rgba(251, 113, 133, 0.2); 
-    background-image: radial-gradient(circle at 80% 20%, #2e0810 0%, #0f0505 50%);
+    background-image: radial-gradient(circle at 80% 20%, #2e0810 0%, #0f0505 60%);
 }
 
 .theme-coffee { 
@@ -52,7 +52,7 @@
     --accent: #d4a373; 
     --accent-dark: #8c6a46; 
     --glow-color: rgba(212, 163, 115, 0.15); 
-    background-image: radial-gradient(circle at 20% 80%, #291d15 0%, #0c0806 50%);
+    background-image: radial-gradient(circle at 20% 80%, #291d15 0%, #0c0806 60%);
 }
 
 .theme-cyberpunk { 
@@ -70,7 +70,7 @@
     --accent: #db2777; 
     --accent-dark: #831843; 
     --glow-color: rgba(219, 39, 119, 0.25); 
-    background-image: radial-gradient(circle at 10% 10%, #30081a 0%, #080205 50%);
+    background-image: radial-gradient(circle at 10% 10%, #30081a 0%, #080205 60%);
 }
 
 .theme-forest { 
@@ -88,7 +88,7 @@
     --accent: #38bdf8; 
     --accent-dark: #0369a1; 
     --glow-color: rgba(56, 189, 248, 0.2); 
-    background-image: radial-gradient(circle at 0% 100%, #081d3d 0%, #01030a 50%);
+    background-image: radial-gradient(circle at 0% 100%, #081d3d 0%, #01030a 60%);
 }
 
 .theme-matrix { 
