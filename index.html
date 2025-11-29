@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white theme-midnight">
@@ -331,9 +332,10 @@
                         <select id="ai-model-selector" class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white text-xs font-sans outline-none cursor-pointer appearance-none focus:border-accent transition-colors">
                             <option value="openai">GPT-4o (Default)</option>
                             <option value="gemini">Gemini 2.0</option>
+                            <option value="claude">Claude 3.5</option>
                             <option value="deepseek">DeepSeek R1</option>
                             <option value="searchgpt">SearchGPT (Online)</option>
-                            <option value="mistral">Mistral</option>
+                            <option value="mistral">Mistral Large</option>
                             <option value="llama">Llama 3.3</option>
                             <option value="qwen">Qwen 2.5</option>
                             <option value="unity">Unity (Uncensored)</option>
