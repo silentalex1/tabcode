@@ -1,4 +1,3 @@
-javascript
 document.addEventListener('DOMContentLoaded', async () => {
     const passOverlay = document.getElementById('passcode-overlay');
     const passInput = document.getElementById('passcode-input');
