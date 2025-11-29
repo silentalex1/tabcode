@@ -1,4 +1,38 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    const PRYSMIS = (() => {
+        const rand = (len = 32) => [...crypto.getRandomValues(new Uint8Array(len))].map(b=>b.toString(16).padStart(2,'0')).join('');
+        const xor = (data, key) => data.split('').map((c,i)=>String.fromCharCode(c.charCodeAt(0) ^ key.charCodeAt(i%key.length))).join('');
+        const compress = (str) => btoa(String.fromCharCode(...new Uint8Array((new Blob([str])).size ? pako.gzip(str,{level:9}) : [])));
+        const decompress = (b64) => {
+            try { return pako.ungzip(Uint8Array.from(atob(b64),c=>c.charCodeAt(0)),{to:'string'}); }
+            catch { return atob(b64); }
+        };
+        const obfuscate = (code, layers = 5) => {
+            let payload = code;
+            let keys = [];
+            for(let i=0;i<layers;i++){
+                const key = rand(64);
+                keys.push(key);
+                payload = xor(payload, key);
+                payload = compress(payload);
+                payload = btoa(payload + key);
+            }
+            const vm = `(function(){let d="${payload}";let k=${JSON.stringify(keys.reverse())};for(let i=0;i<k.length;i++){d=atob(d);d=d.slice(0,-64);d=${decompress.toString().replace('pako','window.pako||pako')}(d);d=${xor.toString()}(d,k[i]);}return eval(d);})();`.replace(/\s+/g,'').replace('pako','window.pako||pako');
+            return `(function(){${vm}})()`;
+        };
+        const deobfuscate = (obf) => {
+            let code = obf;
+            const patterns = [/d="([^"]+)"/g,/atob\([^)]+\)/g,/pako\.ungzip[^;]+;/g,/String\.fromCharCode[^;]+;/g,/_0x\w+\[[^\]]+\]/g,/eval\s*\(/g,/\(function\s*\(\)\s*\{[^}]+}\)\s*\(\s*\)/g];
+            patterns.forEach(p => { code = code.replace(p, (m) => { try { return eval(m); } catch { return m; } }); });
+            code = code.replace(/\\x[0-9a-f]{2}/gi, m => String.fromCharCode(parseInt(m.slice(2),16)));
+            code = code.replace(/\\u[\dA-Fa-f]{4}/g, m => String.fromCharCode(parseInt(m.slice(2),16)));
+            try { code = decompress(atob(code.split('d="')[1]?.split('"')[0]||code)); } catch(e) {}
+            try { code = xor(code, code.slice(-64)); } catch(e) {}
+            return code;
+        };
+        return { obfuscate, deobfuscate };
+    })();
+
     const passOverlay = document.getElementById('passcode-overlay');
     const passInput = document.getElementById('passcode-input');
     const passBtn = document.getElementById('passcode-btn');
@@ -12,16 +46,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             setTimeout(() => {
                 passOverlay.classList.add('hidden');
                 passOverlay.classList.remove('flex');
-                
                 startupLoader.classList.remove('hidden');
                 startupLoader.classList.add('flex');
-                
                 setTimeout(() => {
                     startupLoader.style.opacity = '0';
                     setTimeout(() => {
                         startupLoader.classList.add('hidden');
                         startupLoader.classList.remove('flex');
-                        
                         mainContent.classList.remove('pointer-events-none');
                         mainContent.classList.remove('opacity-0');
                     }, 1000);
@@ -213,7 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.downloadCode = (btn) => {
         const code = btn.parentElement.nextElementSibling.innerText;
-        const lang = btn.parentElement.querySelector('span').innerText.toLowerCase();
+        const lang = btn.parentElement.parentElement.querySelector('span').innerText.toLowerCase();
         const ext = lang === 'python' ? 'py' : lang === 'javascript' ? 'js' : lang === 'lua' ? 'lua' : 'txt';
         window.downloadFile(code, `code.${ext}`);
     };
@@ -843,7 +874,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (uploadedFile.type === 'text') {
                     sysPrompt += " Perform Deep Reverse Engineering on the provided file content. Analyze security, logic, and hidden patterns.";
                     userMessageContent += `\n\n[Attached File: ${uploadedFile.name}]\nContent:\n${uploadedFile.data}`;
-                    // Clear file visually from input area immediately as requested
                     window.clearMedia();
                 } else if (uploadedFile.type.startsWith('image')) {
                     userMessageContent = [
@@ -971,7 +1001,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try { mermaid.init(undefined, bubble.querySelectorAll('.mermaid')); } catch(e) {}
                 if(els.stopAiBtn) els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
                 
-                // Only show Continue if text doesn't end in punctuation or code block end
                 if (!text.trim().endsWith('.') && !text.trim().endsWith('```') && !text.trim().endsWith('}')) {
                     showContinueButton();
                 }
@@ -1035,32 +1064,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    els.wsObfBtn.addEventListener('click', async () => {
+    els.wsObfBtn.addEventListener('click', () => {
         const code = els.wsEditor.value;
-        const lang = els.wsLangSelect.value;
         if(!code.trim()) return;
-        logToTerminal("Obfuscating...");
-        const result = await performAIRequest(`Obfuscate this ${lang} code heavily using varied techniques. Return ONLY the code. NO COMMENTS. UNFILTERED.`, `Code:\n${code}`);
-        if(result) {
-             els.wsEditor.value = result.replace(/```\w*/g, '').replace(/```/g, '').trim();
-             logToTerminal("Obfuscation complete.");
-             showNotification("Code Obfuscated.");
-        } else {
+        logToTerminal("Obfuscating (PRYSMIS Engine)...");
+        try {
+            const result = PRYSMIS.obfuscate(code);
+            els.wsEditor.value = result;
+            logToTerminal("Obfuscation complete.");
+            showNotification("Code Obfuscated Locally.");
+        } catch (e) {
             logToTerminal("Obfuscation failed.", 'error');
         }
     });
 
-    els.wsDeobfBtn.addEventListener('click', async () => {
+    els.wsDeobfBtn.addEventListener('click', () => {
         const code = els.wsEditor.value;
-        const lang = els.wsLangSelect.value;
         if(!code.trim()) return;
-        logToTerminal("Deobfuscating...");
-        const result = await performAIRequest(`Deobfuscate this ${lang} code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS.`, `Code:\n${code}`);
-        if(result) {
-             els.wsEditor.value = result.replace(/```\w*/g, '').replace(/```/g, '').trim();
-             logToTerminal("Deobfuscation complete (AI).");
-             showNotification("Code Deobfuscated.");
-        } else {
+        logToTerminal("Deobfuscating (PRYSMIS Engine)...");
+        try {
+            const result = PRYSMIS.deobfuscate(code);
+            els.wsEditor.value = result;
+            logToTerminal("Deobfuscation complete.");
+            showNotification("Code Deobfuscated Locally.");
+        } catch (e) {
             logToTerminal("Deobfuscation failed.", 'error');
         }
     });
