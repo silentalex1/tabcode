@@ -909,14 +909,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             let data = null;
             let success = false;
-            const model = localStorage.getItem('prysmis_model') || 'openai';
+            
             const prompt = `Act as a code runner terminal. Return ONLY the output. NO COMMENTS. Code:\n${code}`;
 
             try {
                 const response = await fetch('https://text.pollinations.ai/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: model })
+                    body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
                 });
                 if(response.ok) {
                     const text = await response.text();
@@ -942,14 +942,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let data = null;
         let success = false;
-        const model = localStorage.getItem('prysmis_model') || 'openai';
+        
         const prompt = `Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
 
         try {
             const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: model })
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
             });
             if(response.ok) {
                 const text = await response.text();
@@ -976,14 +976,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let data = null;
         let success = false;
-        const model = localStorage.getItem('prysmis_model') || 'openai';
+        
         const prompt = `Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS. Code:\n${code}`;
 
         try {
             const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: model })
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'gemini' })
             });
             if(response.ok) {
                 const text = await response.text();
