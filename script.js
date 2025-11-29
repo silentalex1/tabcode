@@ -8,17 +8,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function checkPass() {
         if(passInput.value === 'schoolistrash') {
-            // 1. Hide Passcode Overlay
+            
             passOverlay.style.opacity = '0';
             setTimeout(() => {
                 passOverlay.classList.add('hidden');
                 passOverlay.classList.remove('flex');
                 
-                // 2. Show Loader
+                
                 startupLoader.classList.remove('hidden');
                 startupLoader.classList.add('flex');
                 
-                // 3. Play Animation for 4 seconds, then show main content
+                
                 setTimeout(() => {
                     startupLoader.style.opacity = '0';
                     setTimeout(() => {
