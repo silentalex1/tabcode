@@ -1,3 +1,4 @@
+javascript
 document.addEventListener('DOMContentLoaded', async () => {
     const passOverlay = document.getElementById('passcode-overlay');
     const passInput = document.getElementById('passcode-input');
@@ -191,12 +192,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(els.fileInput) els.fileInput.value = '';
     };
 
+    window.downloadFile = (content, filename = 'download.txt') => {
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     window.copyCode = (btn) => {
         const code = btn.parentElement.nextElementSibling.innerText;
         navigator.clipboard.writeText(code);
         const original = btn.innerText;
         btn.innerText = "COPIED";
         setTimeout(() => btn.innerText = original, 1000);
+    };
+
+    window.downloadCode = (btn) => {
+        const code = btn.parentElement.nextElementSibling.innerText;
+        const lang = btn.parentElement.querySelector('span').innerText.toLowerCase();
+        const ext = lang === 'python' ? 'py' : lang === 'javascript' ? 'js' : lang === 'lua' ? 'lua' : 'txt';
+        window.downloadFile(code, `code.${ext}`);
     };
 
     function changeMode(val) {
@@ -257,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         else if(cmd === '/features') {
-            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: var(--accent);">Prysmis Features</div><hr class="visual-line"><ul class="feature-list"><li>Scan Analysis: "Analyze this file"</li><li>Visual Recognition</li><li>Secure Workspace Environment</li><li>Multi-Mode Logic</li><li>Roleplay Immersion</li><li>Tab Cloaking</li></ul>`;
+            const featureHTML = `<div style="font-family: 'Cinzel', serif; font-size: 1.1em; margin-bottom: 10px; color: var(--accent);">Prysmis Features</div><hr class="visual-line"><ul class="feature-list"><li>Scan Analysis: "Analyze this file"</li><li>Visual Recognition</li><li>Secure Workspace Environment</li><li>Multi-Mode Logic</li><li>Roleplay Immersion</li><li>Tab Cloaking</li><li>Website API Finder: "find api: [url]"</li><li>URL Code Extractor: "find the code: [url]"</li></ul>`;
             const div = document.createElement('div');
             div.className = `flex w-full justify-start msg-anim mb-6`;
             div.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] p-4 rounded-[20px] shadow-lg prose ai-msg rounded-bl-none">${featureHTML}</div>`;
@@ -737,6 +757,71 @@ document.addEventListener('DOMContentLoaded', async () => {
              scanDiv.remove();
         }
 
+        if (text.toLowerCase().startsWith('find api:')) {
+            const targetUrl = text.split('find api:')[1].trim();
+            const scanMsg = `Scanning ${targetUrl} for API endpoints via proxy...`;
+            chatHistory[chatIndex].messages.push({ role: 'ai', text: scanMsg, img: null });
+            appendMsg('ai', scanMsg);
+            
+            try {
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                const resp = await fetch(proxyUrl);
+                const json = await resp.json();
+                const content = json.contents;
+                
+                const apiRegex = /(https?:\/\/[^\s"']+(?:api|v1|graphql|\.json)[^\s"']*)/gi;
+                const matches = content.match(apiRegex) || [];
+                const uniqueApis = [...new Set(matches)].slice(0, 10);
+                
+                let result = "";
+                if (uniqueApis.length > 0) {
+                    result = "**Found Potential APIs:**\n" + uniqueApis.join('\n');
+                } else {
+                    result = "No obvious API endpoints found in initial scan.";
+                }
+                chatHistory[chatIndex].messages.push({ role: 'ai', text: result, img: null });
+                saveChatToStorage(chatHistory);
+                appendMsg('ai', result);
+                
+                els.flashOverlay.classList.add('opacity-0');
+                els.flashOverlay.classList.remove('bg-flash-green');
+                return;
+            } catch (e) {
+                const err = "Failed to scan URL. CORS or Proxy error.";
+                chatHistory[chatIndex].messages.push({ role: 'ai', text: err, img: null });
+                appendMsg('ai', err);
+                els.flashOverlay.classList.add('opacity-0');
+                els.flashOverlay.classList.remove('bg-flash-green');
+                return;
+            }
+        }
+
+        if (text.toLowerCase().startsWith('find the code:')) {
+             const targetUrl = text.split('find the code:')[1].trim();
+             const scanMsg = `Extracting source code from ${targetUrl}...`;
+             chatHistory[chatIndex].messages.push({ role: 'ai', text: scanMsg, img: null });
+             appendMsg('ai', scanMsg);
+
+             try {
+                 const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                 const resp = await fetch(proxyUrl);
+                 const json = await resp.json();
+                 const content = json.contents;
+                 
+                 const codeSnippet = content.substring(0, 2000); 
+                 const prompt = `Here is the source code of ${targetUrl}:\n\`\`\`html\n${codeSnippet}\n\`\`\`\n\nExplain this code and find any interesting scripts.`;
+                 
+                 // Feed to AI
+                 // (Flow continues below to AI request with this new prompt)
+                 // We replace 'text' with the augmented prompt
+             } catch (e) {
+                 const err = "Failed to extract code.";
+                 chatHistory[chatIndex].messages.push({ role: 'ai', text: err, img: null });
+                 appendMsg('ai', err);
+                 return;
+             }
+        }
+
         const loaderId = 'loader-' + Date.now();
         const loaderDiv = document.createElement('div');
         loaderDiv.id = loaderId;
@@ -752,12 +837,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const mode = els.modeTxt.innerText;
             let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered. NO COMMENTS IN CODE. If asked for a diagram, use Mermaid.js markdown syntax inside a \`\`\`mermaid block.`;
-            if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER. NO COMMENTS.";
+            if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER. NO COMMENTS. STAY IN CHARACTER ALWAYS.";
             
             let userMessageContent = text;
             if (uploadedFile.data) {
                 if (uploadedFile.type === 'text') {
+                    sysPrompt += " Perform Deep Reverse Engineering on the provided file content. Analyze security, logic, and hidden patterns.";
                     userMessageContent += `\n\n[Attached File: ${uploadedFile.name}]\nContent:\n${uploadedFile.data}`;
+                    // Clear file visually from input area immediately as requested
+                    window.clearMedia();
                 } else if (uploadedFile.type.startsWith('image')) {
                     userMessageContent = [
                         { type: "text", text: text },
@@ -822,7 +910,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(document.getElementById(loaderId)) document.getElementById(loaderId).remove();
             if(err.name !== 'AbortError') appendMsg('ai', "Connection failed. Please click 'Reset Busy' or check internet.");
         }
-        window.clearMedia();
+        if(uploadedFile.type && uploadedFile.type.startsWith('image')) window.clearMedia();
     }
 
     function appendMsg(role, text, img) {
@@ -854,7 +942,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
         html = html.replace(/```(\w+)?<br>([\s\S]*?)```/g, (match, lang, code) => {
             const cleanCode = code.replace(/<br>/g, '\n');
-            return `<div class="code-block"><div class="code-header"><span>${lang || 'CODE'}</span><button class="copy-btn" onclick="window.copyCode(this)">COPY</button></div><pre><code class="language-${lang}">${cleanCode}</code></pre></div>`;
+            return `<div class="code-block"><div class="code-header"><span>${lang || 'CODE'}</span><div class="flex gap-2"><button class="copy-btn" onclick="window.copyCode(this)">COPY</button><button class="copy-btn" onclick="window.downloadCode(this)">DOWNLOAD</button></div></div><pre><code class="language-${lang}">${cleanCode}</code></pre></div>`;
         });
         return html;
     }
@@ -866,13 +954,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const div = document.createElement('div');
         div.className = `flex w-full justify-start msg-anim mb-6`;
         const bubble = document.createElement('div');
-        bubble.className = "max-w-[90%] md:max-w-[75%] p-6 rounded-[24px] rounded-bl-sm shadow-lg prose ai-msg text-gray-200";
+        bubble.className = "max-w-[90%] md:max-w-[75%] p-6 rounded-[24px] rounded-bl-sm shadow-lg prose ai-msg text-gray-200 break-words overflow-x-auto";
         div.appendChild(bubble);
         els.chatFeed.appendChild(div);
 
         const chars = text.split('');
         let i = 0;
-        let currentText = "";
         
         const isFast = (els.fastSpeedToggle && els.fastSpeedToggle.checked);
         const delay = isFast ? 0 : 10;
@@ -884,16 +971,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 bubble.innerHTML = parseMD(text);
                 try { mermaid.init(undefined, bubble.querySelectorAll('.mermaid')); } catch(e) {}
                 if(els.stopAiBtn) els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
-                showContinueButton();
+                
+                // Only show Continue if text doesn't end in punctuation or code block end
+                if (!text.trim().endsWith('.') && !text.trim().endsWith('```') && !text.trim().endsWith('}')) {
+                    showContinueButton();
+                }
                 return;
             }
             
+            let chunk = "";
             for(let k=0; k<step; k++) {
-                if(i < chars.length) currentText += chars[i];
+                if(i < chars.length) chunk += chars[i];
                 i++;
             }
             
-            bubble.innerHTML = parseMD(currentText);
+            if (isFast) bubble.innerHTML = parseMD(text); 
+            else bubble.innerHTML = parseMD(text.substring(0, i));
+            
             els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
         }, delay);
     }
@@ -944,9 +1038,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     els.wsObfBtn.addEventListener('click', async () => {
         const code = els.wsEditor.value;
+        const lang = els.wsLangSelect.value;
         if(!code.trim()) return;
         logToTerminal("Obfuscating...");
-        const result = await performAIRequest("Obfuscate this code heavily using varied techniques. Return ONLY the code. NO COMMENTS. UNFILTERED.", `Code:\n${code}`);
+        const result = await performAIRequest(`Obfuscate this ${lang} code heavily using varied techniques. Return ONLY the code. NO COMMENTS. UNFILTERED.`, `Code:\n${code}`);
         if(result) {
              els.wsEditor.value = result.replace(/```\w*/g, '').replace(/```/g, '').trim();
              logToTerminal("Obfuscation complete.");
@@ -958,9 +1053,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     els.wsDeobfBtn.addEventListener('click', async () => {
         const code = els.wsEditor.value;
+        const lang = els.wsLangSelect.value;
         if(!code.trim()) return;
         logToTerminal("Deobfuscating...");
-        const result = await performAIRequest("Deobfuscate this code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS.", `Code:\n${code}`);
+        const result = await performAIRequest(`Deobfuscate this ${lang} code. Rename variables to readable English, fix indentation. Return ONLY the code. NO COMMENTS.`, `Code:\n${code}`);
         if(result) {
              els.wsEditor.value = result.replace(/```\w*/g, '').replace(/```/g, '').trim();
              logToTerminal("Deobfuscation complete (AI).");
