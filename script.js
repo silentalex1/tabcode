@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+
     const passOverlay = document.getElementById('passcode-overlay');
     const passInput = document.getElementById('passcode-input');
     const passBtn = document.getElementById('passcode-btn');
@@ -171,11 +173,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.copyCode = (btn) => {
-        const code = btn.parentElement.nextElementSibling.innerText;
-        navigator.clipboard.writeText(code);
-        const original = btn.innerText;
-        btn.innerText = "COPIED";
-        setTimeout(() => btn.innerText = original, 1000);
+        const codeBlock = btn.parentElement.nextElementSibling.querySelector('code');
+        if (codeBlock) {
+            navigator.clipboard.writeText(codeBlock.innerText);
+            const original = btn.innerText;
+            btn.innerText = "COPIED";
+            setTimeout(() => btn.innerText = original, 1000);
+        }
     };
 
     function changeMode(val) {
@@ -714,7 +718,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const mode = els.modeTxt.innerText;
-            let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered. NO COMMENTS IN CODE.`;
+            let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered. NO COMMENTS IN CODE. If asked for a diagram, use Mermaid.js markdown syntax inside a \`\`\`mermaid block.`;
             if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER. NO COMMENTS.";
             
             if (uploadedFile.data && (text.includes('scan') || text.includes('analyze'))) {
@@ -773,17 +777,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function parseMD(text) {
         if (!text) return "";
+        
         let html = text
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
+            .replace(/>/g, "&gt;");
+
+        html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+            lang = lang || 'text';
+            if (lang === 'mermaid') {
+                return `<div class="mermaid">${code.trim()}</div>`;
+            }
+            return `
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>${lang.toUpperCase()}</span>
+                        <button class="copy-btn" onclick="window.copyCode(this)">COPY</button>
+                    </div>
+                    <pre><code class="language-${lang}">${code.trim()}</code></pre>
+                </div>`;
+        });
+
+        html = html
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/\n/g, '<br>');
-        html = html.replace(/```(\w+)?<br>([\s\S]*?)```/g, (match, lang, code) => {
-            const cleanCode = code.replace(/<br>/g, '\n');
-            return `<div class="code-block"><div class="code-header"><span>${lang || 'CODE'}</span><button class="copy-btn" onclick="window.copyCode(this)">COPY</button></div><pre><code class="language-${lang}">${cleanCode}</code></pre></div>`;
-        });
+
         return html;
     }
 
@@ -804,12 +823,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const isFast = (els.fastSpeedToggle && els.fastSpeedToggle.checked);
         const delay = isFast ? 1 : 10;
-        const step = isFast ? 5 : 1;
+        const step = isFast ? 10 : 1; 
         
         currentInterval = setInterval(() => {
             if(stopGeneration || i >= chars.length) {
                 clearInterval(currentInterval);
                 bubble.innerHTML = parseMD(text);
+                
+                // Render any mermaid diagrams
+                if(text.includes('```mermaid')) {
+                    mermaid.init(undefined, bubble.querySelectorAll('.mermaid'));
+                }
+
                 if(els.stopAiBtn) els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
                 showContinueButton();
                 return;
@@ -820,6 +845,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 i++;
             }
             
+            // Only update innerHTML occasionally to avoid lag with fast response
             bubble.innerHTML = parseMD(currentText);
             els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
         }, delay);
