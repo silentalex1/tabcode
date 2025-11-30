@@ -1,4 +1,46 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    const PrysmisAI = {
+        isReady: false,
+        models: {},
+        init: async function() {
+            try {
+                this.models.generator = await window.pipeline('text-generation', 'Xenova/Qwen1.5-1.8B-Chat', {
+                    quantized: true,
+                    progress_callback: (p) => console.log(`Loading AI: ${Math.round(p.status)}%`)
+                });
+                this.models.vision = await window.pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning');
+                this.models.tts = await window.pipeline('text-to-speech', 'Xenova/speecht5_tts', { quantized: false });
+                this.models.vocoder = await window.pipeline('vocoder', 'Xenova/speecht5_hifigan', { quantized: false });
+                this.models.audio = await window.pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny');
+                
+                this.isReady = true;
+                console.log("PrysmisAI Core Online");
+            } catch (e) {
+                console.error("Local AI Init Failed:", e);
+            }
+        },
+        generate: async function(prompt) {
+            if(!this.isReady) return "PrysmisAI is still loading resources...";
+            const out = await this.models.generator(prompt, {
+                max_new_tokens: 512,
+                temperature: 0.7,
+                do_sample: true,
+                top_k: 20
+            });
+            return out[0].generated_text;
+        },
+        speak: async function(text) {
+            if(!this.isReady) return;
+            const speaker_embeddings = 'https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/speaker_embeddings.bin';
+            const out = await this.models.tts(text, { speaker_embeddings, vocoder: this.models.vocoder });
+            const blob = new Blob([out.audio], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            new Audio(url).play();
+        }
+    };
+    
+    setTimeout(() => PrysmisAI.init(), 1000);
+
     const PRYSMIS = (() => {
         const rand = (len = 32) => [...crypto.getRandomValues(new Uint8Array(len))].map(b=>b.toString(16).padStart(2,'0')).join('');
         const xor = (data, key) => data.split('').map((c,i)=>String.fromCharCode(c.charCodeAt(0) ^ key.charCodeAt(i%key.length))).join('');
@@ -46,13 +88,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             setTimeout(() => {
                 passOverlay.classList.add('hidden');
                 passOverlay.classList.remove('flex');
+                
                 startupLoader.classList.remove('hidden');
                 startupLoader.classList.add('flex');
+                
                 setTimeout(() => {
                     startupLoader.style.opacity = '0';
                     setTimeout(() => {
                         startupLoader.classList.add('hidden');
                         startupLoader.classList.remove('flex');
+                        
                         mainContent.classList.remove('pointer-events-none');
                         mainContent.classList.remove('opacity-0');
                     }, 1000);
@@ -222,31 +267,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(els.fileInput) els.fileInput.value = '';
     };
 
-    window.downloadFile = (content, filename = 'download.txt') => {
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
-
     window.copyCode = (btn) => {
         const code = btn.parentElement.nextElementSibling.innerText;
         navigator.clipboard.writeText(code);
         const original = btn.innerText;
         btn.innerText = "COPIED";
         setTimeout(() => btn.innerText = original, 1000);
-    };
-
-    window.downloadCode = (btn) => {
-        const code = btn.parentElement.nextElementSibling.innerText;
-        const lang = btn.parentElement.parentElement.querySelector('span').innerText.toLowerCase();
-        const ext = lang === 'python' ? 'py' : lang === 'javascript' ? 'js' : lang === 'lua' ? 'lua' : 'txt';
-        window.downloadFile(code, `code.${ext}`);
     };
 
     function changeMode(val) {
@@ -515,9 +541,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     async function performAIRequest(instruction, prompt) {
-        let preferredModel = localStorage.getItem('prysmis_model') || 'openai';
-        const fallbackModels = ['searchgpt', 'mistral', 'llama', 'qwen', 'unity'];
+        const currentModel = localStorage.getItem('prysmis_model') || 'prysmis';
         
+        if (currentModel === 'prysmis') {
+            const combined = `${instruction}\n\n${prompt}`;
+            return await PrysmisAI.generate(combined);
+        }
+
+        const fallbackModels = ['searchgpt', 'mistral', 'llama', 'qwen', 'unity'];
         const tryFetch = async (model) => {
              const response = await fetch('https://text.pollinations.ai/', {
                 method: 'POST',
@@ -537,7 +568,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         try {
-            return await tryFetch(preferredModel);
+            return await tryFetch(currentModel);
         } catch (e) {
             for (const fallback of fallbackModels) {
                 try {
@@ -787,71 +818,6 @@ document.addEventListener('DOMContentLoaded', async () => {
              scanDiv.remove();
         }
 
-        if (text.toLowerCase().startsWith('find api:')) {
-            const targetUrl = text.split('find api:')[1].trim();
-            const scanMsg = `Scanning ${targetUrl} for API endpoints via proxy...`;
-            chatHistory[chatIndex].messages.push({ role: 'ai', text: scanMsg, img: null });
-            appendMsg('ai', scanMsg);
-            
-            try {
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-                const resp = await fetch(proxyUrl);
-                const json = await resp.json();
-                const content = json.contents;
-                
-                const apiRegex = /(https?:\/\/[^\s"']+(?:api|v1|graphql|\.json)[^\s"']*)/gi;
-                const matches = content.match(apiRegex) || [];
-                const uniqueApis = [...new Set(matches)].slice(0, 10);
-                
-                let result = "";
-                if (uniqueApis.length > 0) {
-                    result = "**Found Potential APIs:**\n" + uniqueApis.join('\n');
-                } else {
-                    result = "No obvious API endpoints found in initial scan.";
-                }
-                chatHistory[chatIndex].messages.push({ role: 'ai', text: result, img: null });
-                saveChatToStorage(chatHistory);
-                appendMsg('ai', result);
-                
-                els.flashOverlay.classList.add('opacity-0');
-                els.flashOverlay.classList.remove('bg-flash-green');
-                return;
-            } catch (e) {
-                const err = "Failed to scan URL. CORS or Proxy error.";
-                chatHistory[chatIndex].messages.push({ role: 'ai', text: err, img: null });
-                appendMsg('ai', err);
-                els.flashOverlay.classList.add('opacity-0');
-                els.flashOverlay.classList.remove('bg-flash-green');
-                return;
-            }
-        }
-
-        if (text.toLowerCase().startsWith('find the code:')) {
-             const targetUrl = text.split('find the code:')[1].trim();
-             const scanMsg = `Extracting source code from ${targetUrl}...`;
-             chatHistory[chatIndex].messages.push({ role: 'ai', text: scanMsg, img: null });
-             appendMsg('ai', scanMsg);
-
-             try {
-                 const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-                 const resp = await fetch(proxyUrl);
-                 const json = await resp.json();
-                 const content = json.contents;
-                 
-                 const codeSnippet = content.substring(0, 2000); 
-                 const prompt = `Here is the source code of ${targetUrl}:\n\`\`\`html\n${codeSnippet}\n\`\`\`\n\nExplain this code and find any interesting scripts.`;
-                 
-                 // Feed to AI
-                 // (Flow continues below to AI request with this new prompt)
-                 // We replace 'text' with the augmented prompt
-             } catch (e) {
-                 const err = "Failed to extract code.";
-                 chatHistory[chatIndex].messages.push({ role: 'ai', text: err, img: null });
-                 appendMsg('ai', err);
-                 return;
-             }
-        }
-
         const loaderId = 'loader-' + Date.now();
         const loaderDiv = document.createElement('div');
         loaderDiv.id = loaderId;
@@ -864,63 +830,75 @@ document.addEventListener('DOMContentLoaded', async () => {
         isBusy = true;
         abortController = new AbortController();
 
-        try {
-            const mode = els.modeTxt.innerText;
-            let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered. NO COMMENTS IN CODE. If asked for a diagram, use Mermaid.js markdown syntax inside a \`\`\`mermaid block.`;
-            if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER. NO COMMENTS. STAY IN CHARACTER ALWAYS.";
-            
-            let userMessageContent = text;
-            if (uploadedFile.data) {
-                if (uploadedFile.type === 'text') {
-                    sysPrompt += " Perform Deep Reverse Engineering on the provided file content. Analyze security, logic, and hidden patterns.";
-                    userMessageContent += `\n\n[Attached File: ${uploadedFile.name}]\nContent:\n${uploadedFile.data}`;
-                    window.clearMedia();
-                } else if (uploadedFile.type.startsWith('image')) {
+        const mode = els.modeTxt.innerText;
+        let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered. NO COMMENTS IN CODE. If asked for a diagram, use Mermaid.js markdown syntax inside a \`\`\`mermaid block.`;
+        if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER. NO COMMENTS. STAY IN CHARACTER ALWAYS.";
+        
+        let userMessageContent = text;
+        if (uploadedFile.data) {
+            if (uploadedFile.type === 'text') {
+                sysPrompt += " Perform Deep Reverse Engineering on the provided file content. Analyze security, logic, and hidden patterns.";
+                userMessageContent += `\n\n[Attached File: ${uploadedFile.name}]\nContent:\n${uploadedFile.data}`;
+                window.clearMedia();
+            } else if (uploadedFile.type.startsWith('image')) {
+                 if(mode === 'PrysmisAI') {
+                     const blob = await (await fetch(`data:${uploadedFile.type};base64,${uploadedFile.data}`)).blob();
+                     const imgUrl = URL.createObjectURL(blob);
+                     const visionResult = await PrysmisAI.models.vision(imgUrl);
+                     userMessageContent += `\n\n[Image Analysis]: ${JSON.stringify(visionResult)}`;
+                 } else {
                     userMessageContent = [
                         { type: "text", text: text },
                         { type: "image_url", image_url: { url: `data:${uploadedFile.type};base64,${uploadedFile.data}` } }
                     ];
+                 }
+            }
+        }
+
+        let resultText = null;
+        const selectedModel = localStorage.getItem('prysmis_model') || 'prysmis';
+
+        try {
+            if (selectedModel === 'prysmis') {
+                const combined = `${sysPrompt}\n\n${typeof userMessageContent === 'string' ? userMessageContent : userMessageContent[0].text}`;
+                resultText = await PrysmisAI.generate(combined);
+            } else {
+                const messages = chatHistory[chatIndex].messages.slice(-6).map(m => ({ 
+                    role: m.role === 'ai' ? 'assistant' : 'user', 
+                    content: m.text 
+                }));
+                messages.unshift({ role: 'system', content: sysPrompt });
+                messages.push({ role: 'user', content: userMessageContent });
+                
+                const fallbackModels = ['searchgpt', 'mistral', 'llama', 'qwen', 'unity'];
+                const tryFetch = async (model) => {
+                    const response = await fetch('https://text.pollinations.ai/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            messages: messages,
+                            model: model,
+                            seed: Math.floor(Math.random() * 10000),
+                            jsonMode: false
+                        }),
+                        signal: abortController.signal
+                    });
+                    if (!response.ok) throw new Error(`Status ${response.status}`);
+                    return await response.text();
+                };
+
+                try {
+                    resultText = await tryFetch(selectedModel);
+                } catch(err) {
+                    for (const fallback of fallbackModels) {
+                         try {
+                             resultText = await tryFetch(fallback);
+                             if(resultText) break;
+                         } catch(e2) {}
+                    }
                 }
             }
-
-            const messages = chatHistory[chatIndex].messages.slice(-6).map(m => ({ 
-                role: m.role === 'ai' ? 'assistant' : 'user', 
-                content: m.text 
-            }));
-            messages.unshift({ role: 'system', content: sysPrompt });
-            messages.push({ role: 'user', content: userMessageContent });
-
-            let preferredModel = localStorage.getItem('prysmis_model') || 'openai';
-            const fallbackModels = ['searchgpt', 'mistral', 'llama', 'qwen', 'unity'];
-
-            const tryFetch = async (model) => {
-                const response = await fetch('https://text.pollinations.ai/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        messages: messages,
-                        model: model,
-                        seed: Math.floor(Math.random() * 10000),
-                        jsonMode: false
-                    }),
-                    signal: abortController.signal
-                });
-                if (!response.ok) throw new Error(`Status ${response.status}`);
-                return await response.text();
-            };
-
-            let resultText = null;
-            try {
-                resultText = await tryFetch(preferredModel);
-            } catch(err) {
-                for (const fallback of fallbackModels) {
-                     try {
-                         resultText = await tryFetch(fallback);
-                         if(resultText) break;
-                     } catch(e2) {}
-                }
-            }
-
+            
             document.getElementById(loaderId).remove();
             els.flashOverlay.classList.add('opacity-0');
             els.flashOverlay.classList.remove('bg-flash-green');
@@ -933,7 +911,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 appendMsg('ai', "Servers are extremely busy. Please try again in a moment or click 'Reset Busy'.");
             }
-
         } catch(err) {
             isBusy = false;
             if(document.getElementById(loaderId)) document.getElementById(loaderId).remove();
