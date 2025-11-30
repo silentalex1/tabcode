@@ -18,7 +18,6 @@
         import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
         env.allowLocalModels = false;
         window.pipeline = pipeline;
-        window.TransformersEnv = env;
     </script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -145,7 +144,7 @@
                     
                     <div id="mode-dropdown" class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-72 bg-panel/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[9999] py-2 max-h-72 overflow-y-auto custom-scrollbar ring-1 ring-white/5">
                         <div class="mode-item" data-val="PrysmisAI" data-icon="fa-brain"><i class="fa-solid fa-brain text-accent w-5"></i> PrysmisAI (Default)</div>
-                        <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-gray-400 w-5"></i> Cloud Assistant</div>
+                        <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-gray-400 w-5"></i> ChatGPT-4o</div>
                         <div class="mode-item" data-val="Exploit Creation" data-icon="fa-skull"><i class="fa-solid fa-skull text-red-500 w-5"></i> Exploit Creation</div>
                         <div class="mode-item" data-val="Coding" data-icon="fa-code"><i class="fa-solid fa-code text-cyan-400 w-5"></i> Coding</div>
                         <div class="mode-item" data-val="Image Generation" data-icon="fa-image"><i class="fa-solid fa-image text-purple-400 w-5"></i> Image Generation</div>
@@ -338,17 +337,7 @@
                     <div class="relative">
                         <select id="ai-model-selector" class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white text-xs font-sans outline-none cursor-pointer appearance-none focus:border-accent transition-colors">
                             <option value="prysmis">PrysmisAI (Default)</option>
-                            <option value="openai">GPT-4o (Default)</option>
-                            <option value="gemini">Gemini 2.0</option>
-                            <option value="deepseek">DeepSeek R1</option>
-                            <option value="searchgpt">SearchGPT (Online)</option>
-                            <option value="mistral">Mistral</option>
-                            <option value="llama">Llama 3.3</option>
-                            <option value="qwen">Qwen 2.5</option>
-                            <option value="unity">Unity (Uncensored)</option>
-                            <option value="midijourney">Midijourney</option>
-                            <option value="rtist">Rtist</option>
-                            <option value="p1">Pollinations 1</option>
+                            <option value="openai">GPT-4o</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
                     </div>
