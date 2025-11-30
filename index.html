@@ -14,6 +14,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+        env.allowLocalModels = false;
+        window.pipeline = pipeline;
+        window.TransformersEnv = env;
+    </script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white theme-midnight">
@@ -133,12 +139,13 @@
                 <div class="pointer-events-auto mt-8 relative z-[202]">
                     <button id="mode-btn" class="glass-pill px-6 py-2.5 rounded-full text-xs font-bold flex items-center gap-3 text-gray-300 hover:text-white transition-all duration-300 hover:border-accent shadow-lg hover:shadow-accent/20 cursor-pointer min-w-[180px] justify-center tracking-wide uppercase" aria-label="Change Mode">
                         <span id="mode-icon"><i class="fa-solid fa-sparkles text-accent"></i></span>
-                        <span id="current-mode-txt">AI Assistant</span>
+                        <span id="current-mode-txt">PrysmisAI</span>
                         <i class="fa-solid fa-chevron-down text-[10px] opacity-50 pointer-events-none ml-auto"></i>
                     </button>
                     
                     <div id="mode-dropdown" class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-72 bg-panel/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[9999] py-2 max-h-72 overflow-y-auto custom-scrollbar ring-1 ring-white/5">
-                        <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-accent w-5"></i> AI Assistant</div>
+                        <div class="mode-item" data-val="PrysmisAI" data-icon="fa-brain"><i class="fa-solid fa-brain text-accent w-5"></i> PrysmisAI (Default)</div>
+                        <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-gray-400 w-5"></i> Cloud Assistant</div>
                         <div class="mode-item" data-val="Exploit Creation" data-icon="fa-skull"><i class="fa-solid fa-skull text-red-500 w-5"></i> Exploit Creation</div>
                         <div class="mode-item" data-val="Coding" data-icon="fa-code"><i class="fa-solid fa-code text-cyan-400 w-5"></i> Coding</div>
                         <div class="mode-item" data-val="Image Generation" data-icon="fa-image"><i class="fa-solid fa-image text-purple-400 w-5"></i> Image Generation</div>
@@ -161,7 +168,7 @@
                     <div id="hero-section" class="h-full flex flex-col items-center justify-center animate-fade-in pb-20 px-4">
                         <div class="w-24 h-24 bg-gradient-to-tr from-accent to-accent-dark rounded-full flex items-center justify-center mb-8 border border-white/10 shadow-glow relative group">
                             <div class="absolute inset-0 bg-accent blur-xl opacity-40 rounded-full group-hover:opacity-60 transition duration-500"></div>
-                            <i class="fa-solid fa-wand-magic-sparkles text-4xl text-white relative z-10"></i>
+                            <i class="fa-solid fa-brain text-4xl text-white relative z-10"></i>
                         </div>
                         <h2 class="text-3xl font-bold text-white mb-4 text-center tracking-tight">How can Prysmis help?</h2>
                         <div class="flex flex-wrap gap-3 justify-center max-w-2xl mt-4">
@@ -330,12 +337,12 @@
                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">AI Model</label>
                     <div class="relative">
                         <select id="ai-model-selector" class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white text-xs font-sans outline-none cursor-pointer appearance-none focus:border-accent transition-colors">
+                            <option value="prysmis">PrysmisAI (Default)</option>
                             <option value="openai">GPT-4o (Default)</option>
                             <option value="gemini">Gemini 2.0</option>
-                            <option value="claude">Claude 3.5</option>
                             <option value="deepseek">DeepSeek R1</option>
                             <option value="searchgpt">SearchGPT (Online)</option>
-                            <option value="mistral">Mistral Large</option>
+                            <option value="mistral">Mistral</option>
                             <option value="llama">Llama 3.3</option>
                             <option value="qwen">Qwen 2.5</option>
                             <option value="unity">Unity (Uncensored)</option>
