@@ -41,48 +41,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     })();
 
     const PrysmisAI = {
-        isReady: false,
-        models: {},
-        init: async function() {
-            try {
-                this.models.generator = await window.pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
-                    quantized: true,
-                    progress_callback: (p) => {
-                        if(p.status === 'progress') console.log(`Loading AI: ${Math.round(p.progress)}%`);
-                    }
-                });
-                this.models.vision = await window.pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning');
-                this.models.tts = await window.pipeline('text-to-speech', 'Xenova/speecht5_tts', { quantized: false });
-                this.models.vocoder = await window.pipeline('vocoder', 'Xenova/speecht5_hifigan', { quantized: false });
-                
-                this.isReady = true;
-                console.log("PrysmisAI Core Online");
-            } catch (e) {
-                console.error("Local AI Init Failed:", e);
-            }
-        },
-        generate: async function(prompt) {
-            if(!this.isReady) return "PrysmisAI is warming up...";
-            const out = await this.models.generator(prompt, {
-                max_new_tokens: 512,
-                temperature: 0.6,
-                do_sample: true,
-                repetition_penalty: 1.15,
-                top_k: 20
-            });
-            return out[0].generated_text;
-        },
-        speak: async function(text) {
-            if(!this.isReady) return;
-            const speaker_embeddings = 'https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/speaker_embeddings.bin';
-            const out = await this.models.tts(text, { speaker_embeddings, vocoder: this.models.vocoder });
-            const blob = new Blob([out.audio], { type: 'audio/wav' });
-            const url = URL.createObjectURL(blob);
-            new Audio(url).play();
+        speak: (text) => {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = 1.05;
+            u.pitch = 0.9;
+            const voices = window.speechSynthesis.getVoices();
+            const v = voices.find(v => v.name.includes('Google US English')) || voices.find(v => v.lang === 'en-US') || voices[0];
+            if (v) u.voice = v;
+            window.speechSynthesis.speak(u);
         }
     };
-
-    setTimeout(() => PrysmisAI.init(), 100);
 
     function checkPass() {
         if(passInput.value === 'schoolistrash') {
@@ -571,7 +541,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const combined = `${instruction}\n\n${prompt}`;
             return await PrysmisAI.generate(combined);
         }
-        
+
         const fallbackModels = ['searchgpt', 'mistral', 'llama', 'qwen', 'unity'];
         const tryFetch = async (model) => {
              const response = await fetch('https://text.pollinations.ai/', {
