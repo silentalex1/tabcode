@@ -14,11 +14,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
-    <script type="module">
-        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
-        env.allowLocalModels = false;
-        window.pipeline = pipeline;
-    </script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white theme-midnight">
@@ -137,7 +132,7 @@
                 
                 <div class="pointer-events-auto mt-8 relative z-[202]">
                     <button id="mode-btn" class="glass-pill px-6 py-2.5 rounded-full text-xs font-bold flex items-center gap-3 text-gray-300 hover:text-white transition-all duration-300 hover:border-accent shadow-lg hover:shadow-accent/20 cursor-pointer min-w-[180px] justify-center tracking-wide uppercase" aria-label="Change Mode">
-                        <span id="mode-icon"><i class="fa-solid fa-sparkles text-accent"></i></span>
+                        <span id="mode-icon"><i class="fa-solid fa-brain text-accent"></i></span>
                         <span id="current-mode-txt">PrysmisAI</span>
                         <i class="fa-solid fa-chevron-down text-[10px] opacity-50 pointer-events-none ml-auto"></i>
                     </button>
@@ -205,6 +200,7 @@
                             <div class="cmd-row rounded-xl" onclick="window.runCmd('/roleplay')"><span class="text-pink-400 font-bold">/roleplay</span> <span class="text-gray-500 text-[10px] ml-auto">TOGGLE</span></div>
                             <div class="cmd-row rounded-xl" onclick="window.runCmd('/invisible tab')"><span class="text-emerald-400 font-bold">/invisible tab</span> <span class="text-gray-500 text-[10px] ml-auto">CLOAK</span></div>
                             <div class="cmd-row rounded-xl" onclick="window.runCmd('/discord-invite')"><span class="text-blue-400 font-bold">/discord-invite</span> <span class="text-gray-500 text-[10px] ml-auto">JOIN</span></div>
+                            <div class="cmd-row rounded-xl" onclick="window.runCmd('/say Hello')"><span class="text-yellow-400 font-bold">/say [text]</span> <span class="text-gray-500 text-[10px] ml-auto">SPEAK</span></div>
                             <div class="cmd-row rounded-xl" onclick="window.runCmd('/clear')"><span class="text-red-400 font-bold">/clear</span> <span class="text-gray-500 text-[10px] ml-auto">RESET</span></div>
                         </div>
 
@@ -337,7 +333,7 @@
                     <div class="relative">
                         <select id="ai-model-selector" class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white text-xs font-sans outline-none cursor-pointer appearance-none focus:border-accent transition-colors">
                             <option value="prysmis">PrysmisAI (Default)</option>
-                            <option value="openai">GPT-4o</option>
+                            <option value="openai">ChatGPT-4o</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
                     </div>
