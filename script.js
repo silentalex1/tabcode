@@ -4,14 +4,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         models: {},
         init: async function() {
             try {
-                this.models.generator = await window.pipeline('text-generation', 'Xenova/Qwen1.5-1.8B-Chat', {
+                this.models.generator = await window.pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
                     quantized: true,
-                    progress_callback: (p) => console.log(`Loading AI: ${Math.round(p.status)}%`)
+                    progress_callback: (p) => {
+                        if(p.progress) console.log(`Loading AI: ${Math.round(p.progress)}%`);
+                    }
                 });
                 this.models.vision = await window.pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning');
                 this.models.tts = await window.pipeline('text-to-speech', 'Xenova/speecht5_tts', { quantized: false });
                 this.models.vocoder = await window.pipeline('vocoder', 'Xenova/speecht5_hifigan', { quantized: false });
-                this.models.audio = await window.pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny');
                 
                 this.isReady = true;
                 console.log("PrysmisAI Core Online");
@@ -20,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         },
         generate: async function(prompt) {
-            if(!this.isReady) return "PrysmisAI is still loading resources...";
+            if(!this.isReady) return "PrysmisAI is warming up...";
             const out = await this.models.generator(prompt, {
                 max_new_tokens: 512,
                 temperature: 0.7,
@@ -267,12 +268,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(els.fileInput) els.fileInput.value = '';
     };
 
+    window.downloadFile = (content, filename = 'download.txt') => {
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     window.copyCode = (btn) => {
         const code = btn.parentElement.nextElementSibling.innerText;
         navigator.clipboard.writeText(code);
         const original = btn.innerText;
         btn.innerText = "COPIED";
         setTimeout(() => btn.innerText = original, 1000);
+    };
+
+    window.downloadCode = (btn) => {
+        const code = btn.parentElement.nextElementSibling.innerText;
+        const lang = btn.parentElement.parentElement.querySelector('span').innerText.toLowerCase();
+        const ext = lang === 'python' ? 'py' : lang === 'javascript' ? 'js' : lang === 'lua' ? 'lua' : 'txt';
+        window.downloadFile(code, `code.${ext}`);
     };
 
     function changeMode(val) {
@@ -354,6 +374,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const link = document.querySelector("link[rel~='icon']");
             if (link) link.href = 'https://www.google.com/favicon.ico';
             showNotification("Tab Cloaked.");
+        } else if (cmd.startsWith('/say')) {
+             const text = cmd.replace('/say', '').trim();
+             PrysmisAI.speak(text);
         }
         els.cmdPopup.classList.add('hidden');
         els.cmdPopup.classList.remove('flex');
@@ -911,6 +934,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 appendMsg('ai', "Servers are extremely busy. Please try again in a moment or click 'Reset Busy'.");
             }
+
         } catch(err) {
             isBusy = false;
             if(document.getElementById(loaderId)) document.getElementById(loaderId).remove();
