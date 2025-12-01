@@ -196,6 +196,11 @@ body {
 .notification { background: rgba(10, 10, 10, 0.9); border: 1px solid var(--accent); color: white; padding: 16px 24px; border-radius: 16px; font-size: 13px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: auto; backdrop-filter: blur(20px); display: flex; items-center; gap: 14px; font-weight: 500; }
 @keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
 
+.file-item { padding: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; }
+.file-item:hover { background: rgba(255,255,255,0.1); }
+.file-item .delete-btn { opacity: 0; transition: 0.2s; color: #ef4444; }
+.file-item:hover .delete-btn { opacity: 1; }
+
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .loader-wrapper {
