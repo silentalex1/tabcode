@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Prysmis - A Personal Learning Assistant Tool powered by AI.">
+    <meta name="description" content="Prysmis - A Personal Learning Tool powered by AI.">
     <title>Prysmis - Personal Learning Tool</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,6 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white theme-midnight">
@@ -32,7 +33,7 @@
             </div>
 
             <button id="passcode-btn" class="relative cursor-pointer py-4 px-8 text-center font-barlow inline-flex justify-center text-base uppercase text-white rounded-lg border-solid transition-transform duration-300 ease-in-out group outline-offset-4 focus:outline focus:outline-2 focus:outline-white focus:outline-offset-4 overflow-hidden w-full border border-white/10 bg-white/5 hover:bg-white/10 pointer-events-auto z-50">
-                <span class="relative z-20 tracking-[0.2em] font-bold text-xs">Enter Passcode</span>
+                <span class="relative z-20 tracking-[0.2em] font-bold text-xs">Submit Code</span>
                 <span class="absolute left-[-75%] top-0 h-full w-[50%] bg-white/20 rotate-12 z-10 blur-lg group-hover:left-[125%] transition-all duration-1000 ease-in-out"></span>
             </button>
             
@@ -102,11 +103,6 @@
                     <i class="fa-solid fa-power-off text-xl pointer-events-none group-hover:scale-110 transition-transform"></i>
                     <span class="tooltip-right md:block hidden">Reset Busy</span>
                 </button>
-
-                <button id="import-downloads-btn" class="w-12 h-12 rounded-2xl hover:bg-green-500/20 flex items-center justify-center transition duration-300 text-green-500 hover:text-green-400 group relative cursor-pointer z-[101] pointer-events-auto border border-green-500/10" aria-label="Import Downloads">
-                    <i class="fa-solid fa-file-arrow-down text-xl pointer-events-none group-hover:scale-110 transition-transform"></i>
-                    <span class="tooltip-right md:block hidden">File Vault</span>
-                </button>
             </div>
             
             <button id="settings-trigger" class="w-12 h-12 rounded-2xl hover:bg-white/5 flex items-center justify-center transition duration-300 text-gray-500 hover:text-white group relative mb-4 cursor-pointer z-[101] pointer-events-auto" aria-label="Open Settings">
@@ -140,9 +136,9 @@
                     
                     <div id="mode-dropdown" class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-72 bg-panel/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[9999] py-2 max-h-72 overflow-y-auto custom-scrollbar ring-1 ring-white/5">
                         <div class="mode-item" data-val="PrysmisAI" data-icon="fa-brain"><i class="fa-solid fa-brain text-accent w-5"></i> PrysmisAI (Default)</div>
-                        <div class="mode-item" data-val="Website Development" data-icon="fa-globe"><i class="fa-solid fa-globe text-blue-500 w-5"></i> Website Development</div>
-                        <div class="mode-item" data-val="Grok" data-icon="fa-robot"><i class="fa-solid fa-robot text-gray-400 w-5"></i> Grok (xAI)</div>
-                        <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-yellow-400 w-5"></i> ChatGPT-4o</div>
+                        <div class="mode-item" data-val="Website Development" data-icon="fa-laptop-code"><i class="fa-solid fa-laptop-code text-yellow-400 w-5"></i> Website Development</div>
+                        <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-gray-400 w-5"></i> ChatGPT-4o</div>
+                        <div class="mode-item" data-val="Grok" data-icon="fa-rocket"><i class="fa-solid fa-rocket text-white w-5"></i> Grok</div>
                         <div class="mode-item" data-val="Exploit Creation" data-icon="fa-skull"><i class="fa-solid fa-skull text-red-500 w-5"></i> Exploit Creation</div>
                         <div class="mode-item" data-val="Coding" data-icon="fa-code"><i class="fa-solid fa-code text-cyan-400 w-5"></i> Coding</div>
                         <div class="mode-item" data-val="Image Generation" data-icon="fa-image"><i class="fa-solid fa-image text-purple-400 w-5"></i> Image Generation</div>
@@ -223,27 +219,6 @@
                         </button>
                     </div>
                     <div class="text-center mt-4 w-full"><p class="text-[9px] text-gray-600 font-bold tracking-[0.2em] uppercase opacity-70">Powered by PrysmisAI Softwork.</p></div>
-                </div>
-            </div>
-
-            <div id="web-dev-ui" class="hidden flex-1 flex-col h-full relative bg-main z-[10] overflow-hidden">
-                <div class="sticky top-0 h-14 bg-panel border-b border-white/5 flex items-center justify-between px-6 z-[9000] shrink-0 w-full shadow-lg backdrop-blur-xl">
-                    <div class="flex items-center gap-4">
-                        <i class="fa-solid fa-globe text-blue-500"></i>
-                        <span class="text-xs font-bold tracking-widest text-blue-500">WEB STUDIO</span>
-                        <div class="flex gap-2 ml-4" id="web-file-tabs"></div>
-                    </div>
-                    <div class="flex gap-3">
-                        <button id="web-run-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-2 tracking-widest"><i class="fa-solid fa-play"></i> RUN PROJECT</button>
-                    </div>
-                </div>
-                <div class="flex-1 flex h-full overflow-hidden">
-                    <div class="w-1/2 flex flex-col border-r border-white/5 bg-[#050505]">
-                        <textarea id="web-code-editor" class="flex-1 bg-transparent text-[#d4d4d4] font-mono text-[13px] p-6 outline-none resize-none custom-scrollbar leading-6" spellcheck="false"></textarea>
-                    </div>
-                    <div class="w-1/2 bg-white relative">
-                        <iframe id="web-preview-frame" class="w-full h-full border-none"></iframe>
-                    </div>
                 </div>
             </div>
 
@@ -328,6 +303,35 @@
                  </div>
             </div>
 
+            <div id="web-dev-ui" class="hidden flex-1 flex-col h-full relative bg-main z-[10] overflow-hidden">
+                 <div class="sticky top-0 h-12 bg-panel border-b border-white/5 flex items-center justify-between px-6 z-[9000] shrink-0 w-full shadow-lg backdrop-blur-xl">
+                     <div class="flex items-center gap-4">
+                         <i class="fa-solid fa-laptop-code text-yellow-400 text-lg"></i>
+                         <span class="text-sm font-bold tracking-widest text-yellow-400">WEB STUDIO</span>
+                     </div>
+                     <div class="flex gap-3">
+                         <input type="file" id="web-import-btn" class="hidden" multiple>
+                         <button onclick="document.getElementById('web-import-btn').click()" class="text-xs text-gray-400 hover:text-white transition uppercase tracking-wider"><i class="fa-solid fa-file-import mr-2"></i>Import</button>
+                         <button id="web-export-btn" class="text-xs text-gray-400 hover:text-white transition uppercase tracking-wider"><i class="fa-solid fa-download mr-2"></i>Export</button>
+                         <button id="web-run-btn" class="bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 px-6 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-2 tracking-widest font-mono border border-yellow-500/20"><i class="fa-solid fa-play"></i> RUN LIVE</button>
+                     </div>
+                 </div>
+                 <div class="flex-1 flex h-full overflow-hidden">
+                     <div class="w-64 bg-[#080808] border-r border-white/5 flex flex-col">
+                         <div class="p-4 text-[10px] font-bold text-gray-500 tracking-[0.2em] uppercase border-b border-white/5">Files</div>
+                         <div id="web-file-tree" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                         <button id="web-add-file-btn" class="p-3 text-xs text-gray-400 hover:text-white border-t border-white/5 flex items-center justify-center gap-2"><i class="fa-solid fa-plus"></i> New File</button>
+                     </div>
+                     <div class="flex-1 flex flex-col bg-[#050505] border-r border-white/5">
+                         <div class="h-10 bg-[#0a0a0a] border-b border-white/5 flex items-center px-2 gap-1" id="web-tabs"></div>
+                         <textarea id="web-editor" class="flex-1 bg-transparent text-[#d4d4d4] font-mono text-[13px] p-6 outline-none resize-none custom-scrollbar leading-7 z-10" spellcheck="false"></textarea>
+                     </div>
+                     <div class="w-1/2 h-full bg-white">
+                         <iframe id="web-preview" class="w-full h-full border-none"></iframe>
+                     </div>
+                 </div>
+            </div>
+
             <div id="image-gen-ui" class="hidden flex-1 flex-col h-full relative bg-main z-[10] overflow-hidden items-center justify-center p-6 overflow-y-auto custom-scrollbar">
                 <div class="w-full max-w-2xl flex flex-col gap-8 animate-fade-in my-auto">
                     <div class="border border-white/10 rounded-3xl p-3 bg-panel/50 backdrop-blur-md shadow-2xl relative aspect-square flex items-center justify-center overflow-hidden group transition-all">
@@ -347,22 +351,6 @@
         </main>
     </div>
 
-    <div id="file-vault-ui" class="fixed inset-0 bg-black/95 backdrop-blur-xl z-[99999] hidden flex items-center justify-center opacity-0 transition-opacity duration-300" aria-modal="true" role="dialog">
-        <div class="bg-panel border border-green-500/30 w-full max-w-lg rounded-[2.5rem] shadow-2xl relative mx-4 p-10 flex flex-col items-center">
-             <button id="close-file-vault" class="absolute top-6 right-8 text-gray-500 hover:text-white z-[1000]" aria-label="Close File Vault"><i class="fa-solid fa-xmark text-xl"></i></button>
-             <i class="fa-solid fa-vault text-5xl text-green-500 mb-6"></i>
-             <h2 class="text-2xl font-bold text-white mb-2 tracking-widest uppercase">File Vault</h2>
-             <p class="text-gray-500 text-xs mb-8 text-center max-w-xs">Secure local transfer. Upload files here to bypass network restrictions and redownload them cleanly.</p>
-             
-             <div class="w-full border-2 border-dashed border-white/10 rounded-2xl p-10 flex flex-col items-center justify-center hover:border-green-500/50 transition cursor-pointer bg-black/20" onclick="document.getElementById('vault-input').click()">
-                 <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-4"></i>
-                 <span class="text-xs text-gray-400 font-mono">DROP FILE OR CLICK TO UPLOAD</span>
-                 <input type="file" id="vault-input" class="hidden">
-             </div>
-             <div id="vault-status" class="mt-6 text-xs font-mono text-green-400 h-4"></div>
-        </div>
-    </div>
-
     <div id="settings-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[99999] hidden flex items-center justify-center opacity-0 transition-opacity duration-300" aria-modal="true" role="dialog">
         <div class="bg-panel/90 border border-white/10 w-full max-w-lg rounded-[2.5rem] shadow-2xl transform scale-95 transition-all duration-300 relative mx-4 p-10" id="settings-box">
             <button id="close-settings" class="absolute top-8 right-8 text-gray-500 hover:text-white text-xl transition-colors" aria-label="Close Settings"><i class="fa-solid fa-xmark"></i></button>
@@ -375,25 +363,34 @@
                             <option value="prysmis">PrysmisAI (Default)</option>
                             <option value="openai">ChatGPT-4o</option>
                             <option value="grok">Grok (xAI)</option>
-                            <option value="gemini">Gemini 2.0</option>
-                            <option value="deepseek">DeepSeek R1</option>
-                            <option value="searchgpt">SearchGPT (Online)</option>
-                            <option value="mistral">Mistral</option>
-                            <option value="llama">Llama 3.3</option>
-                            <option value="qwen">Qwen 2.5</option>
-                            <option value="unity">Unity (Uncensored)</option>
-                            <option value="midijourney">Midijourney</option>
-                            <option value="rtist">Rtist</option>
-                            <option value="p1">Pollinations 1</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Grok API Key</label>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Grok API Key (Optional)</label>
                     <input type="password" id="grok-key-field" class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white text-xs font-mono z-[1000] focus:border-accent outline-none transition-colors" placeholder="xai-...">
                     <a href="https://console.x.ai/" target="_blank" class="text-accent text-[10px] mt-4 inline-block hover:text-white transition-colors font-bold tracking-wider"><i class="fa-solid fa-key mr-1"></i> GENERATE KEY</a>
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Visual Theme</label>
+                    <div class="relative">
+                        <select id="theme-selector" class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white text-xs font-sans outline-none cursor-pointer appearance-none focus:border-accent transition-colors">
+                            <option value="theme-midnight">Midnight (Default)</option>
+                            <option value="theme-christmas">Snowy Night (Xmas)</option>
+                            <option value="theme-luxury">Luxury Gold</option>
+                            <option value="theme-cherry">Cherry Blossom</option>
+                            <option value="theme-coffee">Coffee</option>
+                            <option value="theme-sunset">Sunset</option>
+                            <option value="theme-forest">Forest</option>
+                            <option value="theme-ocean">Ocean</option>
+                            <option value="theme-matrix">Matrix</option>
+                            <option value="theme-cyberpunk">Cyberpunk</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
+                    </div>
                 </div>
 
                  <div class="flex items-center justify-between p-5 bg-black/40 rounded-2xl border border-white/10">
