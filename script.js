@@ -54,22 +54,75 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    class WebDevManager {
+        constructor() {
+            this.files = {
+                'index.html': '<!DOCTYPE html>\n<html>\n<head>\n<title>My App</title>\n<link rel="stylesheet" href="style.css">\n</head>\n<body>\n<h1>Hello World</h1>\n<script src="script.js"></script>\n</body>\n</html>',
+                'style.css': 'body { background: #111; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }',
+                'script.js': 'console.log("Hello from Prysmis Web Studio!");'
+            };
+            this.currentFile = 'index.html';
+            this.editor = document.getElementById('web-code-editor');
+            this.preview = document.getElementById('web-preview-frame');
+            this.tabsContainer = document.getElementById('web-file-tabs');
+            this.runBtn = document.getElementById('web-run-btn');
+            
+            if(this.runBtn) {
+                this.runBtn.addEventListener('click', () => this.run());
+                this.renderTabs();
+                this.loadEditor();
+                this.editor.addEventListener('input', () => {
+                    this.files[this.currentFile] = this.editor.value;
+                });
+            }
+        }
+        
+        renderTabs() {
+            this.tabsContainer.innerHTML = '';
+            Object.keys(this.files).forEach(filename => {
+                const btn = document.createElement('button');
+                btn.className = `px-3 py-1 rounded-md text-[10px] font-mono uppercase transition ${this.currentFile === filename ? 'bg-blue-500 text-white' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`;
+                btn.innerText = filename;
+                btn.onclick = () => this.switchFile(filename);
+                this.tabsContainer.appendChild(btn);
+            });
+        }
+        
+        switchFile(filename) {
+            this.currentFile = filename;
+            this.renderTabs();
+            this.loadEditor();
+        }
+        
+        loadEditor() {
+            this.editor.value = this.files[this.currentFile];
+        }
+        
+        run() {
+            const html = this.files['index.html'];
+            const css = `<style>${this.files['style.css']}</style>`;
+            const js = `<script>${this.files['script.js']}<\/script>`;
+            const combined = html.replace('</head>', `${css}</head>`).replace('</body>', `${js}</body>`);
+            const blob = new Blob([combined], { type: 'text/html' });
+            this.preview.src = URL.createObjectURL(blob);
+        }
+    }
+
+    const webDev = new WebDevManager();
+
     function checkPass() {
         if(passInput.value === 'schoolistrash') {
             passOverlay.style.opacity = '0';
             setTimeout(() => {
                 passOverlay.classList.add('hidden');
                 passOverlay.classList.remove('flex');
-                
                 startupLoader.classList.remove('hidden');
                 startupLoader.classList.add('flex');
-                
                 setTimeout(() => {
                     startupLoader.style.opacity = '0';
                     setTimeout(() => {
                         startupLoader.classList.add('hidden');
                         startupLoader.classList.remove('flex');
-                        
                         mainContent.classList.remove('pointer-events-none');
                         mainContent.classList.remove('opacity-0');
                     }, 1000);
@@ -122,6 +175,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         codingWorkspace: document.getElementById('coding-workspace-ui'),
         imageGenUI: document.getElementById('image-gen-ui'),
         standardUI: document.getElementById('standard-ui'),
+        webDevUI: document.getElementById('web-dev-ui'),
+        fileVaultUI: document.getElementById('file-vault-ui'),
+        closeFileVault: document.getElementById('close-file-vault'),
+        vaultInput: document.getElementById('vault-input'),
+        vaultStatus: document.getElementById('vault-status'),
+        importDownloadsBtn: document.getElementById('import-downloads-btn'),
         modeTxt: document.getElementById('current-mode-txt'),
         modeBtn: document.getElementById('mode-btn'),
         modeDrop: document.getElementById('mode-dropdown'),
@@ -131,6 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         saveSettings: document.getElementById('save-settings-btn'),
         fastSpeedToggle: document.getElementById('fast-speed-toggle'),
         aiModelSelector: document.getElementById('ai-model-selector'),
+        grokKeyField: document.getElementById('grok-key-field'),
         themeSelector: document.getElementById('theme-selector'),
         cmdPopup: document.getElementById('cmd-popup'),
         textToolbar: document.getElementById('text-toolbar'),
@@ -201,6 +261,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const savedModel = localStorage.getItem('prysmis_model');
         if(savedModel && els.aiModelSelector) els.aiModelSelector.value = savedModel;
+
+        const grokKey = localStorage.getItem('prysmis_grok_key');
+        if(grokKey && els.grokKeyField) els.grokKeyField.value = grokKey;
     };
     loadSettings();
 
@@ -214,6 +277,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (els.stopAiBtn) els.stopAiBtn.classList.add('opacity-0', 'pointer-events-none');
             showContinueButton();
             showNotification("AI State Reset.");
+        });
+    }
+    
+    if(els.importDownloadsBtn) {
+        els.importDownloadsBtn.addEventListener('click', () => {
+             els.fileVaultUI.classList.remove('hidden');
+             requestAnimationFrame(() => els.fileVaultUI.classList.remove('opacity-0'));
+        });
+    }
+    
+    if(els.closeFileVault) {
+        els.closeFileVault.addEventListener('click', () => {
+            els.fileVaultUI.classList.add('opacity-0');
+            setTimeout(() => els.fileVaultUI.classList.add('hidden'), 300);
+        });
+    }
+
+    if(els.vaultInput) {
+        els.vaultInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                const url = URL.createObjectURL(file);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                els.vaultStatus.innerText = `Downloaded: ${file.name}`;
+                setTimeout(() => els.vaultStatus.innerText = "", 3000);
+            }
         });
     }
 
@@ -268,13 +363,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function changeMode(val) {
         updateDropdownUI(val);
-        if(val === 'Coding') activateCodingWorkspace();
+        
+        els.codingWorkspace.classList.add('hidden');
+        els.imageGenUI.classList.add('hidden');
+        els.exploitUI.classList.add('hidden');
+        els.webDevUI.classList.add('hidden');
+        els.standardUI.classList.add('hidden');
+
+        if(val === 'Coding') els.codingWorkspace.classList.remove('hidden');
+        else if(val === 'Website Development') els.webDevUI.classList.remove('hidden');
         else if(val === 'Code Dumper') {
+            els.standardUI.classList.remove('hidden');
             if(!isCodeDumperUnlocked) toggleDumperKey(true);
             else activateDumper();
-        } else if (val === 'Image Generation') activateImageGen();
-        else if (val === 'Exploit Creation') activateExploitStudio();
-        else switchToStandard();
+        } else if (val === 'Image Generation') {
+            els.imageGenUI.classList.remove('hidden');
+            els.imageGenUI.classList.add('flex');
+        } else if (val === 'Exploit Creation') {
+             els.exploitUI.classList.remove('hidden');
+             els.exploitUI.classList.add('flex');
+        } else {
+            els.standardUI.classList.remove('hidden');
+        }
         toggleDropdown(false);
     }
 
@@ -381,9 +491,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             localStorage.setItem('prysmis_theme', els.themeSelector.value);
             document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white ${els.themeSelector.value}`;
         }
-        if(els.aiModelSelector) {
-            localStorage.setItem('prysmis_model', els.aiModelSelector.value);
-        }
+        if(els.aiModelSelector) localStorage.setItem('prysmis_model', els.aiModelSelector.value);
+        if(els.grokKeyField) localStorage.setItem('prysmis_grok_key', els.grokKeyField.value);
+
         els.saveSettings.textContent = "SAVED";
         els.saveSettings.classList.add('bg-green-500', 'text-white');
         setTimeout(() => {
@@ -479,6 +589,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.standardUI.classList.add('hidden');
         els.imageGenUI.classList.add('hidden');
         els.exploitUI.classList.add('hidden');
+        els.webDevUI.classList.add('hidden');
         els.codingWorkspace.classList.remove('hidden');
     }
 
@@ -487,6 +598,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.standardUI.classList.add('hidden');
         els.imageGenUI.classList.add('hidden');
         els.codingWorkspace.classList.add('hidden');
+        els.webDevUI.classList.add('hidden');
         els.exploitUI.classList.remove('hidden');
         els.exploitUI.classList.add('flex');
     }
@@ -496,6 +608,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.standardUI.classList.add('hidden');
         els.codingWorkspace.classList.add('hidden');
         els.exploitUI.classList.add('hidden');
+        els.webDevUI.classList.add('hidden');
         els.imageGenUI.classList.remove('hidden');
         els.imageGenUI.classList.add('flex');
     }
@@ -509,8 +622,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         els.standardUI.classList.remove('hidden');
         els.codingWorkspace.classList.add('hidden');
         els.imageGenUI.classList.add('hidden');
-        els.imageGenUI.classList.remove('flex');
         els.exploitUI.classList.add('hidden');
+        els.webDevUI.classList.add('hidden');
         els.exploitUI.classList.remove('flex');
     }
 
@@ -541,7 +654,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             const combined = `${instruction}\n\n${prompt}`;
             return await PrysmisAI.generate(combined);
         }
-
+        
+        if (preferredModel === 'grok') {
+            const key = localStorage.getItem('prysmis_grok_key');
+            if (!key) return "Grok API Key Missing. Please set it in settings.";
+            
+            try {
+                const response = await fetch('https://api.x.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${key}`
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: 'system', content: instruction },
+                            { role: 'user', content: prompt }
+                        ],
+                        model: 'grok-beta',
+                        stream: false
+                    })
+                });
+                if (!response.ok) throw new Error(`Grok API Error: ${response.status}`);
+                const data = await response.json();
+                return data.choices[0].message.content;
+            } catch (e) {
+                return `Grok Error: ${e.message}`;
+            }
+        }
+        
         const fallbackModels = ['searchgpt', 'mistral', 'llama', 'qwen', 'unity'];
         const tryFetch = async (model) => {
              const response = await fetch('https://text.pollinations.ai/', {
@@ -812,6 +953,68 @@ document.addEventListener('DOMContentLoaded', async () => {
              scanDiv.remove();
         }
 
+        if (text.toLowerCase().startsWith('find api:')) {
+            const targetUrl = text.split('find api:')[1].trim();
+            const scanMsg = `Scanning ${targetUrl} for API endpoints via proxy...`;
+            chatHistory[chatIndex].messages.push({ role: 'ai', text: scanMsg, img: null });
+            appendMsg('ai', scanMsg);
+            
+            try {
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                const resp = await fetch(proxyUrl);
+                const json = await resp.json();
+                const content = json.contents;
+                
+                const apiRegex = /(https?:\/\/[^\s"']+(?:api|v1|graphql|\.json)[^\s"']*)/gi;
+                const matches = content.match(apiRegex) || [];
+                const uniqueApis = [...new Set(matches)].slice(0, 10);
+                
+                let result = "";
+                if (uniqueApis.length > 0) {
+                    result = "**Found Potential APIs:**\n" + uniqueApis.join('\n');
+                } else {
+                    result = "No obvious API endpoints found in initial scan.";
+                }
+                chatHistory[chatIndex].messages.push({ role: 'ai', text: result, img: null });
+                saveChatToStorage(chatHistory);
+                appendMsg('ai', result);
+                
+                els.flashOverlay.classList.add('opacity-0');
+                els.flashOverlay.classList.remove('bg-flash-green');
+                return;
+            } catch (e) {
+                const err = "Failed to scan URL. CORS or Proxy error.";
+                chatHistory[chatIndex].messages.push({ role: 'ai', text: err, img: null });
+                appendMsg('ai', err);
+                els.flashOverlay.classList.add('opacity-0');
+                els.flashOverlay.classList.remove('bg-flash-green');
+                return;
+            }
+        }
+
+        if (text.toLowerCase().startsWith('find the code:')) {
+             const targetUrl = text.split('find the code:')[1].trim();
+             const scanMsg = `Extracting source code from ${targetUrl}...`;
+             chatHistory[chatIndex].messages.push({ role: 'ai', text: scanMsg, img: null });
+             appendMsg('ai', scanMsg);
+
+             try {
+                 const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                 const resp = await fetch(proxyUrl);
+                 const json = await resp.json();
+                 const content = json.contents;
+                 
+                 const codeSnippet = content.substring(0, 2000); 
+                 const prompt = `Here is the source code of ${targetUrl}:\n\`\`\`html\n${codeSnippet}\n\`\`\`\n\nExplain this code and find any interesting scripts.`;
+                 // Fallthrough to AI process
+             } catch (e) {
+                 const err = "Failed to extract code.";
+                 chatHistory[chatIndex].messages.push({ role: 'ai', text: err, img: null });
+                 appendMsg('ai', err);
+                 return;
+             }
+        }
+
         const loaderId = 'loader-' + Date.now();
         const loaderDiv = document.createElement('div');
         loaderDiv.id = loaderId;
@@ -856,6 +1059,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (selectedModel === 'prysmis') {
                 const combined = `${sysPrompt}\n\n${typeof userMessageContent === 'string' ? userMessageContent : userMessageContent[0].text}`;
                 resultText = await PrysmisAI.generate(combined);
+            } else if (selectedModel === 'grok') {
+                const key = localStorage.getItem('prysmis_grok_key');
+                if (!key) throw new Error("Grok API Key Missing");
+                 const response = await fetch('https://api.x.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${key}`
+                    },
+                    body: JSON.stringify({
+                        messages: [{ role: 'system', content: sysPrompt }, { role: 'user', content: typeof userMessageContent === 'string' ? userMessageContent : userMessageContent[0].text }],
+                        model: 'grok-beta',
+                        stream: false
+                    })
+                });
+                const data = await response.json();
+                resultText = data.choices[0].message.content;
             } else {
                 const messages = chatHistory[chatIndex].messages.slice(-6).map(m => ({ 
                     role: m.role === 'ai' ? 'assistant' : 'user', 
