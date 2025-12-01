@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Prysmis - A Personal Learning Tool powered by AI.">
+    <meta name="description" content="Prysmis - A Personal Learning Assistant Tool powered by AI.">
     <title>Prysmis - Personal Learning Tool</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +33,7 @@
             </div>
 
             <button id="passcode-btn" class="relative cursor-pointer py-4 px-8 text-center font-barlow inline-flex justify-center text-base uppercase text-white rounded-lg border-solid transition-transform duration-300 ease-in-out group outline-offset-4 focus:outline focus:outline-2 focus:outline-white focus:outline-offset-4 overflow-hidden w-full border border-white/10 bg-white/5 hover:bg-white/10 pointer-events-auto z-50">
-                <span class="relative z-20 tracking-[0.2em] font-bold text-xs">Submit Code</span>
+                <span class="relative z-20 tracking-[0.2em] font-bold text-xs">Enter Passcode</span>
                 <span class="absolute left-[-75%] top-0 h-full w-[50%] bg-white/20 rotate-12 z-10 blur-lg group-hover:left-[125%] transition-all duration-1000 ease-in-out"></span>
             </button>
             
@@ -136,9 +136,8 @@
                     
                     <div id="mode-dropdown" class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-72 bg-panel/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden flex-col z-[9999] py-2 max-h-72 overflow-y-auto custom-scrollbar ring-1 ring-white/5">
                         <div class="mode-item" data-val="PrysmisAI" data-icon="fa-brain"><i class="fa-solid fa-brain text-accent w-5"></i> PrysmisAI (Default)</div>
+                        <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-gray-400 w-5"></i> ChatGPT (Free)</div>
                         <div class="mode-item" data-val="Website Development" data-icon="fa-laptop-code"><i class="fa-solid fa-laptop-code text-yellow-400 w-5"></i> Website Development</div>
-                        <div class="mode-item" data-val="AI Assistant" data-icon="fa-sparkles"><i class="fa-solid fa-sparkles text-gray-400 w-5"></i> ChatGPT-4o</div>
-                        <div class="mode-item" data-val="Grok" data-icon="fa-rocket"><i class="fa-solid fa-rocket text-white w-5"></i> Grok</div>
                         <div class="mode-item" data-val="Exploit Creation" data-icon="fa-skull"><i class="fa-solid fa-skull text-red-500 w-5"></i> Exploit Creation</div>
                         <div class="mode-item" data-val="Coding" data-icon="fa-code"><i class="fa-solid fa-code text-cyan-400 w-5"></i> Coding</div>
                         <div class="mode-item" data-val="Image Generation" data-icon="fa-image"><i class="fa-solid fa-image text-purple-400 w-5"></i> Image Generation</div>
@@ -317,7 +316,7 @@
                      </div>
                  </div>
                  <div class="flex-1 flex h-full overflow-hidden">
-                     <div class="w-64 bg-[#080808] border-r border-white/5 flex flex-col">
+                     <div class="w-64 bg-[#080808] border-r border-white/5 flex flex-col" id="web-file-tree-container">
                          <div class="p-4 text-[10px] font-bold text-gray-500 tracking-[0.2em] uppercase border-b border-white/5">Files</div>
                          <div id="web-file-tree" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
                          <button id="web-add-file-btn" class="p-3 text-xs text-gray-400 hover:text-white border-t border-white/5 flex items-center justify-center gap-2"><i class="fa-solid fa-plus"></i> New File</button>
@@ -361,17 +360,16 @@
                     <div class="relative">
                         <select id="ai-model-selector" class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white text-xs font-sans outline-none cursor-pointer appearance-none focus:border-accent transition-colors">
                             <option value="prysmis">PrysmisAI (Default)</option>
-                            <option value="openai">ChatGPT-4o</option>
-                            <option value="grok">Grok (xAI)</option>
+                            <option value="openai">ChatGPT</option>
+                            <option value="grok">Grok</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 text-xs pointer-events-none"></i>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Grok API Key (Optional)</label>
+                 <div id="grok-key-container" class="hidden">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Grok API Key (Required)</label>
                     <input type="password" id="grok-key-field" class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white text-xs font-mono z-[1000] focus:border-accent outline-none transition-colors" placeholder="xai-...">
-                    <a href="https://console.x.ai/" target="_blank" class="text-accent text-[10px] mt-4 inline-block hover:text-white transition-colors font-bold tracking-wider"><i class="fa-solid fa-key mr-1"></i> GENERATE KEY</a>
                 </div>
                 
                 <div>
