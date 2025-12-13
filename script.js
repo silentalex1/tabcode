@@ -11,29 +11,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         models: {},
         init: async function() {
             try {
-                this.models.generator = await window.pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
-                    quantized: true,
-                    progress_callback: (p) => {
-                       
-                    }
-                });
                 this.models.vision = await window.pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning');
                 this.models.tts = await window.pipeline('text-to-speech', 'Xenova/speecht5_tts', { quantized: false });
                 this.models.vocoder = await window.pipeline('vocoder', 'Xenova/speecht5_hifigan', { quantized: false });
-                
                 this.isReady = true;
             } catch (e) {
             }
         },
         generate: async function(prompt) {
-            if(!this.isReady) return "PrysmisAI Local Core is initializing... Please wait a moment.";
-            const out = await this.models.generator(prompt, {
-                max_new_tokens: 512,
-                temperature: 0.6,
-                do_sample: true,
-                top_k: 20
+            return await this.fetchExternal(prompt);
+        },
+        fetchExternal: async function(prompt) {
+             const response = await fetch('https://text.pollinations.ai/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [
+                        { role: 'user', content: prompt }
+                    ],
+                    model: 'qwen',
+                    seed: Math.floor(Math.random() * 10000),
+                    jsonMode: false
+                })
             });
-            return out[0].generated_text;
+            if (!response.ok) throw new Error(`Status ${response.status}`);
+            return await response.text();
         },
         speak: async function(text) {
             if(!this.isReady) return;
@@ -45,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
     
-    setTimeout(() => PrysmisAI.init(), 1000);
+    setTimeout(() => PrysmisAI.init(), 100);
 
     const PRYSMIS_OBFUSCATOR = (() => {
         const rand = (len = 32) => [...crypto.getRandomValues(new Uint8Array(len))].map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -237,8 +239,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.className = `bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white ${theme}`;
         if(els.themeSelector) els.themeSelector.value = theme;
         
-        const savedModel = localStorage.getItem('prysmis_model');
-        if(savedModel && els.aiModelSelector) els.aiModelSelector.value = savedModel;
+        const savedModel = localStorage.getItem('prysmis_model') || 'prysmis';
+        if(els.aiModelSelector) els.aiModelSelector.value = savedModel;
         
         if(els.grokKeyField) els.grokKeyField.value = localStorage.getItem('prysmis_grok_key') || '';
         if(els.openaiKeyField) els.openaiKeyField.value = localStorage.getItem('prysmis_openai_key') || '';
@@ -717,7 +719,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (selectedModel === 'prysmis') {
             const combined = `${instruction}\n\n${prompt}`;
-            return await PrysmisAI.generate(combined);
+            return await PrysmisAI.fetchExternal(combined);
         } 
         else if (selectedModel === 'openai') {
             const key = localStorage.getItem('prysmis_openai_key');
@@ -730,7 +732,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                     const data = await res.json();
                     return data.choices[0].message.content;
-                } catch(e) { console.error(e); }
+                } catch(e) { }
             }
         } 
         else if (selectedModel === 'grok') {
@@ -744,11 +746,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                     const data = await res.json();
                     return data.choices[0].message.content;
-                } catch(e) { console.error(e); }
+                } catch(e) { }
             }
         }
-        
-        const fallbackModels = ['openai', 'searchgpt', 'mistral', 'llama', 'qwen', 'unity'];
         
         const tryFetch = async (model) => {
              const response = await fetch('https://text.pollinations.ai/', {
@@ -771,12 +771,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             return await tryFetch(selectedModel); 
         } catch (e) {
-            for (const fallback of fallbackModels) {
-                try {
-                    return await tryFetch(fallback);
-                } catch (e2) {}
-            }
-            return await PrysmisAI.generate(instruction + "\n\n" + prompt); 
+            return await PrysmisAI.fetchExternal(instruction + "\n\n" + prompt); 
         }
     }
 
@@ -1257,4 +1252,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         img.src = url;
     });
-});
+})
