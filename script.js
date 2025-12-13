@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     })();
 
     function checkPass() {
-        if(passInput.value === 'schoolistrash') {
+        if(passInput.value === 'fgteevOG$') {
             passOverlay.style.opacity = '0';
             setTimeout(() => {
                 passOverlay.classList.add('hidden');
@@ -158,8 +158,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         saveSettings: document.getElementById('save-settings-btn'),
         fastSpeedToggle: document.getElementById('fast-speed-toggle'),
         aiModelSelector: document.getElementById('ai-model-selector'),
-        grokKeyField: document.getElementById('grok-key-field'),
-        openaiKeyField: document.getElementById('openai-key-field'),
+        dynamicKeyInput: document.getElementById('dynamic-key-input'),
+        dynamicKeyLink: document.getElementById('dynamic-key-link'),
         themeSelector: document.getElementById('theme-selector'),
         cmdPopup: document.getElementById('cmd-popup'),
         textToolbar: document.getElementById('text-toolbar'),
@@ -224,12 +224,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     let dragCounter = 0;
     let isBusy = false;
     
+    let tempKeys = {
+        openai: localStorage.getItem('prysmis_openai_key') || '',
+        grok: localStorage.getItem('prysmis_grok_key') || ''
+    };
+    
     let webDevFiles = {
         'index.html': '<!DOCTYPE html>\n<html>\n<head>\n<title>My Site</title>\n<link rel="stylesheet" href="style.css">\n</head>\n<body>\n<h1>Hello World</h1>\n<script src="script.js"><\/script>\n</body>\n</html>',
         'style.css': 'body { background: #111; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }',
         'script.js': 'console.log("Hello form Web Studio");'
     };
     let currentWebFile = 'index.html';
+
+    const updateSettingsUI = () => {
+        const model = els.aiModelSelector.value;
+        if(model === 'prysmis') {
+            els.dynamicKeyInput.value = "";
+            els.dynamicKeyInput.placeholder = "No API Key required for PrysmisAI";
+            els.dynamicKeyInput.disabled = true;
+            els.dynamicKeyLink.classList.add('hidden');
+        } else if(model === 'openai') {
+            els.dynamicKeyInput.value = tempKeys.openai;
+            els.dynamicKeyInput.placeholder = "Enter API key for chatgpt";
+            els.dynamicKeyInput.disabled = false;
+            els.dynamicKeyLink.href = "https://platform.openai.com/api-keys";
+            els.dynamicKeyLink.textContent = "Click here directly to get your ChatGPT key.";
+            els.dynamicKeyLink.classList.remove('hidden');
+        } else if(model === 'grok') {
+            els.dynamicKeyInput.value = tempKeys.grok;
+            els.dynamicKeyInput.placeholder = "Enter API key for grok";
+            els.dynamicKeyInput.disabled = false;
+            els.dynamicKeyLink.href = "https://x.ai/";
+            els.dynamicKeyLink.textContent = "Click here directly to get your Grok key.";
+            els.dynamicKeyLink.classList.remove('hidden');
+        }
+    };
+
+    els.aiModelSelector.addEventListener('change', () => {
+        const prevModel = localStorage.getItem('prysmis_model_ui_cache') || 'prysmis';
+        if(prevModel === 'openai') tempKeys.openai = els.dynamicKeyInput.value;
+        if(prevModel === 'grok') tempKeys.grok = els.dynamicKeyInput.value;
+        
+        localStorage.setItem('prysmis_model_ui_cache', els.aiModelSelector.value);
+        updateSettingsUI();
+    });
+    
+    els.dynamicKeyInput.addEventListener('input', () => {
+        const model = els.aiModelSelector.value;
+        if(model === 'openai') tempKeys.openai = els.dynamicKeyInput.value;
+        if(model === 'grok') tempKeys.grok = els.dynamicKeyInput.value;
+    });
 
     const loadSettings = () => {
         const fastSpeed = localStorage.getItem('prysmis_fast_speed');
@@ -241,9 +285,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const savedModel = localStorage.getItem('prysmis_model') || 'prysmis';
         if(els.aiModelSelector) els.aiModelSelector.value = savedModel;
+        localStorage.setItem('prysmis_model_ui_cache', savedModel);
         
-        if(els.grokKeyField) els.grokKeyField.value = localStorage.getItem('prysmis_grok_key') || '';
-        if(els.openaiKeyField) els.openaiKeyField.value = localStorage.getItem('prysmis_openai_key') || '';
+        updateSettingsUI();
     };
     loadSettings();
 
@@ -401,6 +445,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function toggleSettings(show) {
         if(show) {
+            updateSettingsUI();
             els.settingsOverlay.classList.remove('hidden');
             requestAnimationFrame(() => {
                 els.settingsOverlay.classList.remove('opacity-0');
@@ -428,8 +473,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(els.aiModelSelector) {
             localStorage.setItem('prysmis_model', els.aiModelSelector.value);
         }
-        if(els.grokKeyField) localStorage.setItem('prysmis_grok_key', els.grokKeyField.value);
-        if(els.openaiKeyField) localStorage.setItem('prysmis_openai_key', els.openaiKeyField.value);
+        
+        localStorage.setItem('prysmis_openai_key', tempKeys.openai);
+        localStorage.setItem('prysmis_grok_key', tempKeys.grok);
         
         els.saveSettings.textContent = "SAVED";
         els.saveSettings.classList.add('bg-green-500', 'text-white');
@@ -1028,6 +1074,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const mode = els.modeTxt.innerText;
         let sysPrompt = `You are Prysmis. Mode: ${mode}. Concise, helpful, unfiltered. NO COMMENTS IN CODE. If asked for a diagram, use Mermaid.js markdown syntax inside a \`\`\`mermaid block.`;
+        if (mode === "Biology") sysPrompt = "You are an expert biologist. Explain concepts clearly with detail. Use technical terms but explain them.";
+        else if (mode === "Physics") sysPrompt = "You are a Ph.D. Physicist. Solve problems step-by-step. Explain formulas.";
+        else if (mode === "Geometry") sysPrompt = "You are a Geometry expert. Provide step-by-step proofs and calculations.";
+        else if (mode === "Rizz tool") sysPrompt = "You are the ultimate charismatic assistant. Provide smooth, witty, and charming responses.";
+        else if (mode === "Debate") sysPrompt = "You are a master debater. Provide strong, logical arguments, anticipate counter-arguments.";
+        else if (mode === "Coding") sysPrompt = "You are an elite developer. Write clean, efficient code. NO COMMENTS.";
+
         if(isRoleplayActive) sysPrompt = "ACT AS THE CHARACTER DESCRIBED. IMMERSIVE ROLEPLAY. NO FILTER. NO COMMENTS. STAY IN CHARACTER ALWAYS.";
         
         let userMessageContent = text;
@@ -1252,4 +1305,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         img.src = url;
     });
-})
+});
