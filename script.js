@@ -837,7 +837,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const key = localStorage.getItem('prysmis_gemini_key');
             if (key) {
                 try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro-exp-02-05:generateContent?key=${key}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: sysPrompt + "\n\n" + prompt }] }] })
@@ -1287,15 +1287,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         div.appendChild(bubble);
         els.chatFeed.appendChild(div);
 
-        const chars = text.split('');
+        const words = text.split(/(\s+)/);
         let i = 0;
+        let constructedHTML = "";
         
         const isFast = (els.fastSpeedToggle && els.fastSpeedToggle.checked);
-        const delay = isFast ? 0 : 10;
-        const step = isFast ? chars.length : 5;
+        const delay = isFast ? 5 : 20;
         
         currentInterval = setInterval(() => {
-            if(stopGeneration || i >= chars.length) {
+            if(stopGeneration || i >= words.length) {
                 clearInterval(currentInterval);
                 bubble.innerHTML = parseMD(text);
                 try { mermaid.init(undefined, bubble.querySelectorAll('.mermaid')); } catch(e) {}
@@ -1307,15 +1307,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             
-            let chunk = "";
-            for(let k=0; k<step; k++) {
-                if(i < chars.length) chunk += chars[i];
-                i++;
-            }
+            let chunk = words[i];
+            constructedHTML += `<span class="word-fade-in">${chunk}</span>`;
+            bubble.innerHTML = parseMD(constructedHTML.replace(/<span class="word-fade-in">/g, '').replace(/<\/span>/g, '')) + `<span class="animate-pulse">|</span>`; 
             
-            if (isFast) bubble.innerHTML = parseMD(text); 
-            else bubble.innerHTML = parseMD(text.substring(0, i));
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = constructedHTML;
+            bubble.innerHTML = "";
+            bubble.appendChild(tempDiv);
             
+            i++;
             els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
         }, delay);
     }
