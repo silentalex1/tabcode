@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const passOverlay = document.getElementById('passcode-overlay');
     const passInput = document.getElementById('passcode-input');
+    const passMask = document.getElementById('passcode-mask');
     const passBtn = document.getElementById('passcode-btn');
     const passError = document.getElementById('passcode-error');
     const startupLoader = document.getElementById('startup-loader');
@@ -22,19 +23,45 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (e) {}
         },
         generateLocal: async function(prompt) {
-            const fallbackResponses = [
-                "I am processing your request. Please ensure your input is clear.",
-                "Analyzing query parameters... Done. Result: Successful execution.",
-                "Command recognized. I've updated the internal state based on your input.",
-                "Calculation complete. The logic holds true within standard parameters.",
-                "Generating response... [Data Processed]. Output: Valid.",
-                "I understand. Proceeding with the operation."
-            ];
-            const words = prompt.split(' ');
-            if (words.length > 5) {
-                return `I have analyzed your input regarding "${words[2]} ${words[3]}". My custom neural engine has processed this. \n\n**Result:**\n\nThe operation completed successfully. I have updated my internal context to reflect this new information. Is there anything specific about this subject you would like me to elaborate on?`;
-            }
-            return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+            const p = prompt.toLowerCase().trim();
+            
+            try {
+                if (/^[\d\s\+\-\*\/\(\)\.]+$/.test(p.replace(/[a-z]/g,''))) {
+                    return `**Result:** ${eval(p.replace(/[^\d\+\-\*\/\(\)\.]/g, ''))}`;
+                }
+                if (p.startsWith("what is ") && p.includes("+") || p.includes("-") || p.includes("*") || p.includes("/")) {
+                     const math = p.replace("what is ", "").replace("?", "");
+                     return `**Result:** ${eval(math.replace(/[^\d\+\-\*\/\(\)\.]/g, ''))}`;
+                }
+            } catch(e) {}
+
+            const date = new Date();
+            if (p.includes("time") || p.includes("date")) return `Current System Time: ${date.toLocaleString()}`;
+            if (p.includes("hello") || p.includes("hi ")) return "Hello! I am PrysmisAI, your personal learning tool. How can I assist you today?";
+            
+            return await this.fetchCloud(prompt);
+        },
+        fetchCloud: async function(prompt) {
+             const fallbackEndpoints = [
+                 'https://text.pollinations.ai/',
+                 'https://api.pollinations.ai/text'
+             ];
+             
+             for(let url of fallbackEndpoints) {
+                 try {
+                     const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            messages: [{ role: 'system', content: "You are PrysmisAI. Intelligent, Unfiltered, Precise." }, { role: 'user', content: prompt }],
+                            model: 'openai',
+                            jsonMode: false
+                        })
+                    });
+                    if (response.ok) return await response.text();
+                 } catch(e) {}
+             }
+             return "I am currently calibrating my neural pathways. Please try again or check your connection.";
         },
         fetchExternal: async function(prompt) {
              const customApiUrl = 'https://api.tabcode.cfd/v1/chat';
@@ -101,6 +128,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return { obfuscate, deobfuscate };
     })();
 
+    if(passInput) {
+        passInput.addEventListener('input', (e) => {
+            if(passMask) passMask.innerText = "•".repeat(e.target.value.length);
+        });
+    }
+
     function checkPass() {
         if(passInput.value === 'fgteevOG$') {
             passOverlay.style.opacity = '0';
@@ -121,10 +154,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 500);
         } else {
             passError.style.opacity = '1';
-            passInput.classList.add('border-red-500');
+            if(passInput.parentElement) passInput.parentElement.classList.add('border-red-500');
             setTimeout(() => {
                 passError.style.opacity = '0';
-                passInput.classList.remove('border-red-500');
+                if(passInput.parentElement) passInput.parentElement.classList.remove('border-red-500');
             }, 2000);
         }
     }
