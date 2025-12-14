@@ -15,7 +15,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         models: {},
         init: async function() {
             try {
-                this.models.generator = await window.pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', { quantized: true });
+                this.models.generator = await window.pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', { 
+                    quantized: true,
+                    progress_callback: (x) => {} 
+                });
                 this.models.vision = await window.pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning');
                 this.models.tts = await window.pipeline('text-to-speech', 'Xenova/speecht5_tts', { quantized: false });
                 this.models.vocoder = await window.pipeline('vocoder', 'Xenova/speecht5_hifigan', { quantized: false });
@@ -24,6 +27,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         generate: async function(prompt) {
             const p = prompt.toLowerCase().trim();
+            
+            if (p.includes("who made you") || p.includes("who created you")) {
+                return "I was created by the PrysmisAI team. The owner of PrysmisAI is 17 years old.";
+            }
+            if (p.includes("hello") || p.includes("hi ")) {
+                return "Hello! Thank you for using PrysmisAI! How may I help you today?";
+            }
             
             try {
                 if (/^[\d\s\+\-\*\/\(\)\.]+$/.test(p.replace(/[a-z]/g,''))) {
@@ -35,16 +45,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch(e) {}
 
-            if (p.includes("hello") || p.includes("hi ")) return "Hello! Thank you for using PrysmisAI! How may I help you today?";
-            
             try {
                 if(this.models.generator) {
                     const output = await this.models.generator(prompt, {
-                        max_new_tokens: 200,
+                        max_new_tokens: 300,
                         temperature: 0.7,
-                        do_sample: true
+                        do_sample: true,
+                        top_k: 20
                     });
-                    return output[0].generated_text;
+                    
+                    let text = output[0].generated_text;
+                    if(text.startsWith(prompt)) text = text.substring(prompt.length);
+                    return text || "I processed that, but my response buffer was empty. Please try rephrasing.";
                 }
             } catch(e) {}
 
@@ -54,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const p = prompt.toLowerCase();
             if(p.includes("code") || p.includes("script")) return "```python\nprint('Hello World')\n# Basic script structure\n```";
             if(p.includes("story")) return "Once upon a time, in a digital realm far away...";
-            return "I have processed your input. My neural pathways are active. Please ask a specific question or provide a command.";
+            return "I am currently initializing my core neural pathways. Please wait a moment and try again.";
         },
         speak: async function(text) {
             if(!this.isReady) return;
