@@ -15,7 +15,12 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- Removed Transformers.js for faster load as requested, relying on API mainly -->
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+        env.allowLocalModels = false;
+        env.useBrowserCache = true;
+        window.pipeline = pipeline;
+    </script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-main text-white h-screen w-screen overflow-hidden flex font-sans selection:bg-accent selection:text-white theme-midnight">
@@ -29,7 +34,7 @@
             <p class="text-red-500 text-[10px] uppercase tracking-[0.4em] mb-12 font-bold shadow-glow-text">Passcode Required</p>
             
             <div class="relative group mb-10 pointer-events-auto">
-                <input type="text" id="passcode-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-center text-white outline-none focus:border-accent focus:bg-white/10 transition-all duration-300 font-mono tracking-[0.2em] placeholder-gray-700 text-xl shadow-2xl relative z-[1000000]" placeholder="Enter Code">
+                <input type="password" id="passcode-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-center text-white outline-none focus:border-accent focus:bg-white/10 transition-all duration-300 font-mono tracking-[0.5em] placeholder-gray-700 text-xl shadow-2xl relative z-[1000000]" placeholder="••••••••">
                 <div class="absolute inset-0 rounded-xl border border-accent/0 group-focus-within:border-accent/50 pointer-events-none transition-all duration-500 shadow-[0_0_30px_rgba(139,92,246,0)] group-focus-within:shadow-[0_0_30px_rgba(139,92,246,0.2)]"></div>
             </div>
 
