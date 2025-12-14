@@ -180,6 +180,9 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes msgPop { to { opacity: 1; transform: translateY(0); } }
 
+.word-fade-in { display: inline-block; animation: wordFade 0.3s ease-out forwards; opacity: 0; transform: translateY(5px); filter: blur(2px); }
+@keyframes wordFade { to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+
 .history-item { padding: 18px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; pointer-events: auto; display: flex; justify-content: space-between; align-items: center; }
 .history-item:hover { background: rgba(255,255,255,0.06); transform: scale(1.01) translateX(4px); border-color: rgba(255,255,255,0.1); }
 .history-item.active { background: linear-gradient(90deg, rgba(255,255,255,0.05), transparent); border-left: 3px solid var(--accent); border-color: var(--accent); }
