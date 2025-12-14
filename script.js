@@ -837,7 +837,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const key = localStorage.getItem('prysmis_gemini_key');
             if (key) {
                 try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro-exp-02-05:generateContent?key=${key}`, {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: sysPrompt + "\n\n" + prompt }] }] })
@@ -1086,10 +1086,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isEdit) {
             if(chatHistory[chatIndex].messages.length > 0 && chatHistory[chatIndex].messages[chatHistory[chatIndex].messages.length-1].role === 'ai') {
-                chatHistory[chatIndex].messages.pop(); 
-                chatHistory[chatIndex].messages.pop(); 
-                els.chatFeed.lastElementChild.remove(); 
-                els.chatFeed.lastElementChild.remove(); 
+                chatHistory[chatIndex].messages.pop();
+                chatHistory[chatIndex].messages.pop();
+                els.chatFeed.lastElementChild.remove();
+                els.chatFeed.lastElementChild.remove();
             }
         }
 
@@ -1102,12 +1102,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         saveChatToStorage(chatHistory);
 
         els.heroSection.style.display = 'none';
-        appendMsg('user', text, uploadedFile.type && uploadedFile.type.startsWith('image') ? `data:${uploadedFile.type};base64,${uploadedFile.data}` : null, isEdit ? 1 : 0); 
+        appendMsg('user', text, uploadedFile.type && uploadedFile.type.startsWith('image') ? `data:${uploadedFile.type};base64,${uploadedFile.data}` : null, isEdit ? 1 : 0);
         
         if (!overrideText) els.input.value = '';
         els.input.style.height = 'auto';
         els.cmdPopup.classList.add('hidden');
-        window.clearMedia(); 
+        window.clearMedia();
         
         els.flashOverlay.classList.remove('opacity-0');
         els.flashOverlay.classList.add('bg-flash-green');
@@ -1281,21 +1281,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(els.stopAiBtn) els.stopAiBtn.classList.remove('opacity-0', 'pointer-events-none');
         
         const div = document.createElement('div');
-        div.className = `flex w-full justify-start msg-anim mb-6`;
+        div.className = `flex w-full justify-start animate-text-reveal mb-6`;
         const bubble = document.createElement('div');
         bubble.className = "max-w-[90%] md:max-w-[75%] p-6 rounded-[24px] rounded-bl-sm shadow-lg prose ai-msg text-gray-200 break-words overflow-x-auto";
         div.appendChild(bubble);
         els.chatFeed.appendChild(div);
 
-        const words = text.split(/(\s+)/);
+        const chars = text.split('');
         let i = 0;
-        let constructedHTML = "";
         
         const isFast = (els.fastSpeedToggle && els.fastSpeedToggle.checked);
-        const delay = isFast ? 5 : 20;
+        const delay = isFast ? 0 : 10;
+        const step = isFast ? chars.length : 5;
         
         currentInterval = setInterval(() => {
-            if(stopGeneration || i >= words.length) {
+            if(stopGeneration || i >= chars.length) {
                 clearInterval(currentInterval);
                 bubble.innerHTML = parseMD(text);
                 try { mermaid.init(undefined, bubble.querySelectorAll('.mermaid')); } catch(e) {}
@@ -1307,16 +1307,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             
-            let chunk = words[i];
-            constructedHTML += `<span class="word-fade-in">${chunk}</span>`;
-            bubble.innerHTML = parseMD(constructedHTML.replace(/<span class="word-fade-in">/g, '').replace(/<\/span>/g, '')) + `<span class="animate-pulse">|</span>`; 
+            let chunk = "";
+            for(let k=0; k<step; k++) {
+                if(i < chars.length) chunk += chars[i];
+                i++;
+            }
             
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = constructedHTML;
-            bubble.innerHTML = "";
-            bubble.appendChild(tempDiv);
+            if (isFast) {
+                bubble.innerHTML = parseMD(text);
+            } else {
+                bubble.innerHTML = parseMD(text.substring(0, i)) + '<span class="typing-cursor"></span>';
+            }
             
-            i++;
             els.chatFeed.scrollTop = els.chatFeed.scrollHeight;
         }, delay);
     }
