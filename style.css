@@ -159,7 +159,7 @@ body {
 .group:hover .tooltip-right { opacity: 1; transform: translateY(-50%) translateX(0); }
 
 .user-msg { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); box-shadow: 0 10px 40px -10px var(--glow-color); position: relative; border: 1px solid rgba(255,255,255,0.1); }
-.ai-msg { background: rgba(20,20,20,0.6); border: 1px solid rgba(255,255,255,0.08); color: #d1d5db; backdrop-filter: blur(10px); }
+.ai-msg { background: rgba(20,20,20,0.6); border: 1px solid rgba(255,255,255,0.08); color: #d1d5db; backdrop-filter: blur(10px); transition: box-shadow 0.3s ease; }
 
 .code-block { background: #030303; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
 .code-header { background: rgba(255,255,255,0.03); padding: 10px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -179,9 +179,6 @@ body {
 .animate-fade-in { animation: fadeIn 1s ease-out forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes msgPop { to { opacity: 1; transform: translateY(0); } }
-
-.word-fade-in { display: inline-block; animation: wordFade 0.3s ease-out forwards; opacity: 0; transform: translateY(5px); filter: blur(2px); }
-@keyframes wordFade { to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 
 .history-item { padding: 18px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; pointer-events: auto; display: flex; justify-content: space-between; align-items: center; }
 .history-item:hover { background: rgba(255,255,255,0.06); transform: scale(1.01) translateX(4px); border-color: rgba(255,255,255,0.1); }
@@ -208,6 +205,17 @@ body {
 .user-msg:hover .edit-btn { opacity: 1; }
 .edit-btn:hover { background: rgba(255,255,255,0.2); color: white; }
 .edited-label { font-size: 9px; opacity: 0.6; margin-bottom: 2px; text-align: right; display: block; }
+
+.typing-cursor::after { content: "▋"; display: inline-block; color: var(--accent); animation: blink 1s step-end infinite; margin-left: 2px; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+.animate-text-reveal {
+    animation: textBlurFade 0.5s ease forwards;
+}
+@keyframes textBlurFade {
+    0% { opacity: 0; filter: blur(4px); transform: translateY(5px); }
+    100% { opacity: 1; filter: blur(0); transform: translateY(0); }
+}
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
