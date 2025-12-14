@@ -18,33 +18,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (e) {}
         },
         fetchExternal: async function(prompt) {
-             const endpoints = [
-                 { url: 'https://text.pollinations.ai/', method: 'POST', model: 'qwen' },
-                 { url: 'https://text.pollinations.ai/openai', method: 'POST', model: 'gpt-4o' },
-                 { url: 'https://text.pollinations.ai/', method: 'GET', model: 'qwen' }
-             ];
+             try {
+                 const response = await fetch('https://www.blackbox.ai/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [{ role: 'user', content: prompt, id: "msg" + Date.now() }],
+                        id: "chat" + Date.now(),
+                        previewToken: null,
+                        userId: "guest",
+                        codeModelMode: true,
+                        agentMode: {},
+                        trendingAgentMode: {},
+                        isMicMode: false,
+                        isChromeExt: false,
+                        githubToken: null
+                    })
+                });
+                if (response.ok) {
+                    const text = await response.text();
+                    return text.replace(/\$@\$.*?\$@\$/g, '');
+                }
+             } catch(e) {}
              
-             for(let ep of endpoints) {
-                 try {
-                     let response;
-                     if(ep.method === 'POST') {
-                         response = await fetch(ep.url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                messages: [{ role: 'user', content: prompt }],
-                                model: ep.model,
-                                seed: Math.floor(Math.random() * 999999),
-                                jsonMode: false
-                            })
-                        });
-                     } else {
-                         response = await fetch(`${ep.url}${encodeURIComponent(prompt)}?model=${ep.model}&seed=${Math.floor(Math.random()*1000)}`);
-                     }
-                     
-                     if (response.ok) return await response.text();
-                 } catch(e) {}
-             }
+             try {
+                 const getRes = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`);
+                 if(getRes.ok) return await getRes.text();
+             } catch(e) {}
              
              return "Connection unstable. Please check internet or try again.";
         },
@@ -587,6 +587,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleHistory(false);
         switchToStandard();
         showNotification("New Chat Started");
+        
+        if (els.modeTxt.innerText === "PrysmisAI") {
+            setTimeout(() => appendMsg('ai', "Hello thank you for using PrysmisAI! How may i help you today?", null), 500);
+        }
     }
 
     els.homeBtn.addEventListener('click', (e) => {
@@ -860,29 +864,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         
-        const tryFetch = async (model) => {
-             const response = await fetch('https://text.pollinations.ai/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: [
-                        { role: 'system', content: sysPrompt },
-                        { role: 'user', content: prompt }
-                    ],
-                    model: model,
-                    seed: Math.floor(Math.random() * 10000),
-                    jsonMode: false
-                })
-            });
-            if (!response.ok) throw new Error(`Status ${response.status}`);
-            return await response.text();
-        };
-
         try {
-            return await tryFetch('qwen'); 
-        } catch (e) {
             return await PrysmisAI.fetchExternal(sysPrompt + "\n\n" + prompt); 
-        }
+        } catch(e) { return "System Override Failed. Please reset."; }
     }
 
     els.exploitImproveBtn.addEventListener('click', async () => {
@@ -965,6 +949,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             els.cmdPopup.classList.add('hidden');
             els.cmdPopup.classList.remove('flex');
+        }
+        
+        const mode = els.modeTxt.innerText;
+        if (mode === "PrysmisAI" || mode === "Website Development" || mode === "Exploit Creation" || mode === "Coding" || mode === "Image Generation") {
+             // Basic modes
+        } else {
+             // Auto subject detection logic could go here if needed, but basic matching is handled below
         }
     });
 
@@ -1077,6 +1068,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             showNotification("System busy. Please click 'Reset Busy' in sidebar.");
             return;
         }
+
+        const lowerText = text.toLowerCase();
+        if (lowerText.includes("biology") && els.modeTxt.innerText !== "Biology") changeMode("Biology");
+        else if (lowerText.includes("physics") && els.modeTxt.innerText !== "Physics") changeMode("Physics");
+        else if (lowerText.includes("geometry") && els.modeTxt.innerText !== "Geometry") changeMode("Geometry");
+        else if (lowerText.includes("chemistry") && els.modeTxt.innerText !== "Chemistry") changeMode("Chemistry");
 
         els.continueBtn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
 
