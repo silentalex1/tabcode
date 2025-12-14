@@ -201,6 +201,11 @@ body {
 .file-item .delete-btn { opacity: 0; transition: 0.2s; color: #ef4444; }
 .file-item:hover .delete-btn { opacity: 1; }
 
+.edit-btn { opacity: 0; transition: all 0.2s; font-size: 10px; padding: 4px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); cursor: pointer; color: #ccc; margin-right: 8px; }
+.user-msg:hover .edit-btn { opacity: 1; }
+.edit-btn:hover { background: rgba(255,255,255,0.2); color: white; }
+.edited-label { font-size: 9px; opacity: 0.6; margin-bottom: 2px; text-align: right; display: block; }
+
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .loader-wrapper {
