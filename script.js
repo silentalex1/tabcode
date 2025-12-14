@@ -851,7 +851,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (selectedModel === 'prysmis') {
             const combined = `${sysPrompt}\n\n${prompt}`;
-            return await PrysmisAI.generate(prompt);
+            return await PrysmisAI.generate(combined);
         } 
         else if (selectedModel === 'openai') {
             const key = localStorage.getItem('prysmis_openai_key');
@@ -884,7 +884,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const key = localStorage.getItem('prysmis_gemini_key');
             if (key) {
                 try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: sysPrompt + "\n\n" + prompt }] }] })
