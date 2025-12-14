@@ -19,30 +19,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         fetchExternal: async function(prompt) {
              const endpoints = [
-                 'https://text.pollinations.ai/',
-                 'https://api.pollinations.ai/text', 
+                 { url: 'https://text.pollinations.ai/', method: 'POST', model: 'qwen' },
+                 { url: 'https://text.pollinations.ai/openai', method: 'POST', model: 'gpt-4o' },
+                 { url: 'https://text.pollinations.ai/', method: 'GET', model: 'qwen' }
              ];
              
-             for(let url of endpoints) {
+             for(let ep of endpoints) {
                  try {
-                     const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            messages: [{ role: 'user', content: prompt }],
-                            model: 'qwen',
-                            seed: Math.floor(Math.random() * 999999),
-                            jsonMode: false
-                        })
-                    });
-                    if (response.ok) return await response.text();
+                     let response;
+                     if(ep.method === 'POST') {
+                         response = await fetch(ep.url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                messages: [{ role: 'user', content: prompt }],
+                                model: ep.model,
+                                seed: Math.floor(Math.random() * 999999),
+                                jsonMode: false
+                            })
+                        });
+                     } else {
+                         response = await fetch(`${ep.url}${encodeURIComponent(prompt)}?model=${ep.model}&seed=${Math.floor(Math.random()*1000)}`);
+                     }
+                     
+                     if (response.ok) return await response.text();
                  } catch(e) {}
              }
-             
-             try {
-                 const getRes = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=qwen&seed=${Math.floor(Math.random()*1000)}`);
-                 if(getRes.ok) return await getRes.text();
-             } catch(e) {}
              
              return "Connection unstable. Please check internet or try again.";
         },
