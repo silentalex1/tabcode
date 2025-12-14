@@ -206,16 +206,11 @@ body {
 .edit-btn:hover { background: rgba(255,255,255,0.2); color: white; }
 .edited-label { font-size: 9px; opacity: 0.6; margin-bottom: 2px; text-align: right; display: block; }
 
-.typing-cursor::after { content: "▋"; display: inline-block; color: var(--accent); animation: blink 1s step-end infinite; margin-left: 2px; }
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-.animate-text-reveal {
-    animation: textBlurFade 0.5s ease forwards;
+@keyframes fadeBlurIn { 
+    0% { opacity: 0; filter: blur(3px); transform: translateY(5px); } 
+    100% { opacity: 1; filter: blur(0); transform: translateY(0); } 
 }
-@keyframes textBlurFade {
-    0% { opacity: 0; filter: blur(4px); transform: translateY(5px); }
-    100% { opacity: 1; filter: blur(0); transform: translateY(0); }
-}
+.word-anim { display: inline-block; animation: fadeBlurIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
