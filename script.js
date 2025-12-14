@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const passOverlay = document.getElementById('passcode-overlay');
     const passInput = document.getElementById('passcode-input');
-    const passMask = document.getElementById('passcode-mask');
     const passBtn = document.getElementById('passcode-btn');
     const passError = document.getElementById('passcode-error');
     const startupLoader = document.getElementById('startup-loader');
@@ -16,71 +15,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         models: {},
         init: async function() {
             try {
+                this.models.generator = await window.pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', { quantized: true });
                 this.models.vision = await window.pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning');
                 this.models.tts = await window.pipeline('text-to-speech', 'Xenova/speecht5_tts', { quantized: false });
                 this.models.vocoder = await window.pipeline('vocoder', 'Xenova/speecht5_hifigan', { quantized: false });
                 this.isReady = true;
             } catch (e) {}
         },
-        generateLocal: async function(prompt) {
+        generate: async function(prompt) {
             const p = prompt.toLowerCase().trim();
             
             try {
                 if (/^[\d\s\+\-\*\/\(\)\.]+$/.test(p.replace(/[a-z]/g,''))) {
                     return `**Result:** ${eval(p.replace(/[^\d\+\-\*\/\(\)\.]/g, ''))}`;
                 }
-                if (p.startsWith("what is ") && p.includes("+") || p.includes("-") || p.includes("*") || p.includes("/")) {
+                if (p.startsWith("what is ") && (p.includes("+") || p.includes("-") || p.includes("*") || p.includes("/"))) {
                      const math = p.replace("what is ", "").replace("?", "");
                      return `**Result:** ${eval(math.replace(/[^\d\+\-\*\/\(\)\.]/g, ''))}`;
                 }
             } catch(e) {}
 
-            const date = new Date();
-            if (p.includes("time") || p.includes("date")) return `Current System Time: ${date.toLocaleString()}`;
-            if (p.includes("hello") || p.includes("hi ")) return "Hello! I am PrysmisAI, your personal learning tool. How can I assist you today?";
+            if (p.includes("hello") || p.includes("hi ")) return "Hello! Thank you for using PrysmisAI! How may I help you today?";
             
-            return await this.fetchCloud(prompt);
-        },
-        fetchCloud: async function(prompt) {
-             const fallbackEndpoints = [
-                 'https://text.pollinations.ai/',
-                 'https://api.pollinations.ai/text'
-             ];
-             
-             for(let url of fallbackEndpoints) {
-                 try {
-                     const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            messages: [{ role: 'system', content: "You are PrysmisAI. Intelligent, Unfiltered, Precise." }, { role: 'user', content: prompt }],
-                            model: 'openai',
-                            jsonMode: false
-                        })
+            try {
+                if(this.models.generator) {
+                    const output = await this.models.generator(prompt, {
+                        max_new_tokens: 200,
+                        temperature: 0.7,
+                        do_sample: true
                     });
-                    if (response.ok) return await response.text();
-                 } catch(e) {}
-             }
-             return "I am currently calibrating my neural pathways. Please try again or check your connection.";
+                    return output[0].generated_text;
+                }
+            } catch(e) {}
+
+            return this.generateFallback(prompt);
         },
-        fetchExternal: async function(prompt) {
-             const customApiUrl = 'https://api.tabcode.cfd/v1/chat';
-             
-             try {
-                 const response = await fetch(customApiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        messages: [{ role: 'user', content: prompt }],
-                        model: 'prysmis-custom',
-                        temperature: 0.7
-                    })
-                });
-                if (response.ok) return await response.text();
-                throw new Error("API Unreachable");
-             } catch(e) {
-                 return await this.generateLocal(prompt);
-             }
+        generateFallback: function(prompt) {
+            const p = prompt.toLowerCase();
+            if(p.includes("code") || p.includes("script")) return "```python\nprint('Hello World')\n# Basic script structure\n```";
+            if(p.includes("story")) return "Once upon a time, in a digital realm far away...";
+            return "I have processed your input. My neural pathways are active. Please ask a specific question or provide a command.";
         },
         speak: async function(text) {
             if(!this.isReady) return;
@@ -127,12 +101,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         return { obfuscate, deobfuscate };
     })();
-
-    if(passInput) {
-        passInput.addEventListener('input', (e) => {
-            if(passMask) passMask.innerText = "•".repeat(e.target.value.length);
-        });
-    }
 
     function checkPass() {
         if(passInput.value === 'fgteevOG$') {
@@ -871,10 +839,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (selectedModel === 'prysmis') {
             const combined = `${sysPrompt}\n\n${prompt}`;
-            if (prompt.toLowerCase().includes('hello') || prompt.toLowerCase().includes('hi')) {
-                return "Hello thank you for using PrysmisAI! How may i help you today?";
-            }
-            return await PrysmisAI.fetchExternal(combined);
+            return await PrysmisAI.generate(prompt);
         } 
         else if (selectedModel === 'openai') {
             const key = localStorage.getItem('prysmis_openai_key');
@@ -918,7 +883,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         
-        return await PrysmisAI.generateLocal(prompt);
+        return await PrysmisAI.generate(prompt);
     }
 
     els.exploitImproveBtn.addEventListener('click', async () => {
