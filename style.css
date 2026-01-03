@@ -1,68 +1,167 @@
-const loginBtn = document.getElementById('login-btn');
-const authPage = document.getElementById('auth-page');
-const chatPage = document.getElementById('chat-page');
-const userInput = document.getElementById('user-input');
-const chatMessages = document.getElementById('chat-messages');
-
-loginBtn.addEventListener('click', async () => {
-    const user = await puter.auth.signIn();
-    if (user) {
-        history.pushState({}, '', '/aichat');
-        authPage.classList.add('hidden');
-        chatPage.classList.remove('hidden');
-    }
-});
-
-userInput.addEventListener('keypress', async (e) => {
-    if (e.key === 'Enter' && userInput.value.trim() !== "") {
-        const message = userInput.value;
-        userInput.value = "";
-        
-        chatPage.classList.add('zoom-focus');
-        
-        appendMessage('User', message);
-        
-        const response = await puter.ai.chat(message);
-        handleAIResponse(response);
-    }
-});
-
-function appendMessage(role, text) {
-    const msgDiv = document.createElement('div');
-    msgDiv.innerHTML = `<strong>${role}:</strong> ${text}`;
-    msgDiv.style.marginBottom = "15px";
-    chatMessages.appendChild(msgDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-async function handleAIResponse(response) {
-    const responseText = response.toString();
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'ai-response';
-    msgDiv.innerHTML = `<strong>PrysmisAI:</strong> <span class="text-content"></span>`;
-    chatMessages.appendChild(msgDiv);
-
-    const textSpan = msgDiv.querySelector('.text-content');
-    const words = responseText.split(' ');
-    
-    for (let i = 0; i < words.length; i++) {
-        textSpan.innerHTML += words[i] + ' ';
-        await new Promise(r => setTimeout(r, 40));
-    }
-
-    triggerNeuralPass(msgDiv);
+body {
+    background: #050505;
+    color: #fff;
+    overflow: hidden;
 }
 
-function triggerNeuralPass(element) {
-    const scan = document.createElement('div');
-    scan.className = 'neural-scan';
-    element.appendChild(scan);
+.hidden { display: none; }
 
-    const content = element.querySelector('.text-content');
-    content.classList.add('glow-text');
+.split-screen {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
 
-    setTimeout(() => {
-        content.classList.remove('glow-text');
-        chatPage.classList.remove('zoom-focus');
-    }, 2000);
+.auth-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a0a;
+}
+
+.auth-card {
+    text-align: center;
+}
+
+.auth-card h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+
+#login-btn {
+    margin-top: 20px;
+    padding: 12px 24px;
+    background: #fff;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+#login-btn:hover { transform: scale(1.05); }
+
+.auth-right {
+    flex: 1.5;
+    background: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
+    position: relative;
+    overflow: hidden;
+}
+
+.visual-design .orb {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(0,255,255,0.2) 0%, transparent 70%);
+    transform: translate(-50%, -50%);
+    animation: pulse 4s infinite alternate;
+}
+
+@keyframes pulse {
+    from { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    to { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+}
+
+#chat-page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.zoom-focus {
+    transform: scale(1.15);
+}
+
+#chat-container {
+    width: 60%;
+    max-width: 800px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+#user-input {
+    width: 100%;
+    background: #111;
+    border: 1px solid #333;
+    padding: 15px 20px;
+    color: white;
+    outline: none;
+    border-radius: 8px;
+    position: relative;
+    z-index: 2;
+}
+
+.glow-border {
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    background: linear-gradient(45deg, #ff00cc, #333, #00d4ff);
+    background-size: 400% 400%;
+    border-radius: 10px;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+#user-input:focus + .glow-border {
+    opacity: 1;
+    animation: borderRotate 3s linear infinite;
+}
+
+@keyframes borderRotate {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.ai-response {
+    margin-top: 15px;
+    line-height: 1.6;
+    position: relative;
+    padding: 10px;
+}
+
+.neural-scan {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 2px;
+    background: rgba(0, 212, 255, 0.5);
+    box-shadow: 0 0 10px #00d4ff;
+    animation: scanLine 1.5s ease-in-out forwards;
+}
+
+@keyframes scanLine {
+    0% { top: 0; opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+.glow-text {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    transition: text-shadow 0.5s;
 }
