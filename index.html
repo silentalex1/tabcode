@@ -20,8 +20,8 @@
             <div class="auth-card">
                 <div class="logo-orb"></div>
                 <h1>PrysmisAI</h1>
-                <p>Simple. Fast. Smart.</p>
-                <button id="login-btn">Start Now</button>
+                <p>Clean. Simple. Powerful.</p>
+                <button id="login-btn">Initialize</button>
             </div>
         </div>
         <div class="auth-right"></div>
@@ -41,23 +41,37 @@
             <div id="history-list"></div>
         </aside>
 
-        <main id="chat-viewport">
-            <div id="chat-container">
-                <div id="chat-messages">
-                    <div class="welcome-msg">
-                        <h2>Welcome</h2>
-                        <p>How can I help you today?</p>
+        <div class="main-layout">
+            <main id="chat-viewport">
+                <div id="chat-container">
+                    <div id="chat-messages">
+                        <div class="welcome-msg">
+                            <h2>System Ready</h2>
+                            <p>How can I assist your workflow today?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="input-section">
+                        <div class="input-wrapper">
+                            <textarea id="user-input" rows="1" placeholder="Ask PrysmisAI Anything or use '/' commands."></textarea>
+                            <div class="input-hint">Shift + Enter for new line</div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="input-section">
-                    <div class="input-wrapper">
-                        <input type="text" id="user-input" placeholder="Ask PrysmisAI Anything or use '/' commands." autocomplete="off">
-                        <div class="input-glow"></div>
-                    </div>
+            </main>
+
+            <aside id="code-panel" class="hidden">
+                <div class="panel-header">
+                    <span>Artifact</span>
+                    <button id="close-panel">×</button>
                 </div>
-            </div>
-        </main>
+                <div class="panel-sub-header">
+                    <span id="artifact-type">Code</span>
+                    <button id="copy-artifact">Copy Code</button>
+                </div>
+                <div id="artifact-content"></div>
+            </aside>
+        </div>
     </div>
 
     <script src="script.js"></script>
