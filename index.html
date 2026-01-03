@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrysmisAI | Future of Intelligence</title>
+    <title>PrysmisAI | Intelligence Evolved</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://js.puter.com/v2/"></script>
 </head>
 <body>
@@ -14,39 +15,50 @@
         <div class="layer glow-center"></div>
     </div>
 
+    <!-- Auth Page -->
     <div id="auth-page" class="split-screen">
         <div class="auth-left">
             <div class="auth-card">
                 <div class="logo-orb"></div>
                 <h1>PrysmisAI</h1>
-                <p>Enter the neural network.</p>
-                <button id="login-btn">Login with Puter</button>
+                <p>The next frontier of neural interaction.</p>
+                <button id="login-btn">Launch Interface</button>
             </div>
         </div>
         <div class="auth-right"></div>
     </div>
 
+    <!-- Chat Page -->
     <div id="chat-page" class="hidden">
         <nav class="side-nav">
             <div class="nav-logo">P</div>
             <div class="nav-items">
-                <div class="nav-icon active" id="new-chat-btn"><span>+</span></div>
+                <div class="nav-icon active" title="Chat">●</div>
             </div>
         </nav>
 
         <aside class="sidebar">
-            <div class="sidebar-header">History</div>
+            <div class="sidebar-header">
+                <span>History</span>
+                <button id="new-chat-btn">+</button>
+            </div>
             <div id="history-list"></div>
         </aside>
 
         <main id="chat-viewport">
             <div id="chat-container">
-                <div id="chat-messages"></div>
+                <div id="chat-messages">
+                    <div class="welcome-msg">
+                        <h2>System Ready</h2>
+                        <p>How can I assist your workflow today?</p>
+                    </div>
+                </div>
+                
                 <div class="input-section">
                     <div class="input-wrapper">
                         <div class="glow-border"></div>
-                        <input type="text" id="user-input" placeholder="Ask PrysmisAI anything..." autocomplete="off">
-                        <button id="send-btn">➔</button>
+                        <input type="text" id="user-input" placeholder="Enter command or message..." autocomplete="off">
+                        <div class="input-hint">Press Enter to send</div>
                     </div>
                 </div>
             </div>
