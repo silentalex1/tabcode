@@ -1,19 +1,17 @@
 const loginBtn = document.getElementById('login-btn');
 const authPage = document.getElementById('auth-page');
 const chatPage = document.getElementById('chat-page');
-const chatViewport = document.getElementById('chat-view-viewport');
+const chatViewport = document.getElementById('chat-viewport');
 const userInput = document.getElementById('user-input');
 const chatMessages = document.getElementById('chat-messages');
+const historyList = document.getElementById('history-list');
 
 loginBtn.addEventListener('click', async () => {
     const user = await puter.auth.signIn();
     if (user) {
         window.history.pushState({}, '', '/aichat');
-        authPage.style.opacity = '0';
-        setTimeout(() => {
-            authPage.classList.add('hidden');
-            chatPage.classList.remove('hidden');
-        }, 500);
+        authPage.style.display = 'none';
+        chatPage.classList.remove('hidden');
     }
 });
 
@@ -23,37 +21,43 @@ userInput.addEventListener('keypress', async (e) => {
         userInput.value = "";
         
         chatViewport.classList.add('zoom-active');
-        
-        createMessageElement('user', query);
-        
+        appendMessage('user', query);
+        updateHistory(query);
+
         try {
-            const response = await puter.ai.chat(query, { model: 'gemini-3' });
-            renderAIResponse(response.toString());
+            const resp = await puter.ai.chat(query, { model: 'google-gemini-3-pro' });
+            renderAI(resp.toString());
         } catch (err) {
-            renderAIResponse("System Error: Connection to Gemini 3 failed.");
+            renderAI("Critical Error: Please ensure you have an active Puter session and access to Gemini 3.");
         }
     }
 });
 
-function createMessageElement(role, text) {
+function appendMessage(role, text) {
     const div = document.createElement('div');
-    div.className = `message ${role}-message`;
-    div.innerHTML = `<div style="font-size:0.7rem; color: #444; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">${role}</div><div>${text}</div>`;
+    div.className = 'message';
+    div.innerHTML = `<div class="${role}-label label">${role}</div><div class="content">${text}</div>`;
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    return div;
 }
 
-async function renderAIResponse(text) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'message ai-response';
-    msgDiv.innerHTML = `<div style="font-size:0.7rem; color: #4facfe; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">PrysmisAI</div><div class="text-target"></div>`;
-    chatMessages.appendChild(msgDiv);
+function updateHistory(text) {
+    const item = document.createElement('div');
+    item.style = "padding:10px; margin-bottom:5px; border-radius:6px; background:rgba(255,255,255,0.03); font-size:0.85rem; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#94a3b8;";
+    item.textContent = text;
+    historyList.prepend(item);
+}
 
-    const target = msgDiv.querySelector('.text-target');
+async function renderAI(text) {
+    const div = document.createElement('div');
+    div.className = 'message';
+    div.innerHTML = `<div class="ai-label label">PrysmisAI</div><div class="content" style="position:relative;"></div>`;
+    chatMessages.appendChild(div);
+    
+    const target = div.querySelector('.content');
     const words = text.split(' ');
     
-    for (let i = 0; i < words.length; i++) {
+    for(let i=0; i<words.length; i++) {
         const span = document.createElement('span');
         span.className = 'word';
         span.style.animationDelay = `${i * 0.03}s`;
@@ -62,34 +66,18 @@ async function renderAIResponse(text) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    const cursor = document.createElement('span');
-    cursor.className = 'cursor cursor-blink';
-    target.appendChild(cursor);
-
     setTimeout(() => {
-        runNeuralPass(msgDiv, cursor, target);
-    }, (words.length * 30) + 500);
-}
-
-function runNeuralPass(parent, cursor, target) {
-    const scanner = document.createElement('div');
-    scanner.className = 'neural-line scan-anim';
-    parent.appendChild(scanner);
-
-    const words = target.querySelectorAll('.word');
-    words.forEach((w, idx) => {
-        if (idx % 7 === 0) { 
-            w.classList.add('glow-phrase');
-        }
-    });
-
-    setTimeout(() => {
-        cursor.classList.remove('cursor-blink');
+        const line = document.createElement('div');
+        line.className = 'neural-line scan-active';
+        target.appendChild(line);
+        
         setTimeout(() => {
-            cursor.style.opacity = '0';
-            cursor.style.transition = 'opacity 1s';
-            words.forEach(w => w.classList.remove('glow-phrase'));
             chatViewport.classList.remove('zoom-active');
-        }, 1000);
-    }, 1200);
+        }, 1200);
+    }, words.length * 30 + 500);
 }
+
+document.getElementById('new-chat-btn').onclick = () => {
+    chatMessages.innerHTML = "";
+    chatViewport.classList.remove('zoom-active');
+};
