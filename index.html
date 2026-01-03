@@ -26,11 +26,15 @@
     </div>
 
     <div id="chat-page" class="hidden">
-        <div id="chat-container">
-            <div id="chat-messages"></div>
-            <div class="input-wrapper">
-                <div class="glow-border"></div>
-                <input type="text" id="user-input" placeholder="Ask PrysmisAI anything or use '/' commands.">
+        <div id="chat-view-viewport">
+            <div id="chat-container">
+                <div id="chat-messages"></div>
+                <div class="input-area">
+                    <div class="input-wrapper">
+                        <div class="glow-border"></div>
+                        <input type="text" id="user-input" placeholder="Ask PrysmisAI anything or use '/' commands." autocomplete="off">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
