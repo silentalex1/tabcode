@@ -7,41 +7,35 @@ const chatMessages = document.getElementById('chat-messages');
 const historyList = document.getElementById('history-list');
 const newChatBtn = document.getElementById('new-chat-btn');
 
-// Authentication Logic
 loginBtn.addEventListener('click', async () => {
     try {
         const user = await puter.auth.signIn();
         if (user) {
-            transitionToChat();
+            initSession();
         }
-    } catch (e) {
-        console.error("Authentication failed", e);
-    }
+    } catch (e) {}
 });
 
-function transitionToChat() {
+function initSession() {
     authPage.style.opacity = '0';
     setTimeout(() => {
         authPage.classList.add('hidden');
         chatPage.classList.remove('hidden');
-        window.history.pushState({}, '', '/aichat');
-    }, 400);
+        window.history.pushState({}, '', '/chat');
+    }, 500);
 }
 
-// Check if already signed in on load
 window.onload = async () => {
     if (puter.auth.isSignedIn()) {
-        transitionToChat();
+        initSession();
     }
 };
 
-// Handle Input
 userInput.addEventListener('keypress', async (e) => {
     if (e.key === 'Enter' && userInput.value.trim() !== "") {
         const query = userInput.value;
         userInput.value = "";
         
-        // Remove welcome message on first chat
         const welcome = document.querySelector('.welcome-msg');
         if (welcome) welcome.remove();
 
@@ -50,12 +44,10 @@ userInput.addEventListener('keypress', async (e) => {
         addToHistory(query);
 
         try {
-            // Using a standard high-performance model
             const response = await puter.ai.chat(query);
             renderAI(response.toString());
         } catch (err) {
-            renderAI("System connectivity lost. Please ensure your Puter session is active.");
-            console.error(err);
+            renderAI("System error. Re-initialize interface.");
         }
     }
 });
@@ -64,32 +56,30 @@ function appendMessage(role, text) {
     const div = document.createElement('div');
     div.className = 'message';
     div.innerHTML = `
-        <div class="${role}-label label">${role === 'user' ? 'Access node' : 'Prysmis AI'}</div>
+        <div class="${role}-label label">${role === 'user' ? 'USER' : 'PRYSMIS'}</div>
         <div class="content">${text}</div>
     `;
     chatMessages.appendChild(div);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
 }
 
 function addToHistory(text) {
     const item = document.createElement('div');
     item.style = `
-        padding: 12px; 
-        margin-bottom: 8px; 
+        padding: 10px 14px; 
+        margin-bottom: 4px; 
         border-radius: 8px; 
-        background: rgba(255,255,255,0.03); 
         font-size: 0.8rem; 
         cursor: pointer; 
         white-space: nowrap; 
         overflow: hidden; 
         text-overflow: ellipsis; 
-        color: #94a3b8;
-        border: 1px solid transparent;
-        transition: all 0.2s;
+        color: var(--text-p);
+        transition: background 0.2s;
     `;
     item.textContent = text;
-    item.onmouseover = () => item.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-    item.onmouseout = () => item.style.borderColor = 'transparent';
+    item.onmouseenter = () => item.style.background = 'rgba(255,255,255,0.03)';
+    item.onmouseleave = () => item.style.background = 'transparent';
     historyList.prepend(item);
 }
 
@@ -97,17 +87,16 @@ async function renderAI(text) {
     const div = document.createElement('div');
     div.className = 'message';
     div.innerHTML = `
-        <div class="ai-label label">PrysmisAI</div>
-        <div class="content" style="position:relative;"></div>
+        <div class="ai-label label">PRYSMIS</div>
+        <div class="content"></div>
     `;
     chatMessages.appendChild(div);
     
     const target = div.querySelector('.content');
     const words = text.split(' ');
     
-    // Smooth word-by-word streaming effect
     for(let i = 0; i < words.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 40)); // Speed of typing
+        await new Promise(r => setTimeout(r, 35));
         const span = document.createElement('span');
         span.className = 'word';
         span.textContent = words[i] + ' ';
@@ -115,21 +104,15 @@ async function renderAI(text) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Neural line effect after typing
-    const line = document.createElement('div');
-    line.className = 'neural-line';
-    target.appendChild(line);
-    
     setTimeout(() => {
-        line.classList.add('scan-active');
         chatViewport.classList.remove('zoom-active');
-    }, 100);
+    }, 200);
 }
 
 newChatBtn.onclick = () => {
     chatMessages.innerHTML = `
         <div class="welcome-msg">
-            <h2>System Ready</h2>
+            <h2>System Online</h2>
             <p>New session initialized.</p>
         </div>
     `;
