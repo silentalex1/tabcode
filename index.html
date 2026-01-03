@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrysmisAI | Intelligence Evolved</title>
+    <title>PrysmisAI</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://js.puter.com/v2/"></script>
 </head>
 <body>
@@ -15,31 +15,29 @@
         <div class="layer glow-center"></div>
     </div>
 
-    <!-- Auth Page -->
     <div id="auth-page" class="split-screen">
         <div class="auth-left">
             <div class="auth-card">
                 <div class="logo-orb"></div>
                 <h1>PrysmisAI</h1>
-                <p>The next frontier of neural interaction.</p>
-                <button id="login-btn">Launch Interface</button>
+                <p>Neural Interface 2.0</p>
+                <button id="login-btn">Initialize</button>
             </div>
         </div>
         <div class="auth-right"></div>
     </div>
 
-    <!-- Chat Page -->
     <div id="chat-page" class="hidden">
         <nav class="side-nav">
             <div class="nav-logo">P</div>
             <div class="nav-items">
-                <div class="nav-icon active" title="Chat">●</div>
+                <div class="nav-icon active"></div>
             </div>
         </nav>
 
         <aside class="sidebar">
             <div class="sidebar-header">
-                <span>History</span>
+                <span>Memory</span>
                 <button id="new-chat-btn">+</button>
             </div>
             <div id="history-list"></div>
@@ -49,16 +47,15 @@
             <div id="chat-container">
                 <div id="chat-messages">
                     <div class="welcome-msg">
-                        <h2>System Ready</h2>
-                        <p>How can I assist your workflow today?</p>
+                        <h2>System Online</h2>
+                        <p>Awaiting your directive.</p>
                     </div>
                 </div>
                 
                 <div class="input-section">
                     <div class="input-wrapper">
+                        <input type="text" id="user-input" placeholder="Message PrysmisAI..." autocomplete="off">
                         <div class="glow-border"></div>
-                        <input type="text" id="user-input" placeholder="Enter command or message..." autocomplete="off">
-                        <div class="input-hint">Press Enter to send</div>
                     </div>
                 </div>
             </div>
