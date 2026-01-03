@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrysmisAI</title>
+    <title>PrysmisAI | Future of Intelligence</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://js.puter.com/v2/"></script>
 </head>
@@ -17,9 +17,10 @@
     <div id="auth-page" class="split-screen">
         <div class="auth-left">
             <div class="auth-card">
+                <div class="logo-orb"></div>
                 <h1>PrysmisAI</h1>
-                <p>create your account using:</p>
-                <button id="login-btn">login with puterjs</button>
+                <p>Enter the neural network.</p>
+                <button id="login-btn">Login with Puter</button>
             </div>
         </div>
         <div class="auth-right"></div>
@@ -29,12 +30,12 @@
         <nav class="side-nav">
             <div class="nav-logo">P</div>
             <div class="nav-items">
-                <div class="nav-icon active">Chat</div>
+                <div class="nav-icon active" id="new-chat-btn"><span>+</span></div>
             </div>
         </nav>
 
         <aside class="sidebar">
-            <div class="sidebar-header">Chat History</div>
+            <div class="sidebar-header">History</div>
             <div id="history-list"></div>
         </aside>
 
@@ -42,10 +43,10 @@
             <div id="chat-container">
                 <div id="chat-messages"></div>
                 <div class="input-section">
-                    <div id="image-preview-container" class="hidden"></div>
                     <div class="input-wrapper">
                         <div class="glow-border"></div>
-                        <input type="text" id="user-input" placeholder="Ask PrysmisAI anything or use '/' commands." autocomplete="off">
+                        <input type="text" id="user-input" placeholder="Ask PrysmisAI anything..." autocomplete="off">
+                        <button id="send-btn">➔</button>
                     </div>
                 </div>
             </div>
